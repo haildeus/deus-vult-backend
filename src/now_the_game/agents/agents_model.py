@@ -2,8 +2,8 @@ from typing import Any
 
 from pydantic_ai import Agent
 
+from ..core.base import ProviderBase
 from .prompts.system_prompts import DEFAULT_SYSTEM_PROMPT
-from .providers.base import ProviderBase
 
 
 class TextAgentModel:

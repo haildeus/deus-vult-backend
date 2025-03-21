@@ -11,7 +11,15 @@
 - Better error handling
 - Parsing messages
 - DSPy optimization for summaries
+- Add importing metadata to avoid circular import
 
 ## Ideas
 - What if we do battles Space Rangers text style w/ some drawings?
 - Should we send anything during the battle? Highlights?
+
+## Current thing: Experimental disappearing messages engagement.
+- Simple send message to chat and channel
+
+
+### Nice to do things:
+- Pylance

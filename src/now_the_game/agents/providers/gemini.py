@@ -3,16 +3,16 @@ from google.generativeai.embedding import EmbeddingTaskType
 from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.providers.google_gla import GoogleGLAProvider
 
-from .base import ProviderBase, ProviderConfig
+from ...core import ProviderBase, ProviderConfigBase
 
 
-class GeminiConfig(ProviderConfig):
+class GeminiConfig(ProviderConfigBase):
     """Gemini-specific configuration with explicit environment binding"""
 
     embedding_model_name: str
     model_prefix: str = "models/"
 
-    class Config(ProviderConfig.Config):
+    class Config(ProviderConfigBase.Config):
         env_prefix = "GEMINI_"
 
 

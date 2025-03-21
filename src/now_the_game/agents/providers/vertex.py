@@ -5,17 +5,17 @@ from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.providers.google_vertex import GoogleVertexProvider
 from vertexai.language_models import TextEmbeddingInput, TextEmbeddingModel
 
-from .base import ProviderBase, ProviderConfig
+from ...core.base import ProviderBase, ProviderConfigBase
 
 
-class VertexConfig(ProviderConfig):
+class VertexConfig(ProviderConfigBase):
     """Vertex-specific configuration with explicit environment binding"""
 
     embedding_model_name: str
     project_id: str
     region: str
 
-    class Config(ProviderConfig.Config):
+    class Config(ProviderConfigBase.Config):
         env_prefix = "VERTEX_"
 
 

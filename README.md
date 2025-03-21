@@ -28,7 +28,7 @@ We're using vertical slice architecture. All the files for a single use case are
 ### Telegram Integration - Unfinished
 - [ ] Sending polls to choose community we're invading. Summing the results of the decision.
     - DONE: poll sending.
-    - Storing the polls data.
+    - DONE: Storing the polls data.
     - Getting results of the poll.
 - [ ] Tracking getting added to a new community. Extracting all the relevant messages from the community. Save to SQLite.
     - Create update handlers to track these events.

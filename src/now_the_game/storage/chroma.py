@@ -3,7 +3,7 @@ from enum import Enum
 import chromadb
 from pydantic import BaseModel, Field, field_validator, model_validator
 
-from .storage_config import storage_config
+from ..core.storage_config import storage_config
 
 
 class SupportedMetaFields(Enum):

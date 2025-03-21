@@ -15,9 +15,12 @@ dependencies = [
     "google-cloud-aiplatform>=1.85.0",
     "google-generativeai>=0.8.4",
     "kurigram>=2.1.39",
+    "numpy>=2.2.4",
     "pydantic>=2.10.6",
     "pydantic-ai>=0.0.42",
     "ruff>=0.11.0",
+    "sqlalchemy>=2.0.39",
+    "sqlmodel>=0.0.24",
     "tgcrypto>=1.2.5",
     "uvloop>=0.21.0",
 ]

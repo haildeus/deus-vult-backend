@@ -1,7 +1,14 @@
 from abc import ABC, abstractmethod
+from random import randint
+from typing import Generic, TypeVar
+from uuid import UUID
 
-from pydantic import Field, model_validator
+from pydantic import model_validator
 from pydantic_settings import BaseSettings
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import Field, SQLModel, select
+
+T = TypeVar("T", bound=SQLModel)
 
 
 class MissingCredentialsError(Exception):
@@ -12,7 +19,46 @@ class MissingCredentialsError(Exception):
         self.provider = provider
 
 
-class ProviderConfig(BaseSettings):
+class BaseSchema(SQLModel):
+    object_id: int = Field(
+        primary_key=True, default_factory=lambda: randint(1, 1000000)
+    )
+
+
+class BaseModel(Generic[T]):
+    def __init__(self, model_class: type[T]):
+        self.model_class = model_class
+
+    async def create(self, session: AsyncSession, entity: T) -> T:
+        entity = self.model_class.model_validate(entity)
+        session.add(entity)
+        await session.flush()
+        await session.refresh(entity)
+        return entity
+
+    async def get_by_id(self, session: AsyncSession, entity_id: UUID | int) -> T | None:
+        query = select(self.model_class).where(
+            self.model_class.character_id == entity_id
+        )
+        result = await session.exec(query)
+        return result.first()
+
+    async def list(
+        self, session: AsyncSession, offset: int = 0, limit: int = 100
+    ) -> list[T]:
+        query = select(self.model_class).offset(offset).limit(limit)
+        result = await session.exec(query)
+        return result.scalars().all()
+
+    async def is_present(self, session: AsyncSession, entity_id: UUID | int) -> bool:
+        query = select(self.model_class).where(
+            self.model_class.character_id == entity_id
+        )
+        result = await session.exec(query)
+        return result.first() is not None
+
+
+class ProviderConfigBase(BaseSettings):
     """Base class for provider configuration"""
 
     # Required fields
@@ -40,7 +86,7 @@ class ProviderConfig(BaseSettings):
 class ProviderBase(ABC):
     """Abstract base class for all provider implementations"""
 
-    def __init__(self, config: ProviderConfig):
+    def __init__(self, config: ProviderConfigBase):
         self.config = config
         self._validate_credentials()
 
