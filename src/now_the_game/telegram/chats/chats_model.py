@@ -2,24 +2,26 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from ...core.base import BaseModel
-from .chats_schemas import Chat, ChatMember
+from .chats_schemas import ChatMembershipSchema, ChatSchema
 
 
-class ChatModel(BaseModel[Chat]):
+class ChatModel(BaseModel[ChatSchema]):
     def __init__(self):
-        super().__init__(Chat)
+        super().__init__(ChatSchema)
 
     async def get_by_username(
         self, session: AsyncSession, username: str
-    ) -> Chat | None:
-        result = await session.execute(select(Chat).where(Chat.username == username))
+    ) -> ChatSchema | None:
+        result = await session.execute(
+            select(ChatSchema).where(ChatSchema.username == username)
+        )
         return result.scalar_one_or_none()
 
 
-class ChatMemberModel(BaseModel[ChatMember]):
+class ChatMembershipModel(BaseModel[ChatMembershipSchema]):
     def __init__(self):
-        super().__init__(ChatMember)
+        super().__init__(ChatMembershipSchema)
 
 
 chat_model = ChatModel()
-chat_member_model = ChatMemberModel()
+chat_membership_model = ChatMembershipModel()

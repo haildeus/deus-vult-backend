@@ -1,7 +1,7 @@
 from pyrogram import Client
 from pyrogram.enums import ParseMode
 
-from .. import logger
+from ... import logger
 from .telegram_config import TelegramBotData, TelegramBotStatus, TelegramConfig
 
 

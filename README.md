@@ -44,8 +44,8 @@ We're using vertical slice architecture. All the files for a single use case are
 - [ ] Medival LoRA picture generation with *some* personalization.
 
 ### Pre-deployment
-- [ ] Add diskcache for performance
-- [ ] Some basic testing functionality.
+- [ ] Diskcache
+- [ ] Testing
 - [ ] Docker container.
 
 ### Nice Things

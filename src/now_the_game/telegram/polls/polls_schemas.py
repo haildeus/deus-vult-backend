@@ -5,4 +5,4 @@ from sqlmodel import Field, Relationship
 
 from ...core.base import BaseSchema
 
-from ..telegram_schemas import Poll, PollOptions
+from ..telegram_schemas import PollSchema, PollOptionSchema

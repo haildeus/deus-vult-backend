@@ -2,18 +2,18 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from ...core.base import BaseModel
-from .users_schemas import User
+from .users_schemas import UserSchema
 
 
-class UserModel(BaseModel[User]):
+class UserModel(BaseModel[UserSchema]):
     def __init__(self):
-        super().__init__(User)
+        super().__init__(UserSchema)
 
     async def get_by_username(
         self, session: AsyncSession, username: str
-    ) -> User | None:
-        query = select(User).where(User.username == username)
-        result = await session.exec(query)
+    ) -> UserSchema | None:
+        query = select(UserSchema).where(UserSchema.username == username)
+        result = await session.execute(query)
         return result.scalar_one_or_none()
 
 

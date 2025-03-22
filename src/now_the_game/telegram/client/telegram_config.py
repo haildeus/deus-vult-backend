@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
+from typing import Any
 
 from pydantic import model_validator
 from pydantic_settings import BaseSettings
-from pyrogram import Client
+from pyrogram.client import Client
 
 from ... import logger
 from ...core.base import MissingCredentialsError
@@ -34,7 +35,7 @@ class TelegramConfig(BaseSettings):
         env_prefix = "TELEGRAM_"
 
     @model_validator(mode="before")
-    def validate_base_fields(cls, values):
+    def validate_base_fields(cls, values: dict[str, Any]) -> dict[str, Any]:
         if not values.get("bot_token"):
             raise MissingCredentialsError("bot_token must be provided")
         if not values.get("api_id"):

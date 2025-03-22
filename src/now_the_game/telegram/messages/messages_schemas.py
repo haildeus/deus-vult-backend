@@ -11,8 +11,7 @@ from pyrogram.enums import MessageEntityType, MessageMediaType
 from pyrogram.types import Message
 
 from ... import logger
-from ..telegram_schemas import Message as MessageSchema
-from ..telegram_schemas import MessageBase
+from ..telegram_schemas import MessageBase, MessageSchema  # type: ignore
 
 
 class ChatMessageEngagement(BaseModel):
@@ -162,6 +161,7 @@ class ChatMessageEngagement(BaseModel):
 
             reaction_count = 0
             if message_object.reactions is not None:
+                # TODO: Check the issue with the reactions
                 for reaction in message_object.reactions.reactions:
                     reaction_count += reaction.count
 

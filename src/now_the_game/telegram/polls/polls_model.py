@@ -2,53 +2,53 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from ...core.base import BaseModel
-from .polls_schemas import Poll, PollOptions
+from .polls_schemas import PollSchema, PollOptionSchema
 
 
-class PollsModel(BaseModel[Poll]):
+class PollsModel(BaseModel[PollSchema]):
     def __init__(self):
-        super().__init__(Poll)
+        super().__init__(PollSchema)
 
     async def get_with_options(
         self, session: AsyncSession, poll_id: int
-    ) -> Poll | None:
-        query = select(Poll).where(Poll.poll_id == poll_id)
+    ) -> PollSchema | None:
+        query = select(PollSchema).where(PollSchema.poll_id == poll_id)
         result = await session.exec(query)
         poll = result.scalar_one_or_none()
         if poll:
-            query = select(PollOptions).where(PollOptions.poll_id == poll_id)
+            query = select(PollOptionSchema).where(PollOptionSchema.poll_id == poll_id)
             result = await session.exec(query)
             poll.options = result.scalars().all()
         return poll
 
     async def get_by_message_id(
         self, session: AsyncSession, message_id: int
-    ) -> Poll | None:
-        query = select(Poll).where(Poll.message_id == message_id)
+    ) -> PollSchema | None:
+        query = select(PollSchema).where(PollSchema.message_id == message_id)
         result = await session.exec(query)
         return result.scalar_one_or_none()
 
     async def get_recent_for_chat(
         self, session: AsyncSession, chat_id: int, limit: int = 10
-    ) -> list[Poll]:
+    ) -> list[PollSchema]:
         query = (
-            select(Poll)
-            .where(Poll.chat_id == chat_id)
-            .order_by(Poll.created_at.desc())
+            select(PollSchema)
+            .where(PollSchema.chat_id == chat_id)
+            .order_by(PollSchema.created_at.desc())
             .limit(limit)
         )
         result = await session.exec(query)
         return result.scalars().all()
 
 
-class PollOptionsModel(BaseModel[PollOptions]):
+class PollOptionsModel(BaseModel[PollOptionSchema]):
     def __init__(self):
-        super().__init__(PollOptions)
+        super().__init__(PollOptionSchema)
 
     async def get_by_poll_id(
         self, session: AsyncSession, poll_id: int
-    ) -> list[PollOptions]:
-        query = select(PollOptions).where(PollOptions.poll_id == poll_id)
+    ) -> list[PollOptionSchema]:
+        query = select(PollOptionSchema).where(PollOptionSchema.poll_id == poll_id)
         result = await session.exec(query)
         return result.scalars().all()
 
