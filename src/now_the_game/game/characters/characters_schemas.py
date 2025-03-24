@@ -1,9 +1,8 @@
 from enum import Enum
-from uuid import UUID, uuid4
 
-from sqlmodel import Field, Relationship, SQLModel
+from sqlmodel import Field
 
-from ...core.base import BaseModel
+from ...core.base import BaseSchema
 
 
 class SupportedClasses(Enum):
@@ -13,8 +12,8 @@ class SupportedClasses(Enum):
     RULER = "ruler"
 
 
-class LoreBase(SQLModel):
-    character_id: UUID = Field(foreign_key="characters.character_id")
+class LoreBase(BaseSchema):
+    character_id: int = Field(foreign_key="characters.character_id")
 
     name: str = Field(..., description="Name of the character")
     appearance: str = Field(..., description="Appearance of the character")
@@ -22,8 +21,8 @@ class LoreBase(SQLModel):
     class_name: SupportedClasses = Field(..., description="Class of the character")
 
 
-class PrimaryStatsBase(SQLModel):
-    character_id: UUID = Field(foreign_key="characters.character_id")
+class PrimaryStatsBase(BaseSchema):
+    character_id: int = Field(foreign_key="characters.character_id")
 
     strength: int = Field(..., description="Strength of the character", ge=0, le=30)
     perception: int = Field(..., description="Perception of the character", ge=0, le=30)
@@ -36,26 +35,6 @@ class PrimaryStatsBase(SQLModel):
     luck: int = Field(..., description="Luck of the character", ge=0, le=30)
 
 
-class CharacterBase(SQLModel):
-    character_id: UUID = Field(
-        ..., description="ID of the character", default_factory=uuid4()
-    )
-
-
-class Character(CharacterBase, table=True):
-    __tablename__ = "characters"
-
-    lore: LoreBase = Relationship(back_populates="character")
-    primary_stats: PrimaryStatsBase = Relationship(back_populates="character")
-
-
-class Lore(LoreBase, table=True):
-    __tablename__ = "lore"
-
-    character: Character = Relationship(back_populates="lore")
-
-
-class PrimaryStats(PrimaryStatsBase, table=True):
-    __tablename__ = "primary_stats"
-
-    character: Character = Relationship(back_populates="primary_stats")
+class CharacterBase(BaseSchema):
+    chat_id: int = Field(foreign_key="chats.object_id")
+    user_id: int = Field(foreign_key="users.object_id")

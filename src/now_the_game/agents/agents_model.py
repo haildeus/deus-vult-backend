@@ -16,12 +16,12 @@ class TextAgentModel:
     ):
         self.provider = provider
         self.agent = Agent(
-            model=self.provider.model,
+            model=self.provider.provider_name,
             name=self.provider.provider_name,
             system_prompt=system_prompt,
         )
 
-    async def embed(self, content: str) -> list[float]:
+    async def embed(self, content: str | list[str]) -> list[float] | list[list[float]]:
         return await self.provider.embed_content(content)
 
     async def run(self, query: str, **kwargs: Any) -> str:

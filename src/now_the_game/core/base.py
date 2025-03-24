@@ -5,6 +5,7 @@ from typing import Any, Generic, TypeVar, overload
 
 from pydantic import ValidationError, model_validator
 from pydantic_settings import BaseSettings
+from pydantic_ai.models import KnownModelName
 from sqlalchemy import delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field, SQLModel, col, exists, select
@@ -431,7 +432,7 @@ class ProviderBase(ABC):
 
     @property
     @abstractmethod
-    def provider_name(self) -> str:
+    def provider_name(self) -> KnownModelName:
         """Provider name"""
         pass
 
@@ -447,6 +448,8 @@ class ProviderBase(ABC):
             raise MissingCredentialsError(self.provider_name)
 
     @abstractmethod
-    def embed_content(self, content: str) -> list[float]:
+    async def embed_content(
+        self, content: str | list[str], task_type: Any | None = None
+    ) -> list[float] | list[list[float]]:
         """Embed content using the LLM"""
         pass

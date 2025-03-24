@@ -9,11 +9,11 @@ from .polls.polls_model import poll_options_model, poll_model
 
 # Re-export schemas for convenience
 from .telegram_schemas import (
-    ChatSchema,
-    ChatMembershipSchema,
-    MessageSchema,
-    PollSchema,
-    PollOptionSchema,
-    UserSchema,
+    ChatTable,
+    ChatMembershipTable,
+    MessageTable,
+    PollTable,
+    PollOptionTable,
+    UserTable,
 )
 from .users.users_model import user_model
