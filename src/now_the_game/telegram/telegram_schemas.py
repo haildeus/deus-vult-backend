@@ -11,7 +11,7 @@ from pydantic import model_validator
 from pyrogram.enums import ChatType as PyrogramChatType
 from pyrogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import Field, Relationship, SQLModel, select
+from sqlmodel import Field, Relationship, select
 
 from .. import logger
 from ..core.base import BaseSchema
@@ -228,6 +228,23 @@ class PollBase(BaseSchema):
             and message.scalar_one_or_none() is not None
         )
 
+    @classmethod
+    async def from_pyrogram(cls, message: Message) -> "PollBase":
+        """Create a poll from a pyrogram message"""
+        try:
+            assert message.poll
+        except AssertionError as e:
+            raise PyrogramConversionError("Message is not a poll") from e
+
+        return cls(
+            chat_id=message.chat.id,
+            message_id=message.id,
+            question=message.poll.question,
+            poll_type=PollType.POLL,
+            is_anonymous=message.poll.is_anonymous,
+            close_date=message.poll.close_date,
+        )
+
 
 class PollOptionsBase(BaseSchema):
     poll_id: int = Field(foreign_key="polls.object_id")
@@ -250,57 +267,26 @@ class PollOptionsBase(BaseSchema):
 
         return poll.scalar_one_or_none() is not None
 
-
-# Link table for user-chat relationship to enforce a user having at least one chat
-class UserChatLinkBase(SQLModel, table=True):
-    __tablename__ = "user_chat_links"  # type: ignore
-
-    user_id: int | None = Field(
-        default=None, foreign_key="users.object_id", primary_key=True
-    )
-    chat_id: int | None = Field(
-        default=None, foreign_key="chats.object_id", primary_key=True
-    )
-
     @classmethod
-    async def validate_entities_exist(
-        cls, session: AsyncSession, values: dict[str, Any]
-    ) -> bool:
-        """Validate that user and chat exist before creating a link"""
-
-        user_id = values.get("user_id")
-        chat_id = values.get("chat_id")
-
-        if not user_id or not chat_id:
-            return False
-
-        # Use forward references to avoid circular imports
-        user = await session.execute(
-            select(UserSchema).where(UserSchema.object_id == user_id)
-        )
-        chat = await session.execute(
-            select(ChatSchema).where(ChatSchema.object_id == chat_id)
-        )
-
-        return (
-            user.scalar_one_or_none() is not None
-            and chat.scalar_one_or_none() is not None
-        )
-
-    @classmethod
-    async def from_pyrogram(cls, message: Message) -> "UserChatLinkBase":
-        """Create a user chat link from a pyrogram message"""
-
+    async def from_pyrogram(
+        cls, poll_id: int, option_position: int, message: Message
+    ) -> "PollOptionsBase":
+        """Create a poll option from a pyrogram message"""
         try:
-            return cls(
-                user_id=message.from_user.id,
-                chat_id=message.chat.id,
-            )
-        except Exception as e:
-            logger.error(f"Error creating user chat link from pyrogram message: {e}")
+            assert message.poll
+            assert option_position
+            assert isinstance(option_position, int)
+            assert option_position < len(message.poll.options)
+            assert option_position >= 0
+        except AssertionError as e:
             raise PyrogramConversionError(
-                f"Error creating user chat link from pyrogram message: {e}"
+                f"Error creating poll option from pyrogram message: {e}"
             ) from e
+
+        return cls(
+            poll_id=poll_id,
+            option_text=message.poll.options[option_position].text,
+        )
 
 
 """
@@ -317,7 +303,7 @@ class UserSchema(UserBase, table=True):
 
     # A user must be associated with at least one chat
     chats: list["ChatSchema"] = Relationship(
-        back_populates="users", link_model=UserChatLinkBase
+        back_populates="users", link_model=ChatMembershipBase
     )
 
 
@@ -331,7 +317,7 @@ class ChatSchema(ChatBase, table=True):
 
     # Users in this chat
     users: list["UserSchema"] = Relationship(
-        back_populates="chats", link_model=UserChatLinkBase
+        back_populates="chats", link_model=ChatMembershipBase
     )
 
 
@@ -373,7 +359,6 @@ class MessageCore(BaseSchema):
     message: MessageBase
     chat: ChatBase
     user: UserBase
-    user_chat_link: UserChatLinkBase
     chat_membership: ChatMembershipBase
 
     @classmethod
@@ -385,7 +370,6 @@ class MessageCore(BaseSchema):
                 message=await MessageBase.from_pyrogram(message),
                 chat=await ChatBase.from_pyrogram(message),
                 user=await UserBase.from_pyrogram(message),
-                user_chat_link=await UserChatLinkBase.from_pyrogram(message),
                 chat_membership=await ChatMembershipBase.from_pyrogram(message),
             )
         except Exception as e:
