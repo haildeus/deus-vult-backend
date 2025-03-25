@@ -26,8 +26,12 @@ class MessageBase(BaseSchema):
     message_type: MessageType = Field(default=MessageType.TEXT)
     content: str = Field(min_length=1, max_length=4096)
 
+
+class MessageTable(MessageBase, table=True):
+    __tablename__ = "messages"  # type: ignore
+
     @classmethod
-    async def from_pyrogram(cls, message: Message) -> "MessageBase":
+    async def from_pyrogram(cls, message: Message) -> "MessageTable":
         """Create a message from a pyrogram message"""
 
         try:

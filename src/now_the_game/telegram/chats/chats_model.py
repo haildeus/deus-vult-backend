@@ -1,16 +1,15 @@
 from typing import overload
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
 
 from ... import logger
 from ...core.base import BaseModel, OverloadParametersError
-from .chats_schemas import ChatBase, ChatType
+from .chats_schemas import ChatBase, ChatTable, ChatType
 
 
-class ChatModel(BaseModel[ChatBase]):
+class ChatModel(BaseModel[ChatTable]):
     def __init__(self):
-        super().__init__(ChatBase)
+        super().__init__(ChatTable)
 
     @overload
     async def get(self, session: AsyncSession, *, chat_id: int) -> list[ChatBase]: ...
@@ -50,57 +49,57 @@ class ChatModel(BaseModel[ChatBase]):
             raise OverloadParametersError("Function has too many parameters") from e
 
         if username:
-            return await self.__get_by_username(session, username)
+            return await self.get_by_other_params(session, username=username)
         elif chat_type:
-            return await self.__get_by_type(session, chat_type)
+            return await self.get_by_other_params(session, chat_type=chat_type)
         elif name:
-            return await self.__get_by_name(session, name)
+            return await self.get_by_other_params(session, name=name)
         elif chat_id:
             return await self.get_by_id(session, chat_id)
         else:
             return await self.get_all(session)
 
-    async def __get_by_username(
-        self, session: AsyncSession, username: str
-    ) -> list[ChatBase]:
-        """Get a chat by username"""
-        try:
-            assert username
-            assert isinstance(username, str)
-            assert len(username) >= 3
-        except AssertionError as e:
-            logger.error(f"Error getting chat by username: {e}")
-            raise e
-        query = select(ChatBase).where(ChatBase.username == username)
-        result = await session.execute(query)
-        return list(result.scalars().all())
+    # async def __get_by_username(
+    #     self, session: AsyncSession, username: str
+    # ) -> list[ChatBase]:
+    #     """Get a chat by username"""
+    #     try:
+    #         assert username
+    #         assert isinstance(username, str)
+    #         assert len(username) >= 3
+    #     except AssertionError as e:
+    #         logger.error(f"Error getting chat by username: {e}")
+    #         raise e
+    #     query = select(self.model_class).where(self.model_class.username == username)
+    #     result = await session.execute(query)
+    #     return list(result.scalars().all())
 
-    async def __get_by_type(
-        self, session: AsyncSession, chat_type: ChatType
-    ) -> list[ChatBase]:
-        """Get a chat by type"""
-        try:
-            assert chat_type
-            assert isinstance(chat_type, ChatType)
-        except AssertionError as e:
-            logger.error(f"Error getting chat by type: {e}")
-            raise e
-        query = select(ChatBase).where(ChatBase.chat_type == chat_type)
-        result = await session.execute(query)
-        return list(result.scalars().all())
+    # async def __get_by_type(
+    #     self, session: AsyncSession, chat_type: ChatType
+    # ) -> list[ChatBase]:
+    #     """Get a chat by type"""
+    #     try:
+    #         assert chat_type
+    #         assert isinstance(chat_type, ChatType)
+    #     except AssertionError as e:
+    #         logger.error(f"Error getting chat by type: {e}")
+    #         raise e
+    #     query = select(self.model_class).where(self.model_class.chat_type == chat_type)
+    #     result = await session.execute(query)
+    #     return list(result.scalars().all())
 
-    async def __get_by_name(self, session: AsyncSession, name: str) -> list[ChatBase]:
-        """Get a chat by name"""
-        try:
-            assert name
-            assert isinstance(name, str)
-            assert len(name) >= 3
-        except AssertionError as e:
-            logger.error(f"Error getting chat by name: {e}")
-            raise e
-        query = select(ChatBase).where(ChatBase.name == name)
-        result = await session.execute(query)
-        return list(result.scalars().all())
+    # async def __get_by_name(self, session: AsyncSession, name: str) -> list[ChatBase]:
+    #     """Get a chat by name"""
+    #     try:
+    #         assert name
+    #         assert isinstance(name, str)
+    #         assert len(name) >= 3
+    #     except AssertionError as e:
+    #         logger.error(f"Error getting chat by name: {e}")
+    #         raise e
+    #     query = select(self.model_class).where(self.model_class.name == name)
+    #     result = await session.execute(query)
+    #     return list(result.scalars().all())
 
 
 chat_model = ChatModel()

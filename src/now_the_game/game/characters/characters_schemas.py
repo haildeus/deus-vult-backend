@@ -9,7 +9,7 @@ class SupportedClasses(Enum):
     FARMER = "farmer"
     PRIEST = "priest"
     WARRIOR = "warrior"
-    RULER = "ruler"
+    SCHOLAR = "scholar"
 
 
 class LoreBase(BaseSchema):

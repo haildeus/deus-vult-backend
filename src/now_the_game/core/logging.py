@@ -4,8 +4,8 @@ import sys
 
 def setup_logging():
     """Configure root logger for the entire project"""
-    logger = logging.getLogger("athena")
-    logger.setLevel(logging.INFO)
+    logger = logging.getLogger("now_the_game")
+    logger.setLevel(logging.DEBUG)
 
     # Prevent duplicate handlers
     if logger.hasHandlers():

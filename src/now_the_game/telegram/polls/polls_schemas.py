@@ -1,7 +1,7 @@
 from datetime import datetime
 from enum import Enum
 
-from pyrogram.types import Message
+from pyrogram.types import Message, PollOption
 from sqlmodel import Field
 
 from ...core.base import BaseSchema
@@ -20,9 +20,20 @@ class PollBase(BaseSchema):
     poll_type: PollType = Field(default=PollType.POLL)
     is_anonymous: bool = Field(default=True)
     close_date: datetime | None = Field(default=None)
+    explanation: str | None = Field(default=None)
+
+
+class PollOptionsBase(BaseSchema):
+    poll_id: int = Field(foreign_key="polls.object_id")
+    option_text: str = Field(min_length=1, max_length=100)
+    votes: int = Field(default=0, ge=0)
+
+
+class PollTable(PollBase, table=True):
+    __tablename__ = "polls"  # type: ignore
 
     @classmethod
-    async def from_pyrogram(cls, message: Message) -> "PollBase":
+    async def from_pyrogram(cls, message: Message) -> "PollTable":
         """Create a poll from a pyrogram message"""
         try:
             assert message.poll
@@ -39,27 +50,25 @@ class PollBase(BaseSchema):
         )
 
 
-class PollOptionsBase(BaseSchema):
-    poll_id: int = Field(foreign_key="polls.object_id")
-    option_text: str = Field(min_length=1, max_length=100)
+class PollOptionTable(PollOptionsBase, table=True):
+    __tablename__ = "poll_options"  # type: ignore
 
     @classmethod
     async def from_pyrogram(
-        cls, poll_id: int, option_position: int, message: Message
-    ) -> "PollOptionsBase":
+        cls, poll_id: int, options: list[PollOption]
+    ) -> list["PollOptionTable"]:
         """Create a poll option from a pyrogram message"""
         try:
-            assert message.poll
-            assert option_position
-            assert isinstance(option_position, int)
-            assert option_position < len(message.poll.options)
-            assert option_position >= 0
+            assert options
+            assert isinstance(options, list)
         except AssertionError as e:
-            raise PyrogramConversionError(
-                f"Error creating poll option from pyrogram message: {e}"
-            ) from e
+            raise PyrogramConversionError("Options are not a list") from e
 
-        return cls(
-            poll_id=poll_id,
-            option_text=message.poll.options[option_position].text,
-        )
+        return [
+            cls(
+                poll_id=poll_id,
+                option_text=option.text,
+                votes=option.voter_count,
+            )
+            for option in options
+        ]

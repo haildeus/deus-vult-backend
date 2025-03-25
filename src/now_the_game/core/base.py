@@ -4,13 +4,14 @@ from random import randint
 from typing import Any, Generic, TypeVar, overload
 
 from pydantic import ValidationError, model_validator
-from pydantic_settings import BaseSettings
 from pydantic_ai.models import KnownModelName
+from pydantic_settings import BaseSettings
 from sqlalchemy import delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field, SQLModel, col, exists, select
 
 from .. import logger
+from .database import metadata
 
 T = TypeVar("T", bound="BaseSchema")
 
@@ -26,16 +27,30 @@ class MissingCredentialsError(Exception):
 class EntityAlreadyExistsError(Exception):
     """Raised when an entity already exists"""
 
-    def __init__(self, entity: str):
-        super().__init__(f"Entity {entity} already exists")
+    DEFAULT_ENTITY_TYPE = "Entity"
+
+    def __init__(self, entity: str | int, entity_type: str | None = None):
+        entity_type = entity_type or self.DEFAULT_ENTITY_TYPE
+
+        if isinstance(entity, int):
+            logger.debug(f"{entity_type} object (ID: {entity}) already exists")
+            super().__init__(f"{entity_type} object (ID: {entity}) already exists")
+        else:
+            logger.debug(f"{entity_type} {entity} already exists")
+            super().__init__(f"{entity_type} {entity} already exists")
         self.entity = entity
 
 
 class EntityNotFoundError(Exception):
     """Raised when an entity is not found"""
 
-    def __init__(self, entity_id: int):
-        super().__init__(f"Entity with ID {entity_id} not found")
+    def __init__(self, entity_id: str | int):
+        if isinstance(entity_id, int):
+            logger.debug(f"Entity with ID {entity_id} not found")
+            super().__init__(f"Entity with ID {entity_id} not found")
+        else:
+            logger.debug(f"Entity with ID {entity_id} not found")
+            super().__init__(f"Entity with ID {entity_id} not found")
         self.entity_id = entity_id
 
 
@@ -49,16 +64,24 @@ class OverloadParametersError(Exception):
 
 class BaseSchema(SQLModel):
     object_id: int = Field(
-        primary_key=True, default_factory=lambda: randint(1, 1000000)
+        primary_key=True, default_factory=lambda: randint(1, 100000000)
     )
 
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
 
+    # We need this to set shared metadata for all models
+    metadata = metadata
+
 
 class BaseModel(Generic[T]):
     def __init__(self, model_class: type[T]):
         self.model_class = model_class
+
+    def __dict_keys(self) -> list[str]:
+        return [
+            key for key in self.model_class.__dict__.keys() if not key.startswith("_")
+        ]
 
     @overload
     async def add(self, session: AsyncSession, entity: T) -> list[T]: ...
@@ -66,7 +89,7 @@ class BaseModel(Generic[T]):
     @overload
     async def add(self, session: AsyncSession, entity: list[T]) -> list[T]: ...
 
-    async def add(self, session: AsyncSession, entity: T | list[T]) -> list[T]:
+    async def add(self, session: AsyncSession, entity: T | list[T]) -> list[T] | None:
         """
         Adds an entity to the session. Needs to be flushed.
         Great for adding dependent entities.
@@ -85,19 +108,34 @@ class BaseModel(Generic[T]):
             raise ValueError("Invalid entity") from e
 
         if isinstance(entity, list):
+            # TODO: Adapt the single-entity logic to the many-entity logic
             return await self.add_many(session, entity)
         else:
-            return await self.add_one(session, entity)
+            try:
+                response = await self.add_one(session, entity)
+
+                object_id = response[0].object_id
+                object_name = self.model_class.__name__
+                logger.debug(f"Added {object_name} to session: {object_id}")
+                return response
+            except EntityAlreadyExistsError:
+                return
+            except Exception as e:
+                logger.error(f"Error adding entity: {e}")
+                raise e
 
     async def add_one(self, session: AsyncSession, entity: T) -> list[T]:
         """Adds an entity to the session. Needs to be flushed."""
         try:
             checked_entity = await self.pass_insert_checks(session, entity)
+        except EntityAlreadyExistsError as e:
+            raise e
         except Exception as e:
             logger.error(f"Error adding entity to session: {e}")
             raise e
 
         session.add(checked_entity)
+        logger.debug(f"Added entity to session: {checked_entity}")
         return [checked_entity]
 
     async def add_many(self, session: AsyncSession, entities: list[T]) -> list[T]:
@@ -109,15 +147,40 @@ class BaseModel(Generic[T]):
             raise e
 
         session.add_all(checked_entities)
+        logger.debug(f"Added entities to session: {checked_entities}")
         return checked_entities
 
-    async def get_by_id(self, session: AsyncSession, entity_id: int) -> list[T]:
+    async def get_by_other_params(
+        self, session: AsyncSession, **kwargs: Any
+    ) -> list[Any]:
+        """Gets an entity by other parameters."""
+        try:
+            assert kwargs
+            assert all(key in self.__dict_keys() for key in kwargs.keys())
+        except AssertionError as e:
+            logger.error(f"Error getting entity by other parameters: {e}")
+            raise e
+
+        query = select(self.model_class).where(
+            *[getattr(self.model_class, key) == value for key, value in kwargs.items()]
+        )
+        result = await session.execute(query)
+        return list(result.scalars().all())
+
+    async def get_by_id(self, session: AsyncSession, entity_id: int) -> list[Any]:
         """Gets an entity by its ID."""
+        try:
+            assert entity_id
+            assert isinstance(entity_id, int)
+        except AssertionError as e:
+            logger.error(f"Error getting entity by ID: {e}")
+            raise ValueError("Invalid entity ID") from e
+
         query = select(self.model_class).where(self.model_class.object_id == entity_id)
         result = await session.execute(query)
         return list(result.scalars().all())
 
-    async def get_all(self, session: AsyncSession) -> list[T]:
+    async def get_all(self, session: AsyncSession) -> list[Any]:
         """Gets all entities."""
         query = select(self.model_class)
         result = await session.execute(query)
@@ -150,11 +213,13 @@ class BaseModel(Generic[T]):
             response = await self.add_many(session, entity)
             await session.flush()
             await session.refresh(response)
+            logger.debug(f"Created entities in session: {response}")
             return response
         else:
             response = await self.add_one(session, entity)
             await session.flush()
             await session.refresh(response)
+            logger.debug(f"Created entity in session: {len(response)}")
             return response
 
     @overload
@@ -244,11 +309,46 @@ class BaseModel(Generic[T]):
 
         return True
 
-    async def is_present(self, session: AsyncSession, entity_id: int) -> bool:
+    @overload
+    async def is_present(self, session: AsyncSession, entity_id: int) -> bool: ...
+
+    @overload
+    async def is_present(self, session: AsyncSession, **kwargs: Any) -> bool: ...
+
+    async def is_present(
+        self, session: AsyncSession, entity_id: int | None = None, **kwargs: Any
+    ) -> bool:
+        """Checks if an entity exists by its ID or other parameters."""
+        if entity_id:
+            return await self.is_present_one(session, entity_id)
+        else:
+            return await self.is_present_many(session, **kwargs)
+
+    async def is_present_one(self, session: AsyncSession, entity_id: int) -> bool:
         """Checks if an entity exists by its ID."""
-        query = select(self.model_class).where(self.model_class.object_id == entity_id)
-        result = await session.execute(query)
-        return result.scalars().first() is not None
+        result = await self.get_by_id(session, entity_id)
+        try:
+            assert result
+            assert len(result) != 0
+            return True
+        except AssertionError:
+            return False
+        except Exception as e:
+            logger.error(f"Error checking if entity is present: {e}")
+            raise e
+
+    async def is_present_many(self, session: AsyncSession, **kwargs: Any) -> bool:
+        """Checks if an entity exists by other parameters."""
+        result = await self.get_by_other_params(session, **kwargs)
+        try:
+            assert result
+            assert len(result) != 0
+            return True
+        except AssertionError:
+            return False
+        except Exception as e:
+            logger.error(f"Error checking if entity is present: {e}")
+            raise e
 
     @overload
     async def put(
@@ -341,10 +441,16 @@ class BaseModel(Generic[T]):
         self, session: AsyncSession, entity: T | list[T]
     ) -> T | list[T]:
         """Private method. Checks if entities are exists in db and validates them."""
-        if isinstance(entity, list):
-            return await self.__insert_check_for_many(session, entity)
-        else:
-            return await self.__insert_check_for_one(session, entity)
+        try:
+            if isinstance(entity, list):
+                return await self.__insert_check_for_many(session, entity)
+            else:
+                return await self.__insert_check_for_one(session, entity)
+        except EntityAlreadyExistsError as e:
+            raise e
+        except Exception as e:
+            logger.error(f"Unknown error passing insert checks: {e}")
+            raise e
 
     async def __insert_check_for_many(
         self, session: AsyncSession, entities: list[T]
@@ -355,10 +461,19 @@ class BaseModel(Generic[T]):
         for entity in entities:
             try:
                 entity = await self.__insert_check_for_one(session, entity)
+            except EntityAlreadyExistsError:
+                continue
             except Exception as e:
-                logger.error(f"Error adding entity: {e}")
+                logger.error(f"Unknown error passing insert checks: {e}")
                 raise e
+
             checked_entities.append(entity)
+
+        try:
+            assert len(checked_entities) > 0
+        except AssertionError as e:
+            logger.error(f"Error validating entities: {e}")
+            raise e
 
         return checked_entities
 
@@ -368,13 +483,14 @@ class BaseModel(Generic[T]):
             assert not await self.is_present(session, entity.object_id)
             entity = self.model_class.model_validate(entity)
         except AssertionError as e:
-            logger.error(f"Error adding entity: {e}")
-            raise EntityAlreadyExistsError(entity.__name__) from e
+            raise EntityAlreadyExistsError(
+                entity.object_id, self.model_class.__name__
+            ) from e
         except ValidationError as e:
-            logger.error(f"Error adding entity: {e}")
+            logger.error(f"Failed to validate entity: {e}")
             raise ValueError(f"Invalid entity: {e}") from e
         except Exception as e:
-            logger.error(f"Error adding entity: {e}")
+            logger.error(f"Unknown error adding entity: {e}")
             raise e
 
         return entity

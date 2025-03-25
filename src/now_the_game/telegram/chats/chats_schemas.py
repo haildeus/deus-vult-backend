@@ -8,7 +8,7 @@ from typing import Any
 
 from pydantic import model_validator
 from pyrogram.enums import ChatType as PyrogramChatType
-from pyrogram.types import Message
+from pyrogram.types import Message, ChatMemberUpdated
 from sqlmodel import Field
 
 from ... import logger
@@ -31,13 +31,17 @@ class ChatBase(BaseSchema):
     is_participant: bool = Field(default=False)
 
     @model_validator(mode="before")
-    def validate_chat_type(cls, values: dict[str, Any]) -> dict[str, Any]:
-        if values.get("is_participant") and values.get("chat_type") == ChatType.USER:
+    def validate_chat_type(cls, values: Any) -> Any:
+        if values.is_participant and values.chat_type == ChatType.USER:
             raise ValueError("User cannot be a participant")
         return values
 
+
+class ChatTable(ChatBase, table=True):
+    __tablename__ = "chats"  # type: ignore
+
     @classmethod
-    async def from_pyrogram(cls, message: Message) -> "ChatBase":
+    async def from_pyrogram(cls, message: Message | ChatMemberUpdated) -> "ChatTable":
         """Create a chat from a pyrogram message"""
 
         try:

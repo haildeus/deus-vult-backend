@@ -21,9 +21,9 @@ class TelegramConfig(BaseSettings):
     """Settings for the Telegram bot."""
 
     # TELEGRAM ENVIRONMENT VARIABLES
-    bot_token: str
-    api_id: int
-    api_hash: str
+    api_id: int | None = None
+    api_hash: str | None = None
+    bot_token: str | None = None
 
     # DEFAULT VALUES
     bot_session_dir: Path = Path("src/now_the_game/storage")

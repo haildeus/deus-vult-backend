@@ -1,3 +1,3 @@
-from .core import logger
+from .core import db, logger
 
-__all__ = ["logger"]
+__all__ = ["logger", "db"]

@@ -1,8 +1,10 @@
-from pyrogram import Client
+from pyrogram.client import Client
 from pyrogram.enums import ParseMode
+from pyrogram.methods.utilities.idle import idle
+from pyrogram.handlers.handler import Handler
 
 from ... import logger
-from .telegram_config import TelegramBotData, TelegramBotStatus, TelegramConfig
+from .client_config import TelegramBotData, TelegramBotStatus, TelegramConfig
 
 
 class TelegramBot:
@@ -10,7 +12,11 @@ class TelegramBot:
 
     status: TelegramBotStatus = TelegramBotStatus.STOPPED
 
-    def __init__(self, config: TelegramConfig) -> None:
+    def __init__(
+        self,
+        config: TelegramConfig,
+        plugins: dict[str, str | list[str]] | None = None,
+    ) -> None:
         logger.info("Initializing Telegram bot with .env config")
         self.data = TelegramBotData()
         self.api_token = config.bot_token
@@ -20,6 +26,7 @@ class TelegramBot:
             api_hash=config.api_hash,
             bot_token=config.bot_token,
             workdir=config.bot_session_dir,
+            plugins=plugins,
         )
         logger.info("Client object initialized")
 
@@ -43,13 +50,27 @@ class TelegramBot:
         self.status = status
         logger.info(f"Client status: {self.status.value}")
 
-    async def start(self):
+    async def register_handlers(self, handlers: list[Handler]):
+        for handler in handlers:
+            print(handler)
+            self.client.add_handler(handler)
+
+    async def start(
+        self, blocking: bool = False, handlers: list[Handler] | None = None
+    ):
         await self.client.start()
         logger.info("Client started")
         await self._fill_session_data()
         await self._setup_client()
         logger.info("Client setup complete")
         self.change_status(TelegramBotStatus.RUNNING)
+
+        if handlers:
+            await self.register_handlers(handlers)
+
+        if blocking:
+            await idle()
+            await self.client.stop()
 
     async def stop(self):
         await self.client.stop()

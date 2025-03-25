@@ -2,10 +2,11 @@ from enum import Enum
 from typing import Any
 
 import vertexai
-from pydantic import Field, model_validator
+from pydantic import Field
 from pydantic_ai.models import KnownModelName
 from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.providers.google_vertex import GoogleVertexProvider
+import vertexai.generative_models
 from vertexai.language_models import TextEmbeddingInput, TextEmbeddingModel
 from vertexai.language_models._language_models import TextEmbedding
 
@@ -22,16 +23,6 @@ class VertexConfig(ProviderConfigBase):
 
     class Config(ProviderConfigBase.Config):
         env_prefix = "VERTEX_"
-
-    @model_validator(mode="before")
-    def validate_dimensionality(cls, values: dict[str, Any]) -> dict[str, Any]:
-        try:
-            assert values
-            assert values["dimensionality"]
-            assert values["dimensionality"] > 0 and values["dimensionality"] <= 768
-        except AssertionError as e:
-            raise ValueError("Choose an output dimensionality between 1 and 768") from e
-        return values
 
 
 class VertexEmbeddingTaskType(Enum):
@@ -60,6 +51,24 @@ class VertexLLM(ProviderBase):
     @property
     def provider_name(self) -> KnownModelName:
         return "google-vertex:gemini-2.0-flash"
+
+    async def generate_with_image(self, prompt: str, image: bytes):
+        client = vertexai.generative_models.GenerativeModel(
+            model_name="gemini-2.0-flash",
+        )
+        part_1_bytes = vertexai.generative_models.Image.from_bytes(image)
+        part_1 = vertexai.generative_models.Part.from_image(part_1_bytes)
+        part_2 = vertexai.generative_models.Part.from_text(prompt)
+
+        content = vertexai.generative_models.Content(
+            role="user",
+            parts=[part_1, part_2],
+        )
+
+        response = client.generate_content(
+            contents=[content],
+        )
+        return response
 
     async def embed_content(
         self,
@@ -99,3 +108,6 @@ class VertexLLM(ProviderBase):
         if len(return_array) == 1:
             return return_array[0]
         return return_array
+
+
+vertex = VertexLLM()
