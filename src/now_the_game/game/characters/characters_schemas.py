@@ -38,3 +38,15 @@ class PrimaryStatsBase(BaseSchema):
 class CharacterBase(BaseSchema):
     chat_id: int = Field(foreign_key="chats.object_id")
     user_id: int = Field(foreign_key="users.object_id")
+
+
+class CharacterTable(CharacterBase, table=True):
+    __tablename__ = "characters"  # type: ignore
+
+
+class LoreTable(LoreBase, table=True):
+    __tablename__ = "lore"  # type: ignore
+
+
+class PrimaryStatsTable(PrimaryStatsBase, table=True):
+    __tablename__ = "primary_stats"  # type: ignore

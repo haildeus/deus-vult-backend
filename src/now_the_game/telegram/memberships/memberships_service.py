@@ -17,10 +17,10 @@ class MembershipsService:
 
         # subscribe to events
         self.event_bus.subscribe_to_topic(
-            ChangeChatMembershipEvent, self.on_change_chat_membership
+            ChangeChatMembershipEvent.topic, self.on_change_chat_membership
         )
         self.event_bus.subscribe_to_topic(
-            AddChatMembershipEvent, self.on_add_chat_membership
+            AddChatMembershipEvent.topic, self.on_add_chat_membership
         )
 
     async def on_change_chat_membership(self, event: Event) -> None:

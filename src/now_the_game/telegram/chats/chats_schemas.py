@@ -19,6 +19,31 @@ from ...core.events import EventPayload
 from ..telegram_exceptions import PyrogramConversionError
 from ..telegram_interfaces import IChatEvent
 
+"""
+CONSTANTS
+"""
+
+EVENT_BUS_PREFIX = "telegram.chats"
+
+"""
+ENUMS
+"""
+
+
+class ChatTopics(Enum):
+    CHAT_ADDED = f"{EVENT_BUS_PREFIX}.added"
+
+
+class ChatType(Enum):
+    USER = "user"
+    CHAT = "chat"
+    CHANNEL = "channel"
+
+
+"""
+MODELS
+"""
+
 
 class AddChatEventPayload(EventPayload):
     client: Client
@@ -26,15 +51,19 @@ class AddChatEventPayload(EventPayload):
     db_session: AsyncSession
 
 
+"""
+EVENTS
+"""
+
+
 class AddChatEvent(IChatEvent):
-    topic: str = "telegram.chats.added"
+    topic: str = ChatTopics.CHAT_ADDED.value
     payload: AddChatEventPayload  # type: ignore
 
 
-class ChatType(Enum):
-    USER = "user"
-    CHAT = "chat"
-    CHANNEL = "channel"
+"""
+TABLES
+"""
 
 
 class ChatBase(BaseSchema):

@@ -17,5 +17,9 @@ class EventPayload(BaseModel):
 
 class Event(BaseModel):
     topic: str
-    payload: EventPayload | dict[str, Any] | None
+    payload: dict[str, Any] | EventPayload | None = None
     timestamp: datetime = Field(default_factory=datetime.now)
+
+    @classmethod
+    def from_dict(cls, topic: str, payload: dict[str, Any]) -> "Event":
+        return cls(topic=topic, payload=payload)

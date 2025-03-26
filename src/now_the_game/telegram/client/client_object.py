@@ -52,7 +52,7 @@ class TelegramBot:
 
     async def register_handlers(self, handlers: list[Handler]):
         for handler in handlers:
-            print(handler)
+            logger.debug(f"Adding handler: {handler}")
             self.client.add_handler(handler)
 
     async def start(

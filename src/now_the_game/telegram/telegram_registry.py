@@ -1,10 +1,15 @@
 from sqlmodel import Relationship, SQLModel
 
 from .chats.chats_schemas import ChatTable
+from .chats.chats_service import ChatsService
 from .memberships.memberships_schemas import ChatMembershipTable
+from .memberships.memberships_service import MembershipsService
 from .messages.messages_schemas import MessageTable
+from .messages.messages_service import MessagesService
 from .polls.polls_schemas import PollOptionTable, PollTable
+from .polls.polls_service import PollsService
 from .users.users_schemas import UserTable
+from .users.users_service import UsersService
 
 """
 User relationships

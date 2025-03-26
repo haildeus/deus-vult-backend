@@ -2,11 +2,11 @@ from enum import Enum
 from typing import Any
 
 import vertexai
+import vertexai.generative_models
 from pydantic import Field
 from pydantic_ai.models import KnownModelName
 from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.providers.google_vertex import GoogleVertexProvider
-import vertexai.generative_models
 from vertexai.language_models import TextEmbeddingInput, TextEmbeddingModel
 from vertexai.language_models._language_models import TextEmbedding
 
@@ -52,7 +52,7 @@ class VertexLLM(ProviderBase):
     def provider_name(self) -> KnownModelName:
         return "google-vertex:gemini-2.0-flash"
 
-    async def generate_with_image(self, prompt: str, image: bytes):
+    async def generate_multimodal(self, prompt: str, image: bytes):
         client = vertexai.generative_models.GenerativeModel(
             model_name="gemini-2.0-flash",
         )
@@ -67,6 +67,20 @@ class VertexLLM(ProviderBase):
 
         response = client.generate_content(
             contents=[content],
+        )
+        return response
+
+    async def generate_text(self, prompt: str):
+        client = vertexai.generative_models.GenerativeModel(
+            model_name="gemini-2.0-flash",
+        )
+        response = client.generate_content(
+            contents=[
+                vertexai.generative_models.Content(
+                    role="user",
+                    parts=[vertexai.generative_models.Part.from_text(prompt)],
+                )
+            ],
         )
         return response
 

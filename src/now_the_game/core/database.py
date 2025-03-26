@@ -26,7 +26,7 @@ class Database:
     async def initialize(self):
         logger.info("Initializing database")
         db_dir = storage_config.db_path.parent
-        print(db_dir)
+        logger.debug(f"Database directory: {db_dir}")
         if db_dir and not db_dir.exists():
             logger.info("Database directory not found. Creating.")
             db_dir.mkdir(parents=True, exist_ok=True)

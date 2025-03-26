@@ -16,6 +16,31 @@ from ...core.events import EventPayload
 from ..telegram_interfaces import IMessageEvent
 from ..telegram_exceptions import PyrogramConversionError
 
+"""
+CONSTANTS
+"""
+
+EVENT_BUS_PREFIX = "telegram.messages"
+
+"""
+ENUMS
+"""
+
+
+class MessageTopics(Enum):
+    MESSAGE_ADDED = f"{EVENT_BUS_PREFIX}.added"
+
+
+class MessageType(Enum):
+    TEXT = "text"
+    MEDIA = "media"
+    POLL = "poll"
+
+
+"""
+MODELS
+"""
+
 
 class AddMessagePayload(EventPayload):
     client: Client
@@ -23,15 +48,19 @@ class AddMessagePayload(EventPayload):
     db_session: AsyncSession
 
 
+"""
+EVENTS
+"""
+
+
 class AddMessageEvent(IMessageEvent):
-    topic: str = "telegram.messages.added"
+    topic: str = MessageTopics.MESSAGE_ADDED.value
     payload: AddMessagePayload  # type: ignore
 
 
-class MessageType(Enum):
-    TEXT = "text"
-    MEDIA = "media"
-    POLL = "poll"
+"""
+TABLES
+"""
 
 
 class MessageBase(BaseSchema):

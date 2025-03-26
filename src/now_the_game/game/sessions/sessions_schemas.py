@@ -12,3 +12,6 @@ class GameSessionBase(BaseSchema):
     created_at: datetime = Field(default=datetime.now())
     updated_at: datetime = Field(default=datetime.now())
 
+
+class GameSessionTable(GameSessionBase, table=True):
+    __tablename__ = "game_sessions"  # type: ignore

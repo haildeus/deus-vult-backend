@@ -1,15 +1,37 @@
 from datetime import datetime
 from enum import Enum
 
-from pyrogram.client import Client
 from pyrogram.types import Message, PollOption
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 from ... import EventPayload
 from ...core.base import BaseSchema
 from ..telegram_exceptions import PyrogramConversionError
 from ..telegram_interfaces import IPollEvent
+
+"""
+CONSTANTS
+"""
+
+EVENT_BUS_PREFIX = "telegram.polls"
+
+"""
+ENUMS
+"""
+
+
+class PollTopics(Enum):
+    POLL_ADDED = f"{EVENT_BUS_PREFIX}.added"
+
+
+class PollType(Enum):
+    QUIZ = "quiz"
+    POLL = "poll"
+
+
+"""
+MODELS
+"""
 
 
 class SendPollEventPayload(EventPayload):
@@ -21,14 +43,19 @@ class SendPollEventPayload(EventPayload):
     save: bool
 
 
+"""
+EVENTS
+"""
+
+
 class SendPollEvent(IPollEvent):
-    topic: str = "telegram.polls.added"
+    topic: str = PollTopics.POLL_ADDED.value
     payload: SendPollEventPayload  # type: ignore
 
 
-class PollType(Enum):
-    QUIZ = "quiz"
-    POLL = "poll"
+"""
+TABLES
+"""
 
 
 class PollBase(BaseSchema):

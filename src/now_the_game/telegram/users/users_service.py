@@ -14,7 +14,7 @@ class UsersService:
         self.event_bus = event_bus
 
         # Subscribe to events
-        self.event_bus.subscribe_to_topic(AddUserEvent, self.on_add_user)
+        self.event_bus.subscribe_to_topic(AddUserEvent.topic, self.on_add_user)
 
     async def on_add_user(self, event: Event) -> None:
         if not isinstance(event.payload, AddUserPayload):

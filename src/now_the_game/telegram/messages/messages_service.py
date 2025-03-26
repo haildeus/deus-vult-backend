@@ -3,9 +3,9 @@ from datetime import datetime
 from pyrogram.client import Client
 from pyrogram.types import Message
 
+from ... import Event, event_bus, logger
 from .messages_model import message_model
 from .messages_schemas import AddMessageEvent, AddMessagePayload, MessageTable
-from ... import logger, event_bus, Event
 
 
 class MessagesService:
@@ -15,7 +15,7 @@ class MessagesService:
         self.event_bus = event_bus
 
         # subscribe to events
-        self.event_bus.subscribe_to_topic(AddMessageEvent, self.on_add_message)
+        self.event_bus.subscribe_to_topic(AddMessageEvent.topic, self.on_add_message)
 
     async def on_add_message(self, event: Event) -> None:
         if not isinstance(event.payload, AddMessagePayload):
@@ -32,7 +32,7 @@ class MessagesService:
         self,
         chat_id: int | str,
         message_ids: list[int] | int,
-    ) -> list[Message] | Message:
+    ) -> list[Message] | Message | None:
         message_request = await self.client.get_messages(
             chat_id=chat_id,
             message_ids=message_ids,

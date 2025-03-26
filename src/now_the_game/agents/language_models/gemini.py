@@ -51,3 +51,6 @@ class GeminiLLM(ProviderBase):
     @property
     def provider_name(self) -> KnownModelName:
         return "google-gla:gemini-2.0-flash"
+
+
+gemini = GeminiLLM()
