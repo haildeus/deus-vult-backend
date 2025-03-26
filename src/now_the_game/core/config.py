@@ -1,31 +1,19 @@
-from pathlib import Path
+from enum import Enum
 
 from pydantic_settings import BaseSettings
 
 
+class EventBusType(Enum):
+    LOCAL = "local"
+
+
 class Config(BaseSettings):
+    event_bus: EventBusType = EventBusType.LOCAL
+
     class Config:
         extra = "ignore"
         env_file = ".env"
         env_prefix = "GLOBAL_"
-
-
-class StorageConfig(BaseSettings):
-    storage_path: Path = Path("src/now_the_game/storage")
-
-    # SQLite config
-    db_path: Path = storage_path / "database.db"
-    schemas_path: Path = storage_path / "schemas"
-    queries_path: Path = storage_path / "queries"
-
-    # Chroma config
-    chroma_in_memory: bool = True
-    chroma_collection_default_name: str = "messages"
-
-    class Config:
-        extra = "ignore"
-        env_file = ".env"
-        env_prefix = "STORAGE_"
 
 
 config = Config()
