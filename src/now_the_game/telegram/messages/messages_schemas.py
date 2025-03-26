@@ -5,12 +5,27 @@ This module re-exports the Message-related schemas from the central schema modul
 
 from enum import Enum
 
+from pyrogram.client import Client
 from pyrogram.types import Message
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 from ... import logger
 from ...core.base import BaseSchema
+from ...core.events import EventPayload
+from ..telegram_interfaces import IMessageEvent
 from ..telegram_exceptions import PyrogramConversionError
+
+
+class AddMessagePayload(EventPayload):
+    client: Client
+    message: Message
+    db_session: AsyncSession
+
+
+class AddMessageEvent(IMessageEvent):
+    topic: str = "telegram.messages.added"
+    payload: AddMessagePayload  # type: ignore
 
 
 class MessageType(Enum):

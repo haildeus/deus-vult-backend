@@ -4,12 +4,40 @@ ChatMembership-specific schema definitions.
 
 from datetime import datetime
 
-from pyrogram.types import Message
+from pyrogram.client import Client
+from pyrogram.types import ChatMember, ChatMemberUpdated, Message
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 from ... import logger
 from ...core.base import BaseSchema
+from ...core.events import EventPayload
 from ..telegram_exceptions import PyrogramConversionError
+from ..telegram_interfaces import IMembershipChanged
+
+
+class AddChatMembershipPayload(EventPayload):
+    client: Client
+    message: Message
+    db_session: AsyncSession
+
+
+class ChangeChatMembershipPayload(EventPayload):
+    client: Client
+    chat_member_updated: ChatMemberUpdated
+    updated_info: ChatMember
+    db_session: AsyncSession
+    new_member: bool
+
+
+class ChangeChatMembershipEvent(IMembershipChanged):
+    topic: str = "telegram.memberships.changed"
+    payload: ChangeChatMembershipPayload  # type: ignore
+
+
+class AddChatMembershipEvent(IMembershipChanged):
+    topic: str = "telegram.memberships.added"
+    payload: AddChatMembershipPayload  # type: ignore
 
 
 class ChatMembershipBase(BaseSchema):

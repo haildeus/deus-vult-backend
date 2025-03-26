@@ -1,22 +1,70 @@
 from datetime import datetime
 
-from pyrogram import Client
+from pyrogram.client import Client
 from pyrogram.types import Message, Poll
 
-from .polls_model import poll_model, poll_options_model
+from ... import Event, db, event_bus, logger
+from .polls_model import poll_model, poll_option_model
+from .polls_schemas import (
+    PollOptionTable,
+    PollTable,
+    SendPollEvent,
+    SendPollEventPayload,
+)
 
 
 class PollsService:
     def __init__(self, client: Client):
         self.client = client
         self.poll_model = poll_model
-        self.poll_options_model = poll_options_model
+        self.poll_option_model = poll_option_model
+        self.db = db
+        self.event_bus = event_bus
+
+        # subscribe to events
+        self.event_bus.subscribe_to_topic(SendPollEvent, self.on_send_poll)
+
+    async def on_send_poll(self, event: Event) -> None:
+        logger.debug(f"Received send poll event: {event}")
+        if not isinstance(event.payload, SendPollEventPayload):
+            payload = SendPollEventPayload(**event.payload)  # type: ignore
+        else:
+            payload = event.payload
+
+        save_to_db = payload.save
+
+        logger.debug(f"Sending poll to {payload.chat_id}")
+        poll_message = await self.client.send_poll(
+            chat_id=payload.chat_id,
+            question=payload.question,
+            options=payload.options,
+            is_anonymous=payload.is_anonymous,
+            explanation=payload.explanation,
+        )
+        logger.debug(f"Poll sent to {payload.chat_id}")
+
+        if save_to_db:
+            logger.debug("Converting poll to database model")
+            poll_from_pyrogram = await PollTable.from_pyrogram(poll_message)
+            poll_options_from_pyrogram = await PollOptionTable.from_pyrogram(
+                poll_id=poll_from_pyrogram.object_id, options=poll_message.poll.options
+            )
+
+            logger.debug("Adding poll to database")
+            async with self.db.session() as session:
+                await self.poll_model.add(session, poll_from_pyrogram)
+                await self.poll_option_model.add(session, poll_options_from_pyrogram)
+                await session.flush()
 
     async def is_poll(self, message: Message) -> bool:
-        return message.poll is not None
+        try:
+            assert message.poll
+            return True
+        except AssertionError:
+            return False
 
     async def get_poll(self, message: Message) -> Poll:
-        if not self.is_poll(message):
+        if not await self.is_poll(message):
             raise ValueError("Message is not a poll")
         return message.poll
 
@@ -45,6 +93,3 @@ class PollsService:
             message_id=message_id,
         )
         return stopped_poll
-
-
-polls_service = PollsService()

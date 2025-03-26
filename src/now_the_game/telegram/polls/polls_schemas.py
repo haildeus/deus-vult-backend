@@ -1,11 +1,29 @@
 from datetime import datetime
 from enum import Enum
 
+from pyrogram.client import Client
 from pyrogram.types import Message, PollOption
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
+from ... import EventPayload
 from ...core.base import BaseSchema
 from ..telegram_exceptions import PyrogramConversionError
+from ..telegram_interfaces import IPollEvent
+
+
+class SendPollEventPayload(EventPayload):
+    chat_id: int | str
+    question: str
+    options: list[str]
+    is_anonymous: bool
+    explanation: str | None
+    save: bool
+
+
+class SendPollEvent(IPollEvent):
+    topic: str = "telegram.polls.added"
+    payload: SendPollEventPayload  # type: ignore
 
 
 class PollType(Enum):

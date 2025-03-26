@@ -1,15 +1,32 @@
 from datetime import datetime
 
-from pyrogram import Client
+from pyrogram.client import Client
 from pyrogram.types import Message
 
 from .messages_model import message_model
+from .messages_schemas import AddMessageEvent, AddMessagePayload, MessageTable
+from ... import logger, event_bus, Event
 
 
 class MessagesService:
     def __init__(self, client: Client):
         self.client = client
         self.message_model = message_model
+        self.event_bus = event_bus
+
+        # subscribe to events
+        self.event_bus.subscribe_to_topic(AddMessageEvent, self.on_add_message)
+
+    async def on_add_message(self, event: Event) -> None:
+        if not isinstance(event.payload, AddMessagePayload):
+            payload = AddMessagePayload(**event.payload)  # type: ignore
+        else:
+            payload = event.payload
+
+        logger.debug(f"Processing new message: {payload.message.text}")
+        message_core_info = await MessageTable.from_pyrogram(payload.message)
+        await self.message_model.add(payload.db_session, message_core_info)
+        logger.debug(f"Message added: {message_core_info}")
 
     async def get_messages(
         self,

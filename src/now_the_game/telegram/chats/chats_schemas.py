@@ -7,13 +7,28 @@ from enum import Enum
 from typing import Any
 
 from pydantic import model_validator
+from pyrogram.client import Client
 from pyrogram.enums import ChatType as PyrogramChatType
-from pyrogram.types import Message, ChatMemberUpdated
+from pyrogram.types import ChatMemberUpdated, Message
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 from ... import logger
 from ...core.base import BaseSchema
+from ...core.events import EventPayload
 from ..telegram_exceptions import PyrogramConversionError
+from ..telegram_interfaces import IChatEvent
+
+
+class AddChatEventPayload(EventPayload):
+    client: Client
+    message: Message | ChatMemberUpdated
+    db_session: AsyncSession
+
+
+class AddChatEvent(IChatEvent):
+    topic: str = "telegram.chats.added"
+    payload: AddChatEventPayload  # type: ignore
 
 
 class ChatType(Enum):
