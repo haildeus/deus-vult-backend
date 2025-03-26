@@ -22,14 +22,8 @@ class AddUserPayload(EventPayload):
 
 
 class AddUserEvent(IUserEvent):
-    topic: str = "telegram.users.add"
-
-    @classmethod
-    def create(cls, payload_data: AddUserPayload | dict[str, Any]) -> "AddUserEvent":
-        if isinstance(payload_data, dict):
-            payload_data = AddUserPayload(**payload_data)
-
-        return cls(payload=payload_data, topic=cls.topic)
+    topic: str = "telegram.users.added"
+    payload: AddUserPayload  # type: ignore
 
 
 class UserBase(BaseSchema):
