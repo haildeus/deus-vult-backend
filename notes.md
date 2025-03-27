@@ -22,6 +22,6 @@
 - Should we send anything during the battle? Highlights?
 - Riddles with disappearing messages. Press callback, bot opens, you get the disappearing picture.
 
-### March 25
-- Check diskcache
-- Implement genai
+### March 26
+- Fix the issues with Telegram event bus
+- Design the first game

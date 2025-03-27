@@ -3,18 +3,19 @@ from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlmodel import MetaData, SQLModel
 
+from .config import BaseStorageConfig
 from .logging import logger
-from .storage_config import storage_config
-
 
 
 class Database:
-    def __init__(self):
-        db_path = storage_config.db_path
-        db_url = f"sqlite+aiosqlite:///{db_path}"
+    def __init__(self, db_config: BaseStorageConfig):
+        self.__config_check(db_config)
+
+        self.db_path = db_config.db_path
+        self.db_url = f"sqlite+aiosqlite:///{self.db_path}"
 
         self.engine = create_async_engine(
-            db_url,
+            self.db_url,
             echo=False,
             pool_pre_ping=True,
             pool_recycle=3600,
@@ -24,9 +25,18 @@ class Database:
             bind=self.engine, class_=AsyncSession, expire_on_commit=False
         )
 
+    def __config_check(self, config: BaseStorageConfig):
+        try:
+            assert config
+            assert config.db_path
+            assert config.storage_path
+        except AssertionError as e:
+            logger.error(f"Error initializing database: {e}")
+            raise
+
     async def initialize(self):
         logger.info("Initializing database")
-        db_dir = storage_config.db_path.parent
+        db_dir = self.db_path.parent
         logger.debug(f"Database directory: {db_dir}")
         if db_dir and not db_dir.exists():
             logger.info("Database directory not found. Creating.")
@@ -71,5 +81,4 @@ class Database:
         await self.engine.dispose()
 
 
-db = Database()
-metadata = MetaData()
+metadata = MetaData()  # We need this to set shared metadata for all models
