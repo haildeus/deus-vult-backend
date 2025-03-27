@@ -2,6 +2,6 @@
 Telegram module initialization
 """
 
-from .client import TelegramBot, TelegramConfig
+from src.now_the_game.telegram.client import TelegramBot, TelegramConfig
 
 __all__ = ["TelegramBot", "TelegramConfig"]

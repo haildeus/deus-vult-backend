@@ -10,11 +10,10 @@ from pyrogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
-from ... import logger
-from ...core.base import BaseSchema
-from ...core.events import EventPayload
-from ..telegram_interfaces import IMessageEvent
-from ..telegram_exceptions import PyrogramConversionError
+from src import BaseSchema, EventPayload
+from src.now_the_game import logger
+from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
+from src.now_the_game.telegram.telegram_interfaces import IMessageEvent
 
 """
 CONSTANTS

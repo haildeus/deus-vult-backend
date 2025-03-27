@@ -4,8 +4,8 @@ from pyrogram.handlers.chat_member_updated_handler import ChatMemberUpdatedHandl
 from pyrogram.handlers.handler import Handler
 from pyrogram.types import ChatMemberUpdated
 
-from ... import db, event_bus, logger
-from ...core.events import Event
+from src import Event, event_bus
+from src.now_the_game import db, logger
 
 
 class ChatMembershipHandlers:

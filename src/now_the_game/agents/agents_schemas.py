@@ -1,7 +1,7 @@
 from enum import Enum
 
-from .. import EventPayload
-from .agents_interfaces import IAgentEvent
+from src import EventPayload
+from src.now_the_game.agents.agents_interfaces import IAgentEvent
 
 
 class SupportedModels(Enum):

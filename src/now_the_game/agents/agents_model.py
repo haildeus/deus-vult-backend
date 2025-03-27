@@ -2,8 +2,8 @@ from typing import Any
 
 from pydantic_ai import Agent
 
-from ..core.base import ProviderBase
-from .prompts.system_prompts import DEFAULT_SYSTEM_PROMPT
+from src import ProviderBase
+from src.now_the_game.agents.prompts.system_prompts import DEFAULT_SYSTEM_PROMPT
 
 
 class TextAgentModel:

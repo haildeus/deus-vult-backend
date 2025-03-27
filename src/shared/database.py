@@ -3,8 +3,8 @@ from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlmodel import MetaData, SQLModel
 
-from .config import BaseStorageConfig
-from .logging import logger
+from src.shared.config import BaseStorageConfig
+from src.shared.logging import logger
 
 
 class Database:
@@ -81,4 +81,4 @@ class Database:
         await self.engine.dispose()
 
 
-metadata = MetaData()  # We need this to set shared metadata for all models
+metadata = MetaData()

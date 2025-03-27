@@ -1,8 +1,8 @@
 from pyrogram import Client, filters
 from pyrogram.types import Message
 
-from ... import logger
-from .polls_service import polls_service
+from src.now_the_game import logger
+from src.now_the_game.telegram.polls.polls_service import polls_service
 
 
 @Client.on_message(filters.poll)

@@ -1,4 +1,4 @@
-from .. import setup_logging
+from src import setup_logging
 
 logger = setup_logging("api")
 

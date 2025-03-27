@@ -1,10 +1,14 @@
 from pyrogram.client import Client
 from pyrogram.types import Chat
 
-from ... import event_bus, logger
-from ...core.events import Event
-from .users_model import user_model
-from .users_schemas import AddUserEvent, AddUserPayload, UserTable
+from src import Event, event_bus
+from src.now_the_game import logger
+from src.now_the_game.telegram.users.users_model import user_model
+from src.now_the_game.telegram.users.users_schemas import (
+    AddUserEvent,
+    AddUserPayload,
+    UserTable,
+)
 
 
 class UsersService:

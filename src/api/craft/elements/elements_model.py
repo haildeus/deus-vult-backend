@@ -2,8 +2,8 @@ from typing import overload
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .... import BaseModel
-from .elements_schemas import ElementBase, ElementTable
+from src import BaseModel
+from src.api.craft.elements.elements_schemas import ElementBase, ElementTable
 
 
 class ElementModel(BaseModel[ElementTable]):

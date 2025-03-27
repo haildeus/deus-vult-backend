@@ -6,8 +6,8 @@ from pyrogram.handlers.handler import Handler
 from pyrogram.handlers.message_handler import MessageHandler
 from pyrogram.types import Message
 
-from ... import db, event_bus, logger
-from ...core.events import Event
+from src import Event, event_bus
+from src.now_the_game import db, logger
 
 
 class MessageHandlers:

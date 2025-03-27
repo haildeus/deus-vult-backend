@@ -1,9 +1,10 @@
 import asyncio
 import hashlib
 import logging
+from collections.abc import Callable
 from functools import wraps
 from pathlib import Path
-from typing import Any, Callable, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 import orjson
 from diskcache import Cache  # type: ignore

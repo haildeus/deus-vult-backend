@@ -1,8 +1,11 @@
 from sqlmodel import Relationship, SQLModel
 
-from .characters.characters_schemas import CharacterTable, LoreTable, PrimaryStatsTable
-from .sessions.sessions_schemas import GameSessionTable
-
+from src.now_the_game.game.characters.characters_schemas import (
+    CharacterTable,
+    LoreTable,
+    PrimaryStatsTable,
+)
+from src.now_the_game.game.sessions.sessions_schemas import GameSessionTable
 
 CharacterTable.lore = Relationship(back_populates="character")
 CharacterTable.primary_stats = Relationship(back_populates="character")

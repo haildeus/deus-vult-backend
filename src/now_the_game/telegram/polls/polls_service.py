@@ -3,9 +3,13 @@ from datetime import datetime
 from pyrogram.client import Client
 from pyrogram.types import Message, Poll
 
-from ... import Event, db, event_bus, logger
-from .polls_model import poll_model, poll_option_model
-from .polls_schemas import (
+from src import Event, event_bus
+from src.now_the_game import db, logger
+from src.now_the_game.telegram.polls.polls_model import (
+    poll_model,
+    poll_option_model,
+)
+from src.now_the_game.telegram.polls.polls_schemas import (
     PollOptionTable,
     PollTable,
     SendPollEvent,

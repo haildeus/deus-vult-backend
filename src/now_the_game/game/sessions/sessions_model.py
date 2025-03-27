@@ -3,8 +3,8 @@ from typing import overload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from ...core.base import BaseModel
-from .sessions_schemas import GameSessionBase
+from src import BaseModel
+from src.now_the_game.game.sessions.sessions_schemas import GameSessionBase
 
 
 class GameSessionModel(BaseModel[GameSessionBase]):

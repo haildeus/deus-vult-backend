@@ -10,11 +10,10 @@ from pyrogram.types import ChatMember, ChatMemberUpdated, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
-from ... import logger
-from ...core.base import BaseSchema
-from ...core.events import EventPayload
-from ..telegram_exceptions import PyrogramConversionError
-from ..telegram_interfaces import IMembershipChanged
+from src import BaseSchema, EventPayload
+from src.now_the_game import logger
+from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
+from src.now_the_game.telegram.telegram_interfaces import IMembershipChanged
 
 """
 CONSTANTS

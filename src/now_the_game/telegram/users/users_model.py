@@ -2,8 +2,8 @@ from typing import overload
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ...core.base import BaseModel
-from .users_schemas import UserBase, UserTable
+from src import BaseModel
+from src.now_the_game.telegram.users.users_schemas import UserBase, UserTable
 
 
 class UserModel(BaseModel[UserTable]):

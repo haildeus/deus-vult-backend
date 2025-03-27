@@ -1,15 +1,15 @@
 from sqlmodel import Relationship, SQLModel
 
-from .chats.chats_schemas import ChatTable
-from .chats.chats_service import ChatsService
-from .memberships.memberships_schemas import ChatMembershipTable
-from .memberships.memberships_service import MembershipsService
-from .messages.messages_schemas import MessageTable
-from .messages.messages_service import MessagesService
-from .polls.polls_schemas import PollOptionTable, PollTable
-from .polls.polls_service import PollsService
-from .users.users_schemas import UserTable
-from .users.users_service import UsersService
+from src.now_the_game.telegram.chats.chats_schemas import ChatTable
+from src.now_the_game.telegram.memberships.memberships_schemas import (
+    ChatMembershipTable,
+)
+from src.now_the_game.telegram.messages.messages_schemas import MessageTable
+from src.now_the_game.telegram.polls.polls_schemas import (
+    PollOptionTable,
+    PollTable,
+)
+from src.now_the_game.telegram.users.users_schemas import UserTable
 
 """
 User relationships

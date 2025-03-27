@@ -1,5 +1,4 @@
 from enum import Enum
-from typing import Any
 
 import vertexai
 import vertexai.generative_models
@@ -10,7 +9,7 @@ from pydantic_ai.providers.google_vertex import GoogleVertexProvider
 from vertexai.language_models import TextEmbeddingInput, TextEmbeddingModel
 from vertexai.language_models._language_models import TextEmbedding
 
-from ...core.base import ProviderBase, ProviderConfigBase
+from src import ProviderBase, ProviderConfigBase
 
 
 class VertexConfig(ProviderConfigBase):

@@ -1,19 +1,21 @@
-from enum import Enum
+from pathlib import Path
 
-from pydantic_settings import BaseSettings
-
-
-class EventBusType(Enum):
-    LOCAL = "local"
+from src import BaseStorageConfig
 
 
-class Config(BaseSettings):
-    event_bus: EventBusType = EventBusType.LOCAL
+class StorageConfig(BaseStorageConfig):
+    @property
+    def storage_path(self) -> Path:
+        return Path("src/now_the_game/storage")
 
-    class Config:
+    @property
+    def db_path(self) -> Path:
+        return self.storage_path / "database.db"
+
+    class Config(BaseStorageConfig.Config):
         extra = "ignore"
         env_file = ".env"
-        env_prefix = "GLOBAL_"
+        env_prefix = "STORAGE_"
 
 
-config = Config()
+storage_config = StorageConfig()

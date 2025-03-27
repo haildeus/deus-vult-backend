@@ -3,9 +3,14 @@ from datetime import datetime
 from pyrogram.client import Client
 from pyrogram.types import Message
 
-from ... import Event, event_bus, logger
-from .messages_model import message_model
-from .messages_schemas import AddMessageEvent, AddMessagePayload, MessageTable
+from src import Event, event_bus
+from src.now_the_game import logger
+from src.now_the_game.telegram.messages.messages_model import message_model
+from src.now_the_game.telegram.messages.messages_schemas import (
+    AddMessageEvent,
+    AddMessagePayload,
+    MessageTable,
+)
 
 
 class MessagesService:

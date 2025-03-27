@@ -12,9 +12,9 @@ from collections.abc import Callable, Coroutine
 from inspect import isawaitable
 from typing import Any, TypeVar
 
-from .config import EventBusType, SharedConfig
-from .events import Event
-from .logging import logger
+from src.shared.config import EventBusType, SharedConfig
+from src.shared.events import Event
+from src.shared.logging import logger
 
 E = TypeVar("E", bound=Event)
 R = TypeVar("R", covariant=True)  # Return type

@@ -1,6 +1,7 @@
-from .. import Event, event_bus, logger
-from .agents_exceptions import UnsupportedModelError
-from .agents_schemas import (
+from src import Event, event_bus
+from src.now_the_game import logger
+from src.now_the_game.agents.agents_exceptions import UnsupportedModelError
+from src.now_the_game.agents.agents_schemas import (
     AgentQueryPayload,
     SupportedModels,
 )

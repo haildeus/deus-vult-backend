@@ -3,9 +3,12 @@ from typing import overload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from ... import logger
-from ...core.base import BaseModel, EntityAlreadyExistsError, EntityNotFoundError
-from .memberships_schemas import ChatMembershipBase, ChatMembershipTable
+from src import BaseModel, EntityAlreadyExistsError, EntityNotFoundError
+from src.now_the_game import logger
+from src.now_the_game.telegram.memberships.memberships_schemas import (
+    ChatMembershipBase,
+    ChatMembershipTable,
+)
 
 
 class ChatMembershipModel(BaseModel[ChatMembershipTable]):

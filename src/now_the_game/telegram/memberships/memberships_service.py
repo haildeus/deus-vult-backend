@@ -1,7 +1,9 @@
-from ... import event_bus, logger
-from ...core.events import Event
-from .memberships_model import chat_membership_model
-from .memberships_schemas import (
+from src import Event, event_bus
+from src.now_the_game import logger
+from src.now_the_game.telegram.memberships.memberships_model import (
+    chat_membership_model,
+)
+from src.now_the_game.telegram.memberships.memberships_schemas import (
     AddChatMembershipEvent,
     AddChatMembershipPayload,
     ChangeChatMembershipEvent,

@@ -1,5 +1,5 @@
-from ... import Database
-from .config import ApiStorageConfig, api_storage_config
+from src import Database
+from src.api.core.config import ApiStorageConfig, api_storage_config
 
 
 class ApiDatabase(Database):

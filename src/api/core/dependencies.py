@@ -1,8 +1,8 @@
 import hashlib
 import hmac
 
-from .. import logger
-from .config import api_config
+from src.api import logger
+from src.api.core.config import api_config
 
 
 # TODO: add auth_date check

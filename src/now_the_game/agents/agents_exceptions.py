@@ -1,4 +1,4 @@
-from .. import logger
+from src.now_the_game import logger
 
 
 class UnsupportedModelError(Exception):

@@ -2,7 +2,7 @@ from pyrogram.client import Client
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message
 
-from ... import logger
+from src.now_the_game import logger
 
 
 class Telegram:

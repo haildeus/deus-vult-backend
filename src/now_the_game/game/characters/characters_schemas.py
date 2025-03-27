@@ -2,7 +2,7 @@ from enum import Enum
 
 from sqlmodel import Field
 
-from ...core.base import BaseSchema
+from src import BaseSchema
 
 
 class SupportedClasses(Enum):

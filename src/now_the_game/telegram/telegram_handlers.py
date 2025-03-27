@@ -2,8 +2,10 @@
 
 from pyrogram.handlers.handler import Handler
 
-from .memberships.memberships_handlers import ChatMembershipHandlers
-from .messages.messages_handlers import MessageHandlers
+from src.now_the_game.telegram.memberships.memberships_handlers import (
+    ChatMembershipHandlers,
+)
+from src.now_the_game.telegram.messages.messages_handlers import MessageHandlers
 
 
 class TelegramHandlers:

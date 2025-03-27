@@ -4,7 +4,7 @@ from pydantic_ai.models import KnownModelName
 from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.providers.google_gla import GoogleGLAProvider
 
-from ...core.base import ProviderBase, ProviderConfigBase
+from src import ProviderBase, ProviderConfigBase
 
 
 class GeminiConfig(ProviderConfigBase):

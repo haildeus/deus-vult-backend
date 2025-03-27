@@ -11,9 +11,8 @@ from pyrogram.types import Message, User
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
-from ...core.base import BaseSchema
-from ...core.events import EventPayload
-from ..telegram_interfaces import IUserEvent
+from src import BaseSchema, EventPayload
+from src.now_the_game.telegram.telegram_interfaces import IUserEvent
 
 """
 CONSTANTS

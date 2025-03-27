@@ -1,4 +1,4 @@
-from .base import (
+from src.shared.base import (
     BaseModel,
     BaseSchema,
     EntityAlreadyExistsError,
@@ -6,11 +6,12 @@ from .base import (
     MissingCredentialsError,
     OverloadParametersError,
 )
-from .config import BaseConfig, BaseStorageConfig
-from .database import Database
-from .event_bus import EventBusInterface, event_bus
-from .events import Event, EventPayload
-from .logging import logger, setup_logging
+from src.shared.config import BaseConfig, BaseStorageConfig
+from src.shared.database import Database, metadata
+from src.shared.event_bus import EventBusInterface, event_bus
+from src.shared.events import Event, EventPayload
+from src.shared.llm import ProviderBase, ProviderConfigBase
+from src.shared.logging import setup_logging
 
 __all__ = [
     "BaseStorageConfig",
@@ -22,10 +23,12 @@ __all__ = [
     "BaseSchema",
     "BaseModel",
     "Database",
+    "metadata",
     "event_bus",
     "EventBusInterface",
     "Event",
     "EventPayload",
-    "logger",
     "setup_logging",
+    "ProviderBase",
+    "ProviderConfigBase",
 ]

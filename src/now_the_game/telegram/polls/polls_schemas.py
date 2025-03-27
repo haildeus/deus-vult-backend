@@ -4,10 +4,9 @@ from enum import Enum
 from pyrogram.types import Message, PollOption
 from sqlmodel import Field
 
-from ... import EventPayload
-from ...core.base import BaseSchema
-from ..telegram_exceptions import PyrogramConversionError
-from ..telegram_interfaces import IPollEvent
+from src import BaseSchema, EventPayload
+from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
+from src.now_the_game.telegram.telegram_interfaces import IPollEvent
 
 """
 CONSTANTS

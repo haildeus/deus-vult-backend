@@ -1,4 +1,4 @@
-from .shared import (
+from src.shared import (
     BaseConfig,
     BaseModel,
     BaseSchema,
@@ -11,6 +11,8 @@ from .shared import (
     EventPayload,
     MissingCredentialsError,
     OverloadParametersError,
+    ProviderBase,
+    ProviderConfigBase,
     event_bus,
     setup_logging,
 )
@@ -30,4 +32,6 @@ __all__ = [
     "Event",
     "EventPayload",
     "setup_logging",
+    "ProviderBase",
+    "ProviderConfigBase",
 ]

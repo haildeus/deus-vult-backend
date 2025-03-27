@@ -2,8 +2,8 @@ from enum import Enum
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .... import BaseSchema, EventPayload
-from ..craft_interfaces import ICraftElementEvent
+from src import BaseSchema, EventPayload
+from src.api.craft.craft_interfaces import ICraftElementEvent
 
 """
 CONSTANTS

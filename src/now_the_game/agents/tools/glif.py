@@ -5,8 +5,9 @@ import requests
 from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings
 
-from ... import Event, EventPayload, event_bus, logger
-from ..agents_interfaces import IAgentEvent
+from src import Event, EventPayload, event_bus
+from src.now_the_game import logger
+from src.now_the_game.agents.agents_interfaces import IAgentEvent
 
 """
 ENUMS

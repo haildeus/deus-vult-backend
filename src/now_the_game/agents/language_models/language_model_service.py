@@ -1,8 +1,9 @@
 from enum import Enum
 
-from ... import Event, EventPayload, event_bus, logger
-from ..agents_interfaces import IAgentEvent
-from .vertex import vertex
+from src import Event, EventPayload, event_bus
+from src.now_the_game import logger
+from src.now_the_game.agents.agents_interfaces import IAgentEvent
+from src.now_the_game.agents.language_models.vertex import vertex
 
 EVENT_BUS_PREFIX = "agents.language_model"
 

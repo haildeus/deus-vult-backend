@@ -1,4 +1,4 @@
-from ..core.events import Event
+from src import Event
 
 
 class IChatEvent(Event):

@@ -3,12 +3,11 @@ from typing import Any
 
 from pydantic import model_validator
 
-from ... import BaseConfig, BaseStorageConfig, MissingCredentialsError
+from src import BaseConfig, BaseStorageConfig, MissingCredentialsError
 
 
 class ApiConfig(BaseConfig):
     bot_token: str | None = None
-    bot_id: str | None = None
 
     class Config(BaseConfig.Config):
         env_prefix = "TELEGRAM_"

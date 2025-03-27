@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from api.api_router import api_router
+from src.api.api_router import api_router
 
 
 @asynccontextmanager
