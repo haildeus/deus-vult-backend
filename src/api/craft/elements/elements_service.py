@@ -1,26 +1,20 @@
-from src import Event, event_bus
+from src import BaseService, Event, event_bus
 from src.api.craft.elements.elements_model import element_model
 from src.api.craft.elements.elements_schemas import (
-    ElementCreatedEvent,
     ElementCreatedPayload,
-    ElementGetEvent,
     ElementGetPayload,
     ElementGetResponse,
     ElementGetResponsePayload,
+    ElementTopics,
 )
 
 
-class ElementsService:
+class ElementsService(BaseService):
     def __init__(self):
+        super().__init__()
         self.model = element_model
-        self.event_bus = event_bus
 
-        # Subscribe to events
-        self.event_bus.subscribe_to_topic(
-            ElementCreatedEvent.topic, self.on_add_element
-        )
-        self.event_bus.subscribe_to_topic(ElementGetEvent.topic, self.on_get_element)
-
+    @event_bus.subscribe(ElementTopics.ELEMENT_CREATED.value)
     async def on_add_element(self, event: Event) -> None:
         if not isinstance(event.payload, ElementCreatedPayload):
             payload = ElementCreatedPayload(**event.payload)  # type: ignore
@@ -29,6 +23,7 @@ class ElementsService:
 
         raise NotImplementedError("Not implemented")
 
+    @event_bus.subscribe(ElementTopics.ELEMENT_GET.value)
     async def on_get_element(self, event: Event) -> ElementGetResponse:
         if not isinstance(event.payload, ElementGetPayload):
             payload = ElementGetPayload(**event.payload)  # type: ignore
