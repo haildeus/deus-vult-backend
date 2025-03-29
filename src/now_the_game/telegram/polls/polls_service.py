@@ -3,31 +3,27 @@ from datetime import datetime
 from pyrogram.client import Client
 from pyrogram.types import Message, Poll
 
-from src import Event, event_bus
+from src import BaseService, Event, event_bus
 from src.now_the_game import db, logger
-from src.now_the_game.telegram.polls.polls_model import (
-    poll_model,
-    poll_option_model,
-)
+from src.now_the_game.telegram.polls.polls_model import poll_model, poll_option_model
 from src.now_the_game.telegram.polls.polls_schemas import (
     PollOptionTable,
     PollTable,
-    SendPollEvent,
+    PollTopics,
     SendPollEventPayload,
 )
 
 
-class PollsService:
+class PollsService(BaseService):
     def __init__(self, client: Client):
+        super().__init__()
         self.client = client
         self.poll_model = poll_model
         self.poll_option_model = poll_option_model
         self.db = db
         self.event_bus = event_bus
 
-        # subscribe to events
-        self.event_bus.subscribe_to_topic(SendPollEvent, self.on_send_poll)
-
+    @event_bus.subscribe(PollTopics.SEND_POLL.value)
     async def on_send_poll(self, event: Event) -> None:
         logger.debug(f"Received send poll event: {event}")
         if not isinstance(event.payload, SendPollEventPayload):

@@ -1,5 +1,6 @@
-from src import setup_logging
+from src import LoggerWrapper
 
-logger = setup_logging("api")
+logger_wrapper = LoggerWrapper("api")
+logger = logger_wrapper.logger
 
 __all__ = ["logger"]

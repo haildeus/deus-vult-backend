@@ -3,25 +3,23 @@ from datetime import datetime
 from pyrogram.client import Client
 from pyrogram.types import Message
 
-from src import Event, event_bus
+from src import BaseService, Event, event_bus
 from src.now_the_game import logger
 from src.now_the_game.telegram.messages.messages_model import message_model
 from src.now_the_game.telegram.messages.messages_schemas import (
-    AddMessageEvent,
     AddMessagePayload,
     MessageTable,
+    MessageTopics,
 )
 
 
-class MessagesService:
+class MessagesService(BaseService):
     def __init__(self, client: Client):
+        super().__init__()
         self.client = client
         self.message_model = message_model
-        self.event_bus = event_bus
 
-        # subscribe to events
-        self.event_bus.subscribe_to_topic(AddMessageEvent.topic, self.on_add_message)
-
+    @event_bus.subscribe(MessageTopics.MESSAGE_ADDED.value)
     async def on_add_message(self, event: Event) -> None:
         if not isinstance(event.payload, AddMessagePayload):
             payload = AddMessagePayload(**event.payload)  # type: ignore

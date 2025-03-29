@@ -1,6 +1,6 @@
 from enum import Enum
 
-from src import Event, EventPayload, event_bus
+from src import BaseService, Event, EventPayload, event_bus
 from src.now_the_game import logger
 from src.now_the_game.agents.agents_interfaces import IAgentEvent
 from src.now_the_game.agents.language_models.vertex import vertex
@@ -80,18 +80,11 @@ SERVICE
 """
 
 
-class LanguageModelService:
+class LanguageModelService(BaseService):
     def __init__(self):
-        self.event_bus = event_bus
+        super().__init__()
 
-        # subscribe to events
-        self.event_bus.subscribe_to_topic(
-            LanguageModelTopics.TEXT_QUERY.value, self.on_text_query
-        )
-        self.event_bus.subscribe_to_topic(
-            LanguageModelTopics.MULTI_MODAL_QUERY.value, self.on_multi_modal_query
-        )
-
+    @event_bus.subscribe(LanguageModelTopics.TEXT_QUERY.value)
     async def on_text_query(self, event: Event):
         if not isinstance(event.payload, TextQueryPayload):
             payload = TextQueryPayload(**event.payload)  # type: ignore
@@ -116,6 +109,7 @@ class LanguageModelService:
         elif selected_model == SupportedLanguageModels.GEMINI:
             raise NotImplementedError("Gemini text model is not implemented yet")
 
+    @event_bus.subscribe(LanguageModelTopics.MULTI_MODAL_QUERY.value)
     async def on_multi_modal_query(self, event: Event):
         if not isinstance(event.payload, MultiModalQueryPayload):
             payload = MultiModalQueryPayload(**event.payload)  # type: ignore

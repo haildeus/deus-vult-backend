@@ -1,25 +1,23 @@
 from pyrogram.client import Client
 from pyrogram.types import Chat
 
-from src import Event, event_bus
+from src import BaseService, Event, event_bus
 from src.now_the_game import logger
 from src.now_the_game.telegram.users.users_model import user_model
 from src.now_the_game.telegram.users.users_schemas import (
-    AddUserEvent,
     AddUserPayload,
     UserTable,
+    UserTopics,
 )
 
 
-class UsersService:
+class UsersService(BaseService):
     def __init__(self, client: Client):
+        super().__init__()
         self.client = client
         self.model = user_model
-        self.event_bus = event_bus
 
-        # Subscribe to events
-        self.event_bus.subscribe_to_topic(AddUserEvent.topic, self.on_add_user)
-
+    @event_bus.subscribe(UserTopics.USER_ADDED.value)
     async def on_add_user(self, event: Event) -> None:
         if not isinstance(event.payload, AddUserPayload):
             payload = AddUserPayload(**event.payload)  # type: ignore

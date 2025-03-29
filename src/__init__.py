@@ -2,6 +2,7 @@ from src.shared import (
     BaseConfig,
     BaseModel,
     BaseSchema,
+    BaseService,
     BaseStorageConfig,
     Database,
     EntityAlreadyExistsError,
@@ -9,12 +10,12 @@ from src.shared import (
     Event,
     EventBusInterface,
     EventPayload,
+    LoggerWrapper,
     MissingCredentialsError,
     OverloadParametersError,
     ProviderBase,
     ProviderConfigBase,
     event_bus,
-    setup_logging,
 )
 
 __all__ = [
@@ -24,6 +25,7 @@ __all__ = [
     "EntityAlreadyExistsError",
     "EntityNotFoundError",
     "OverloadParametersError",
+    "LoggerWrapper",
     "BaseSchema",
     "BaseModel",
     "Database",
@@ -31,7 +33,7 @@ __all__ = [
     "EventBusInterface",
     "Event",
     "EventPayload",
-    "setup_logging",
     "ProviderBase",
     "ProviderConfigBase",
+    "BaseService",
 ]

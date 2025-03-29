@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from enum import Enum
 from pathlib import Path
@@ -44,6 +45,7 @@ class EventBusType(Enum):
 
 class SharedConfig(BaseConfig):
     event_bus: EventBusType = EventBusType.LOCAL
+    log_level: int = logging.DEBUG
 
     class Config(BaseConfig.Config):
         env_prefix = "GLOBAL_"

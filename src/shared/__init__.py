@@ -1,6 +1,7 @@
 from src.shared.base import (
     BaseModel,
     BaseSchema,
+    BaseService,
     EntityAlreadyExistsError,
     EntityNotFoundError,
     MissingCredentialsError,
@@ -11,7 +12,7 @@ from src.shared.database import Database, metadata
 from src.shared.event_bus import EventBusInterface, event_bus
 from src.shared.events import Event, EventPayload
 from src.shared.llm import ProviderBase, ProviderConfigBase
-from src.shared.logging import setup_logging
+from src.shared.logging import LoggerWrapper
 
 __all__ = [
     "BaseStorageConfig",
@@ -22,13 +23,14 @@ __all__ = [
     "OverloadParametersError",
     "BaseSchema",
     "BaseModel",
+    "BaseService",
     "Database",
     "metadata",
     "event_bus",
     "EventBusInterface",
     "Event",
     "EventPayload",
-    "setup_logging",
     "ProviderBase",
     "ProviderConfigBase",
+    "LoggerWrapper",
 ]

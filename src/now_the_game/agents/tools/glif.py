@@ -5,7 +5,7 @@ import requests
 from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings
 
-from src import Event, EventPayload, event_bus
+from src import BaseService, Event, EventPayload, event_bus
 from src.now_the_game import logger
 from src.now_the_game.agents.agents_interfaces import IAgentEvent
 
@@ -95,15 +95,11 @@ SERVICE
 """
 
 
-class GlifService:
+class GlifService(BaseService):
     def __init__(self):
-        self.event_bus = event_bus
+        super().__init__()
 
-        # subscribe to events
-        self.event_bus.subscribe_to_topic(
-            GlifEventTopics.QUERY.value, self.on_glif_query
-        )
-
+    @event_bus.subscribe(GlifEventTopics.QUERY.value)
     async def on_glif_query(self, event: Event) -> GlifResponseEvent:
         if not isinstance(event.payload, GlifQueryPayload):
             payload = GlifQueryPayload(**event.payload)  # type: ignore

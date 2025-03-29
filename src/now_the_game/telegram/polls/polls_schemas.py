@@ -21,6 +21,7 @@ ENUMS
 
 class PollTopics(Enum):
     POLL_ADDED = f"{EVENT_BUS_PREFIX}.added"
+    SEND_POLL = f"{EVENT_BUS_PREFIX}.send"
 
 
 class PollType(Enum):

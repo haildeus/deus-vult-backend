@@ -9,7 +9,7 @@ import uuid
 from abc import ABC, abstractmethod
 from asyncio import Task, create_task, gather
 from collections.abc import Callable, Coroutine
-from inspect import isawaitable
+from inspect import getmembers, isawaitable, ismethod
 from typing import Any, TypeVar
 
 from src.shared.config import EventBusType, SharedConfig
@@ -22,6 +22,17 @@ EventHandler = Callable[[E], Any | Coroutine[Any, Any, R]]
 
 
 class EventBusInterface(ABC):
+    @staticmethod
+    @abstractmethod
+    def subscribe(
+        topic: str,
+    ) -> Callable[
+        [Callable[..., Any | Coroutine[Any, Any, Any]]],
+        Callable[..., Any | Coroutine[Any, Any, Any]],
+    ]:
+        """Attaches subscription metadata to a method."""
+        pass
+
     @abstractmethod
     async def publish(self, event: Event) -> None:
         """Publish an event"""
@@ -44,12 +55,36 @@ class EventBusInterface(ABC):
         """Publish an event and wait for all handlers to complete"""
         pass
 
+    @abstractmethod
+    def register_subscribers_from(self, obj: object) -> None:
+        """Register methods decorated with @subscribe from an object."""
+        pass
+
 
 class EventBus(EventBusInterface):
     def __init__(self):
         self._subscribers: dict[type[Event], list[EventHandler[Any, Any]]] = {}
         self._topic_subscribers: dict[str, list[EventHandler[Any, Any]]] = {}
         self._event_tasks: dict[str, set[Task[Any]]] = {}
+
+    # Decorator to subscribe a method to an event bus topic
+    @staticmethod
+    def subscribe(
+        topic: str,
+    ) -> Callable[
+        [Callable[..., Any | Coroutine[Any, Any, Any]]],
+        Callable[..., Any | Coroutine[Any, Any, Any]],
+    ]:
+        """Attaches subscription metadata to a method."""
+
+        def decorator(
+            func: Callable[..., Any | Coroutine[Any, Any, Any]],
+        ) -> Callable[..., Any | Coroutine[Any, Any, Any]]:
+            # Dynamically attach the topic to the function object.
+            func._subscribed_topic = topic  # type: ignore[attr-defined]
+            return func
+
+        return decorator
 
     def subscribe_to_topic(
         self, topic: str, callback: Callable[[E], Any | Coroutine[Any, Any, R]]
@@ -144,6 +179,19 @@ class EventBus(EventBusInterface):
     def get_subscriber_count(self, topic: str) -> int:
         """Get the number of subscribers for an event type"""
         return len(self._topic_subscribers.get(topic, []))
+
+    def register_subscribers_from(self, obj: object) -> None:
+        """Register all methods decorated with @subscribe from the given object."""
+        for _, method in getmembers(obj, predicate=ismethod):
+            if hasattr(method, "_subscribed_topic"):
+                topic = getattr(method, "_subscribed_topic")
+                # Type ignore needed as EventBus.subscribe_to_topic expects specific Callable type,
+                # but decorated instance methods have 'self'.
+                # The runtime logic correctly handles this.
+                self.subscribe_to_topic(topic, method)  # type: ignore
+                logger.debug(
+                    f"Subscribed {method.__name__} from {obj.__class__.__name__} to topic {topic}"
+                )
 
 
 def get_event_bus(config_obj: SharedConfig) -> EventBus | EventBusInterface:
