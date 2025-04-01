@@ -1,33 +1,45 @@
-from fastapi import APIRouter, Path
+from fastapi import APIRouter, HTTPException, Query
 
 from src import Event, event_bus
-from src.api import logger
+from src.api import logger, logger_wrapper
 from src.api.core.database import api_db
 from src.api.core.interfaces import SuccessResponse
+from src.api.craft.elements.elements_schemas import ElementTopics
 
 elements_router = APIRouter()
 
 
 @elements_router.get(
     "/elements",
-    name="Get all elements",
+    name="Get elements",
     response_model=SuccessResponse,
     status_code=200,
 )
-async def get_element_all() -> SuccessResponse:
-    """Get all elements"""
-    logger.debug("Getting all elements")
+@logger_wrapper.log_debug
+async def get_elements(
+    element_id: int | None = Query(None, description="The ID of the element"),
+    name: str | None = Query(None, description="The name of the element"),
+) -> SuccessResponse:
+    """Get elements"""
+    logger.debug("Getting elements")
+    if element_id and name:
+        raise HTTPException(
+            status_code=400, detail="Only one of element_id or name must be provided"
+        )
 
     async with api_db.session() as session:
-        payload_example = {"db": session}
-        event = Event(
-            topic="craft.elements.get",
-            payload=payload_example,
-        )
+        payload_example = {
+            "element_id": element_id,
+            "name": name,
+            "db_session": session,
+        }
+        event = Event.from_dict(ElementTopics.ELEMENT_FETCH.value, payload_example)
         response = await event_bus.request(event)
-        logger.debug(f"Element response: {response}")
+        logger.debug(f"Element response: {response.payload.elements}")
 
-    return SuccessResponse(message="Elements fetched successfully", data=response)
+    return SuccessResponse(
+        message="Elements fetched successfully", data=response.payload.elements
+    )
 
 
 @elements_router.post(
@@ -36,18 +48,16 @@ async def get_element_all() -> SuccessResponse:
     response_model=SuccessResponse,
     status_code=201,
 )
-async def create_element(entity: str) -> SuccessResponse:
+@logger_wrapper.log_debug
+async def create_element(name: str, emoji: str) -> SuccessResponse:
     """Create a new element"""
-    logger.debug("Creating new element")
+    logger.debug(f"Creating new element: {name} with emoji: {emoji}")
 
     async with api_db.session() as session:
         # Create payload
-        payload_example = {"entity": entity, "db_session": session}
+        payload_example = {"name": name, "emoji": emoji, "db_session": session}
         # Create event
-        event = Event(
-            topic="craft.elements.created",
-            payload=payload_example,
-        )
+        event = Event.from_dict(ElementTopics.ELEMENT_CREATE.value, payload_example)
         # Send event to event bus
         await event_bus.publish_and_wait(event)
         # Flush session
@@ -57,27 +67,3 @@ async def create_element(entity: str) -> SuccessResponse:
     return SuccessResponse(
         message="Element created", data={"message": "Element created"}
     )
-
-
-@elements_router.get(
-    "/elements/{element_id}",
-    name="Get an element by ID",
-    response_model=SuccessResponse,
-    status_code=200,
-)
-async def get_element(
-    element_id: int = Path(..., description="The ID of the element"),
-) -> SuccessResponse:
-    """Get an element by ID"""
-    logger.debug(f"Getting element with ID: {element_id}")
-
-    async with api_db.session() as session:
-        payload_example = {"element_id": element_id, "db": session}
-        event = Event(
-            topic="craft.elements.get",
-            payload=payload_example,
-        )
-        response = await event_bus.request(event)
-        logger.debug(f"Element response: {response}")
-
-    return SuccessResponse(message="Element fetched successfully", data=response)

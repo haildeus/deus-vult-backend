@@ -2,9 +2,8 @@ from fastapi import APIRouter
 
 from .. import logger
 from .elements.elements_router import elements_router
-from .recipes.recipes_router import recipes_router
 
-imported_routers = [elements_router, recipes_router]
+imported_routers = [elements_router]
 
 craft_router = APIRouter(prefix="/craft")
 

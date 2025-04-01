@@ -1,11 +1,12 @@
-from src import BaseService, Event, event_bus
+from src import BaseService, EntityAlreadyExistsError, Event, event_bus
+from src.api import logger, logger_wrapper
 from src.api.craft.elements.elements_model import element_model
 from src.api.craft.elements.elements_schemas import (
-    ElementCreatedPayload,
-    ElementGetPayload,
-    ElementGetResponse,
-    ElementGetResponsePayload,
+    CreateElementPayload,
+    ElementTable,
     ElementTopics,
+    FetchElementPayload,
+    FetchElementResponsePayload,
 )
 
 
@@ -14,31 +15,56 @@ class ElementsService(BaseService):
         super().__init__()
         self.model = element_model
 
-    @event_bus.subscribe(ElementTopics.ELEMENT_CREATED.value)
-    async def on_add_element(self, event: Event) -> None:
-        if not isinstance(event.payload, ElementCreatedPayload):
-            payload = ElementCreatedPayload(**event.payload)  # type: ignore
+    @event_bus.subscribe(ElementTopics.ELEMENT_CREATE.value)
+    @logger_wrapper.log_debug
+    async def on_create_element(self, event: Event) -> None:
+        if not isinstance(event.payload, CreateElementPayload):
+            payload = CreateElementPayload(**event.payload)  # type: ignore
         else:
             payload = event.payload
 
-        raise NotImplementedError("Not implemented")
+        logger.debug(f"Creating element: {payload}")
 
-    @event_bus.subscribe(ElementTopics.ELEMENT_GET.value)
-    async def on_get_element(self, event: Event) -> ElementGetResponse:
-        if not isinstance(event.payload, ElementGetPayload):
-            payload = ElementGetPayload(**event.payload)  # type: ignore
+        name = payload.name
+        emoji = payload.emoji
+        db = payload.db_session
+
+        logger.debug(f"Creating element: {name} with emoji: {emoji}")
+
+        element = ElementTable(name=name, emoji=emoji)
+        if await self.model.not_exists(db, name):
+            logger.debug(f"Element {name} does not exist, adding to database")
+            await self.model.add(db, element)
+        else:
+            logger.debug(f"Element {name} already exists, skipping")
+            raise EntityAlreadyExistsError(
+                entity=name, entity_type=ElementTable.__name__
+            )
+
+    @event_bus.subscribe(ElementTopics.ELEMENT_FETCH.value)
+    @logger_wrapper.log_debug
+    async def on_fetch_element(self, event: Event) -> FetchElementResponsePayload:
+        if not isinstance(event.payload, FetchElementPayload):
+            payload = FetchElementPayload(**event.payload)  # type: ignore
         else:
             payload = event.payload
 
-        element_id = payload.element_id if payload.element_id else None
-        session = payload.db
+        element_id = payload.element_id
+        name = payload.name
+        db = payload.db_session
+
+        logger.debug(f"Fetching element: {element_id} or {name}")
 
         if element_id:
-            element = await self.model.get(session, element_id=element_id)
+            result = await self.model.get(db, element_id=element_id)
+        elif name:
+            result = await self.model.get(db, name=name)
         else:
-            element = await self.model.get(session)
+            result = await self.model.get(db)
 
-        response = ElementGetResponse(
-            payload=ElementGetResponsePayload(elements=element)
-        )
-        return response
+        logger.debug(f"Fetched elements: {result}")
+
+        return FetchElementResponsePayload(elements=result)
+
+
+elements_service = ElementsService()

@@ -1,5 +1,7 @@
 from enum import Enum
+from typing import Any
 
+from pydantic import model_validator
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src import BaseSchema, EventPayload
@@ -17,9 +19,11 @@ ENUMS
 
 
 class ElementTopics(Enum):
-    ELEMENT_CREATED = f"{EVENT_BUS_PREFIX}.fetch"
-    ELEMENT_GET = f"{EVENT_BUS_PREFIX}.get"
-    ELEMENT_GET_RESPONSE = f"{EVENT_BUS_PREFIX}.get.response"
+    # Create
+    ELEMENT_CREATE = f"{EVENT_BUS_PREFIX}.create"
+    # Fetch
+    ELEMENT_FETCH = f"{EVENT_BUS_PREFIX}.fetch"
+    ELEMENT_FETCH_RESPONSE = f"{EVENT_BUS_PREFIX}.fetch.response"
 
 
 """
@@ -27,16 +31,31 @@ MODELS
 """
 
 
-class ElementCreatedPayload(EventPayload):
-    pass
+class CreateElement(EventPayload):
+    name: str
+    emoji: str
 
 
-class ElementGetPayload(EventPayload):
+class CreateElementPayload(CreateElement):
+    db_session: AsyncSession
+
+
+class FetchElement(EventPayload):
     element_id: int | None = None
-    db: AsyncSession
+    name: str | None = None
+
+    @model_validator(mode="before")
+    def validate_payload(cls, values: dict[str, Any]) -> dict[str, Any]:
+        if values.get("element_id") and values.get("name"):
+            raise ValueError("Only one of element_id or name must be provided")
+        return values
 
 
-class ElementGetResponsePayload(EventPayload):
+class FetchElementPayload(FetchElement):
+    db_session: AsyncSession
+
+
+class FetchElementResponsePayload(EventPayload):
     elements: list["ElementBase"]
 
 
@@ -45,19 +64,19 @@ EVENTS
 """
 
 
-class ElementCreatedEvent(ICraftElementEvent):
-    topic: str = ElementTopics.ELEMENT_CREATED.value
-    payload: ElementCreatedPayload  # type: ignore
+class CreateElementEvent(ICraftElementEvent):
+    topic: str = ElementTopics.ELEMENT_CREATE.value
+    payload: CreateElementPayload  # type: ignore
 
 
-class ElementGetEvent(ICraftElementEvent):
-    topic: str = ElementTopics.ELEMENT_GET.value
-    payload: ElementGetPayload  # type: ignore
+class FetchElementEvent(ICraftElementEvent):
+    topic: str = ElementTopics.ELEMENT_FETCH.value
+    payload: FetchElementPayload  # type: ignore
 
 
-class ElementGetResponse(EventPayload):
-    topic: str = ElementTopics.ELEMENT_GET_RESPONSE.value
-    payload: ElementGetResponsePayload  # type: ignore
+class FetchElementEventResponse(ICraftElementEvent):
+    topic: str = ElementTopics.ELEMENT_FETCH_RESPONSE.value
+    payload: FetchElementResponsePayload  # type: ignore
 
 
 """
@@ -66,7 +85,8 @@ TABLES
 
 
 class ElementBase(BaseSchema):
-    pass
+    name: str
+    emoji: str
 
 
 class ElementTable(ElementBase, table=True):
