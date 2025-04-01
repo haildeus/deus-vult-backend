@@ -3,10 +3,13 @@ import hmac
 
 from src.api import logger
 from src.api.core.config import api_config
+from src.shared.config import shared_config
+
+DEBUG_MODE = shared_config.debug_mode
 
 
 # TODO: add auth_date check
-def validate_init_data(init_data: str) -> bool:
+def validate_init_data(init_data: str, debug_mode: bool = DEBUG_MODE) -> bool:
     """
     Validates the data received from Telegram WebApp.
 
@@ -16,6 +19,9 @@ def validate_init_data(init_data: str) -> bool:
     Returns:
         bool: True if the data is valid, False otherwise
     """
+    if debug_mode:
+        return True
+
     try:
         assert init_data
         assert api_config.bot_token

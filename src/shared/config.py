@@ -45,7 +45,8 @@ class EventBusType(Enum):
 
 class SharedConfig(BaseConfig):
     event_bus: EventBusType = EventBusType.LOCAL
-    log_level: int = logging.DEBUG
+    debug_mode: bool = True
+    log_level: int = logging.DEBUG if debug_mode else logging.INFO
 
     class Config(BaseConfig.Config):
         env_prefix = "GLOBAL_"
