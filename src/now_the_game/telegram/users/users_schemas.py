@@ -3,7 +3,6 @@ User-specific schema definitions.
 This module re-exports the User-related schemas from the central schema module.
 """
 
-from enum import Enum
 from typing import Any
 
 from pyrogram.client import Client
@@ -13,21 +12,7 @@ from sqlmodel import Field
 
 from src import BaseSchema, EventPayload
 from src.now_the_game.telegram.telegram_interfaces import IUserEvent
-
-"""
-CONSTANTS
-"""
-
-EVENT_BUS_PREFIX = "telegram.users"
-
-"""
-ENUMS
-"""
-
-
-class UserTopics(Enum):
-    USER_ADDED = f"{EVENT_BUS_PREFIX}.added"
-
+from src.shared.event_registry import UserTopics
 
 """
 MODELS
@@ -46,7 +31,7 @@ EVENTS
 
 
 class AddUserEvent(IUserEvent):
-    topic: str = UserTopics.USER_ADDED.value
+    topic: str = UserTopics.USER_CREATE.value
     payload: AddUserPayload  # type: ignore
 
 

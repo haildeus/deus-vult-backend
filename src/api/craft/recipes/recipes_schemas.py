@@ -1,30 +1,10 @@
-from enum import Enum
-
 from sqlalchemy import CheckConstraint, UniqueConstraint
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 from src import BaseSchema, EventPayload
 from src.api.craft.craft_interfaces import ICraftElementEvent
-
-"""
-CONSTANTS
-"""
-
-EVENT_BUS_PREFIX = "api.craft.recipes"
-
-"""
-ENUMS
-"""
-
-
-class RecipeTopics(Enum):
-    # Create
-    RECIPE_CREATE = f"{EVENT_BUS_PREFIX}.create"
-    # Fetch
-    RECIPE_FETCH = f"{EVENT_BUS_PREFIX}.fetch"
-    RECIPE_FETCH_RESPONSE = f"{EVENT_BUS_PREFIX}.fetch.response"
-
+from src.shared.event_registry import RecipeTopics
 
 """
 MODELS

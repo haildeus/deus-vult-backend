@@ -19,7 +19,7 @@ class MessagesService(BaseService):
         self.client = client
         self.message_model = message_model
 
-    @event_bus.subscribe(MessageTopics.MESSAGE_ADDED.value)
+    @event_bus.subscribe(MessageTopics.MESSAGE_CREATE.value)
     async def on_add_message(self, event: Event) -> None:
         if not isinstance(event.payload, AddMessagePayload):
             payload = AddMessagePayload(**event.payload)  # type: ignore

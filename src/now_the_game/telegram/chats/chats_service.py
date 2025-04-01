@@ -17,7 +17,7 @@ class ChatsService(BaseService):
         self.client = client
         self.model = chat_model
 
-    @event_bus.subscribe(ChatTopics.CHAT_ADDED.value)
+    @event_bus.subscribe(ChatTopics.CHAT_CREATE.value)
     async def on_add_chat(self, event: Event) -> None:
         if not isinstance(event.payload, AddChatEventPayload):
             payload = AddChatEventPayload(**event.payload)  # type: ignore

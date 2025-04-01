@@ -1,10 +1,8 @@
 from src import Event, event_bus
 from src.now_the_game import logger
 from src.now_the_game.agents.agents_exceptions import UnsupportedModelError
-from src.now_the_game.agents.agents_schemas import (
-    AgentQueryPayload,
-    SupportedModels,
-)
+from src.now_the_game.agents.agents_schemas import AgentQueryPayload, SupportedModels
+from src.shared.event_registry import GlifTopics, LanguageModelTopics
 
 
 class AgentsService:
@@ -35,8 +33,7 @@ class AgentsService:
             "inputs": inputs,
             "service_id": service_id,
         }
-        glif_topic = "agents.glif.query"
-        event = Event.from_dict(glif_topic, glif_payload)
+        event = Event.from_dict(GlifTopics.QUERY.value, glif_payload)
         return await self.event_bus.request(event)
 
     async def get_text_query(self, query: str, model: str) -> str:
@@ -44,8 +41,9 @@ class AgentsService:
             "query": query,
             "model": model,
         }
-        text_query_topic = "agents.language_model.text.query"
-        event = Event.from_dict(text_query_topic, text_query_payload)
+        event = Event.from_dict(
+            LanguageModelTopics.TEXT_QUERY.value, text_query_payload
+        )
         response = await self.event_bus.request(event)
         return response.payload.response
 
@@ -55,7 +53,8 @@ class AgentsService:
             "image": image,
             "model": model,
         }
-        multimodal_query_topic = "agents.language_model.multimodal.query"
-        event = Event.from_dict(multimodal_query_topic, multimodal_query_payload)
+        event = Event.from_dict(
+            LanguageModelTopics.MULTI_MODAL_QUERY.value, multimodal_query_payload
+        )
         response = await self.event_bus.request(event)
         return response.payload.response

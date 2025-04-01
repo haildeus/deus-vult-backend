@@ -1,4 +1,3 @@
-from enum import Enum
 from typing import Any
 
 from pydantic import model_validator
@@ -7,25 +6,7 @@ from sqlmodel import Field
 
 from src import BaseSchema, EventPayload
 from src.api.craft.craft_interfaces import ICraftElementEvent
-
-"""
-CONSTANTS
-"""
-
-EVENT_BUS_PREFIX = "api.craft.elements"
-
-"""
-ENUMS
-"""
-
-
-class ElementTopics(Enum):
-    # Create
-    ELEMENT_CREATE = f"{EVENT_BUS_PREFIX}.create"
-    # Fetch
-    ELEMENT_FETCH = f"{EVENT_BUS_PREFIX}.fetch"
-    ELEMENT_FETCH_RESPONSE = f"{EVENT_BUS_PREFIX}.fetch.response"
-
+from src.shared.event_registry import ElementTopics
 
 """
 MODELS

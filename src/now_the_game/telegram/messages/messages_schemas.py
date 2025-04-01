@@ -14,20 +14,7 @@ from src import BaseSchema, EventPayload
 from src.now_the_game import logger
 from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
 from src.now_the_game.telegram.telegram_interfaces import IMessageEvent
-
-"""
-CONSTANTS
-"""
-
-EVENT_BUS_PREFIX = "telegram.messages"
-
-"""
-ENUMS
-"""
-
-
-class MessageTopics(Enum):
-    MESSAGE_ADDED = f"{EVENT_BUS_PREFIX}.added"
+from src.shared.event_registry import MessageTopics
 
 
 class MessageType(Enum):
@@ -53,7 +40,7 @@ EVENTS
 
 
 class AddMessageEvent(IMessageEvent):
-    topic: str = MessageTopics.MESSAGE_ADDED.value
+    topic: str = MessageTopics.MESSAGE_CREATE.value
     payload: AddMessagePayload  # type: ignore
 
 

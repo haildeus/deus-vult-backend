@@ -4,6 +4,7 @@ from src import BaseService, Event, EventPayload, event_bus
 from src.now_the_game import logger
 from src.now_the_game.agents.agents_interfaces import IAgentEvent
 from src.now_the_game.agents.language_models.vertex import vertex
+from src.shared.event_registry import LanguageModelTopics
 
 EVENT_BUS_PREFIX = "agents.language_model"
 
@@ -15,13 +16,6 @@ ENUMS
 class SupportedLanguageModels(Enum):
     VERTEX = "vertex"
     GEMINI = "gemini"
-
-
-class LanguageModelTopics(Enum):
-    TEXT_QUERY = f"{EVENT_BUS_PREFIX}.text.query"
-    TEXT_RESPONSE = f"{EVENT_BUS_PREFIX}.text.response"
-    MULTI_MODAL_QUERY = f"{EVENT_BUS_PREFIX}.multimodal.query"
-    MULTI_MODAL_RESPONSE = f"{EVENT_BUS_PREFIX}.multimodal.response"
 
 
 """

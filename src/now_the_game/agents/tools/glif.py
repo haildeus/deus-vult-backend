@@ -8,6 +8,7 @@ from pydantic_settings import BaseSettings
 from src import BaseService, Event, EventPayload, event_bus
 from src.now_the_game import logger
 from src.now_the_game.agents.agents_interfaces import IAgentEvent
+from src.shared.event_registry import GlifTopics
 
 """
 ENUMS
@@ -22,11 +23,6 @@ class GlifGeneratorID(Enum):
     MEDIEVAL_IMAGE_GEN = "cm1926mxf0006ekfvp3xr69da"
     TEST_PIC_GEN = "clgh1vxtu0011mo081dplq3xs"
     TEST_ECHO_GEN = "clozwqgs60013l80fkgmtf49o"
-
-
-class GlifEventTopics(Enum):
-    QUERY = "agents.glif.query"
-    RESPONSE = "agents.glif.response"
 
 
 """
@@ -81,12 +77,12 @@ class GlifQueryPayload(EventPayload):
 
 
 class GlifQueryEvent(IAgentEvent):
-    topic: str = GlifEventTopics.QUERY.value
+    topic: str = GlifTopics.QUERY.value
     payload: GlifQueryPayload  # type: ignore
 
 
 class GlifResponseEvent(IAgentEvent):
-    topic: str = GlifEventTopics.RESPONSE.value
+    topic: str = GlifTopics.RESPONSE.value
     payload: GlifResponse  # type: ignore
 
 
@@ -99,7 +95,7 @@ class GlifService(BaseService):
     def __init__(self):
         super().__init__()
 
-    @event_bus.subscribe(GlifEventTopics.QUERY.value)
+    @event_bus.subscribe(GlifTopics.QUERY.value)
     async def on_glif_query(self, event: Event) -> GlifResponseEvent:
         if not isinstance(event.payload, GlifQueryPayload):
             payload = GlifQueryPayload(**event.payload)  # type: ignore

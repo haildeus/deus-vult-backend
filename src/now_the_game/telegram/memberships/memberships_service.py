@@ -16,7 +16,7 @@ class MembershipsService(BaseService):
         super().__init__()
         self.model = chat_membership_model
 
-    @event_bus.subscribe(MembershipTopics.MEMBERSHIP_CHANGED.value)
+    @event_bus.subscribe(MembershipTopics.MEMBERSHIP_UPDATE.value)
     async def on_change_chat_membership(self, event: Event) -> None:
         if not isinstance(event.payload, ChangeChatMembershipPayload):
             payload = ChangeChatMembershipPayload(**event.payload)  # type: ignore
@@ -42,7 +42,7 @@ class MembershipsService(BaseService):
         else:
             await self.model.remove_secure(db, user_id, chat_id)
 
-    @event_bus.subscribe(MembershipTopics.MEMBERSHIP_ADDED.value)
+    @event_bus.subscribe(MembershipTopics.MEMBERSHIP_CREATE.value)
     async def on_add_chat_membership(self, event: Event) -> None:
         if not isinstance(event.payload, AddChatMembershipPayload):
             payload = AddChatMembershipPayload(**event.payload)  # type: ignore

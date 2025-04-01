@@ -17,7 +17,7 @@ class UsersService(BaseService):
         self.client = client
         self.model = user_model
 
-    @event_bus.subscribe(UserTopics.USER_ADDED.value)
+    @event_bus.subscribe(UserTopics.USER_CREATE.value)
     async def on_add_user(self, event: Event) -> None:
         if not isinstance(event.payload, AddUserPayload):
             payload = AddUserPayload(**event.payload)  # type: ignore

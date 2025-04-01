@@ -7,21 +7,7 @@ from sqlmodel import Field
 from src import BaseSchema, EventPayload
 from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
 from src.now_the_game.telegram.telegram_interfaces import IPollEvent
-
-"""
-CONSTANTS
-"""
-
-EVENT_BUS_PREFIX = "telegram.polls"
-
-"""
-ENUMS
-"""
-
-
-class PollTopics(Enum):
-    POLL_ADDED = f"{EVENT_BUS_PREFIX}.added"
-    SEND_POLL = f"{EVENT_BUS_PREFIX}.send"
+from src.shared.event_registry import PollTopics
 
 
 class PollType(Enum):
@@ -49,7 +35,7 @@ EVENTS
 
 
 class SendPollEvent(IPollEvent):
-    topic: str = PollTopics.POLL_ADDED.value
+    topic: str = PollTopics.POLL_SEND.value
     payload: SendPollEventPayload  # type: ignore
 
 

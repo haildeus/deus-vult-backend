@@ -23,7 +23,7 @@ class PollsService(BaseService):
         self.db = db
         self.event_bus = event_bus
 
-    @event_bus.subscribe(PollTopics.SEND_POLL.value)
+    @event_bus.subscribe(PollTopics.POLL_SEND.value)
     async def on_send_poll(self, event: Event) -> None:
         logger.debug(f"Received send poll event: {event}")
         if not isinstance(event.payload, SendPollEventPayload):

@@ -17,20 +17,7 @@ from src import BaseSchema, EventPayload
 from src.now_the_game import logger
 from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
 from src.now_the_game.telegram.telegram_interfaces import IChatEvent
-
-"""
-CONSTANTS
-"""
-
-EVENT_BUS_PREFIX = "telegram.chats"
-
-"""
-ENUMS
-"""
-
-
-class ChatTopics(Enum):
-    CHAT_ADDED = f"{EVENT_BUS_PREFIX}.added"
+from src.shared.event_registry import ChatTopics
 
 
 class ChatType(Enum):
@@ -56,7 +43,7 @@ EVENTS
 
 
 class AddChatEvent(IChatEvent):
-    topic: str = ChatTopics.CHAT_ADDED.value
+    topic: str = ChatTopics.CHAT_CREATE.value
     payload: AddChatEventPayload  # type: ignore
 
 

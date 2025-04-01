@@ -3,7 +3,6 @@ ChatMembership-specific schema definitions.
 """
 
 from datetime import datetime
-from enum import Enum
 
 from pyrogram.client import Client
 from pyrogram.types import ChatMember, ChatMemberUpdated, Message
@@ -14,22 +13,7 @@ from src import BaseSchema, EventPayload
 from src.now_the_game import logger
 from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
 from src.now_the_game.telegram.telegram_interfaces import IMembershipChanged
-
-"""
-CONSTANTS
-"""
-
-EVENT_BUS_PREFIX = "telegram.memberships"
-
-"""
-ENUMS
-"""
-
-
-class MembershipTopics(Enum):
-    MEMBERSHIP_ADDED = f"{EVENT_BUS_PREFIX}.added"
-    MEMBERSHIP_CHANGED = f"{EVENT_BUS_PREFIX}.changed"
-
+from src.shared.event_registry import MembershipTopics
 
 """
 MODELS
@@ -56,12 +40,12 @@ EVENTS
 
 
 class ChangeChatMembershipEvent(IMembershipChanged):
-    topic: str = MembershipTopics.MEMBERSHIP_CHANGED.value
+    topic: str = MembershipTopics.MEMBERSHIP_UPDATE.value
     payload: ChangeChatMembershipPayload  # type: ignore
 
 
 class AddChatMembershipEvent(IMembershipChanged):
-    topic: str = MembershipTopics.MEMBERSHIP_ADDED.value
+    topic: str = MembershipTopics.MEMBERSHIP_CREATE.value
     payload: AddChatMembershipPayload  # type: ignore
 
 
