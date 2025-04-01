@@ -1,8 +1,11 @@
-from fastapi import APIRouter, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, Query
 
 from src import Event, event_bus
 from src.api import logger, logger_wrapper
 from src.api.core.database import api_db
+from src.api.core.dependencies import validate_init_data
 from src.api.core.interfaces import SuccessResponse
 from src.api.craft.recipes.recipes_schemas import CreateRecipe, RecipeTopics
 
@@ -17,6 +20,7 @@ recipes_router = APIRouter()
 )
 @logger_wrapper.log_debug
 async def get_recipes(
+    init_data: Annotated[dict[str, str] | None, Depends(validate_init_data)],
     element_a_id: int | None = Query(None, description="The ID of the element"),
     element_b_id: int | None = Query(None, description="The ID of the element"),
     result_id: int | None = Query(None, description="The ID of the element"),
@@ -48,6 +52,7 @@ async def get_recipes(
 )
 @logger_wrapper.log_debug
 async def create_recipe(
+    init_data: Annotated[dict[str, str] | None, Depends(validate_init_data)],
     recipe: CreateRecipe,
 ) -> SuccessResponse:
     """Create a new recipe"""

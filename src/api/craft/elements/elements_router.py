@@ -1,8 +1,11 @@
-from fastapi import APIRouter, HTTPException, Query
+from typing import Annotated
+
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from src import Event, event_bus
 from src.api import logger, logger_wrapper
 from src.api.core.database import api_db
+from src.api.core.dependencies import validate_init_data
 from src.api.core.interfaces import SuccessResponse
 from src.api.craft.elements.elements_schemas import CreateElement, ElementTopics
 
@@ -17,6 +20,7 @@ elements_router = APIRouter()
 )
 @logger_wrapper.log_debug
 async def get_elements(
+    init_data: Annotated[dict[str, str] | None, Depends(validate_init_data)],
     element_id: int | None = Query(None, description="The ID of the element"),
     name: str | None = Query(None, description="The name of the element"),
 ) -> SuccessResponse:
@@ -49,7 +53,10 @@ async def get_elements(
     status_code=201,
 )
 @logger_wrapper.log_debug
-async def create_element(element: CreateElement) -> SuccessResponse:
+async def create_element(
+    init_data: Annotated[dict[str, str] | None, Depends(validate_init_data)],
+    element: CreateElement,
+) -> SuccessResponse:
     """Create a new element"""
     logger.debug(f"Creating new element: {element}")
 
