@@ -4,7 +4,7 @@ from src import Event, event_bus
 from src.api import logger, logger_wrapper
 from src.api.core.database import api_db
 from src.api.core.interfaces import SuccessResponse
-from src.api.craft.elements.elements_schemas import ElementTopics
+from src.api.craft.elements.elements_schemas import CreateElement, ElementTopics
 
 elements_router = APIRouter()
 
@@ -49,13 +49,17 @@ async def get_elements(
     status_code=201,
 )
 @logger_wrapper.log_debug
-async def create_element(name: str, emoji: str) -> SuccessResponse:
+async def create_element(element: CreateElement) -> SuccessResponse:
     """Create a new element"""
-    logger.debug(f"Creating new element: {name} with emoji: {emoji}")
+    logger.debug(f"Creating new element: {element}")
 
     async with api_db.session() as session:
         # Create payload
-        payload_example = {"name": name, "emoji": emoji, "db_session": session}
+        payload_example = {
+            "name": element.name,
+            "emoji": element.emoji,
+            "db_session": session,
+        }
         # Create event
         event = Event.from_dict(ElementTopics.ELEMENT_CREATE.value, payload_example)
         # Send event to event bus

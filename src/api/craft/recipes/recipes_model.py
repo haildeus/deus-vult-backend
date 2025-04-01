@@ -1,10 +1,9 @@
 from typing import overload
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
 
-from src import BaseModel, EntityAlreadyExistsError, EntityNotFoundError
-from src.api import logger, logger_wrapper
+from src import BaseModel
+from src.api import logger_wrapper
 from src.api.craft.recipes.recipes_schemas import RecipeBase, RecipeTable
 
 
@@ -16,25 +15,38 @@ class RecipeModel(BaseModel[RecipeTable]):
     async def get(self, session: AsyncSession) -> list[RecipeBase]: ...
 
     @overload
-    async def get(self, session: AsyncSession, *, first: int) -> list[RecipeBase]: ...
-
-    @overload
     async def get(
-        self, session: AsyncSession, *, first: int, second: int
+        self, session: AsyncSession, *, element_a_id: int
     ) -> list[RecipeBase]: ...
 
     @overload
-    async def get(self, session: AsyncSession, *, result: int) -> list[RecipeBase]: ...
+    async def get(
+        self, session: AsyncSession, *, element_a_id: int, element_b_id: int
+    ) -> list[RecipeBase]: ...
 
+    @overload
+    async def get(
+        self, session: AsyncSession, *, result_id: int
+    ) -> list[RecipeBase]: ...
+
+    @logger_wrapper.log_debug
     async def get(
         self,
         session: AsyncSession,
         *,
-        first: int | None = None,
-        second: int | None = None,
-        result: int | None = None,
+        element_a_id: int | None = None,
+        element_b_id: int | None = None,
+        result_id: int | None = None,
     ) -> list[RecipeBase]:
-        """Get a recipe by first, second, or result"""
-        if first:
-            return await self.get_by_other_params(session, first=first)
-        
+        """Get a recipe by element_a_id, element_b_id, or result_id"""
+        if element_a_id:
+            return await self.get_by_other_params(session, element_a_id=element_a_id)
+        elif element_b_id:
+            return await self.get_by_other_params(session, element_b_id=element_b_id)
+        elif result_id:
+            return await self.get_by_other_params(session, result_id=result_id)
+        else:
+            return await self.get_all(session)
+
+
+recipe_model = RecipeModel()

@@ -56,6 +56,10 @@ class FetchRecipePayload(FetchRecipe):
     db_session: AsyncSession
 
 
+class FetchRecipeResponsePayload(EventPayload):
+    recipes: list["RecipeBase"]
+
+
 """
 EVENTS
 """
