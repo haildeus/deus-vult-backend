@@ -5,10 +5,7 @@ from src.now_the_game.telegram.memberships.memberships_schemas import (
     ChatMembershipTable,
 )
 from src.now_the_game.telegram.messages.messages_schemas import MessageTable
-from src.now_the_game.telegram.polls.polls_schemas import (
-    PollOptionTable,
-    PollTable,
-)
+from src.now_the_game.telegram.polls.polls_schemas import PollOptionTable, PollTable
 from src.now_the_game.telegram.users.users_schemas import UserTable
 
 """

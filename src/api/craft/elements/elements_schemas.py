@@ -3,6 +3,7 @@ from typing import Any
 
 from pydantic import model_validator
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import Field
 
 from src import BaseSchema, EventPayload
 from src.api.craft.craft_interfaces import ICraftElementEvent
@@ -36,10 +37,6 @@ class CreateElement(EventPayload):
     emoji: str
 
 
-class CreateElementPayload(CreateElement):
-    db_session: AsyncSession
-
-
 class FetchElement(EventPayload):
     element_id: int | None = None
     name: str | None = None
@@ -49,6 +46,15 @@ class FetchElement(EventPayload):
         if values.get("element_id") and values.get("name"):
             raise ValueError("Only one of element_id or name must be provided")
         return values
+
+
+"""
+PAYLOADS
+"""
+
+
+class CreateElementPayload(CreateElement):
+    db_session: AsyncSession
 
 
 class FetchElementPayload(FetchElement):
@@ -85,8 +91,8 @@ TABLES
 
 
 class ElementBase(BaseSchema):
-    name: str
-    emoji: str
+    name: str = Field(index=True, unique=True, max_length=100)
+    emoji: str = Field(max_length=10)
 
 
 class ElementTable(ElementBase, table=True):
