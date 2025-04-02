@@ -52,3 +52,4 @@ def validate_init_data(init_data: str | None = None) -> dict[str, str] | None:
         raise HTTPException(status_code=401, detail="Invalid init data")
 
     return data_dict
+

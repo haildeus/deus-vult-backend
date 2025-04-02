@@ -1,13 +1,17 @@
+from collections.abc import Callable
 from typing import Annotated
 
+from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, Query
 
-from src import Event, event_bus
+from src import Container
 from src.api import logger, logger_wrapper
-from src.api.core.database import api_db
 from src.api.core.dependencies import validate_init_data
 from src.api.core.interfaces import SuccessResponse
 from src.api.craft.recipes.recipes_schemas import CreateRecipe, RecipeTopics
+from src.shared.event_bus import EventBus
+from src.shared.events import Event
+from src.shared.uow import UnitOfWork
 
 recipes_router = APIRouter()
 
@@ -18,9 +22,14 @@ recipes_router = APIRouter()
     response_model=SuccessResponse,
     status_code=200,
 )
+@inject
 @logger_wrapper.log_debug
 async def get_recipes(
     init_data: Annotated[dict[str, str] | None, Depends(validate_init_data)],
+    event_bus: Annotated[EventBus, Depends(Provide[Container.event_bus])],
+    uow_factory: Annotated[
+        Callable[[], UnitOfWork], Depends(Provide[Container.uow_factory])
+    ],
     element_a_id: int | None = Query(None, description="The ID of the element"),
     element_b_id: int | None = Query(None, description="The ID of the element"),
     result_id: int | None = Query(None, description="The ID of the element"),
@@ -28,12 +37,13 @@ async def get_recipes(
     """Get recipes"""
     logger.debug("Getting recipes")
 
-    async with api_db.session() as session:
+    uow = uow_factory()
+
+    async with uow.start():
         payload_example = {
             "element_a_id": element_a_id,
             "element_b_id": element_b_id,
             "result_id": result_id,
-            "db_session": session,
         }
         event = Event.from_dict(RecipeTopics.RECIPE_FETCH.value, payload_example)
         response = await event_bus.request(event)
@@ -50,24 +60,29 @@ async def get_recipes(
     response_model=SuccessResponse,
     status_code=201,
 )
+@inject
 @logger_wrapper.log_debug
 async def create_recipe(
     init_data: Annotated[dict[str, str] | None, Depends(validate_init_data)],
+    event_bus: Annotated[EventBus, Depends(Provide[Container.event_bus])],
+    uow_factory: Annotated[
+        Callable[[], UnitOfWork], Depends(Provide[Container.uow_factory])
+    ],
     recipe: CreateRecipe,
 ) -> SuccessResponse:
     """Create a new recipe"""
     logger.debug(f"Creating new recipe: {recipe}")
 
-    async with api_db.session() as session:
+    uow = uow_factory()
+
+    async with uow.start():
         payload_example = {
             "element_a_id": recipe.element_a_id,
             "element_b_id": recipe.element_b_id,
             "result_id": recipe.result_id,
-            "db_session": session,
         }
         event = Event.from_dict(RecipeTopics.RECIPE_CREATE.value, payload_example)
         await event_bus.publish_and_wait(event)
-        await session.flush()
         logger.debug("Recipe created")
 
     return SuccessResponse(message="Recipe created", data={"message": "Recipe created"})

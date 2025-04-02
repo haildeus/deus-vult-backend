@@ -1,11 +1,18 @@
+from collections.abc import Callable
+
+from dependency_injector.wiring import Provide, inject
 from pyrogram import filters
 from pyrogram.client import Client
 from pyrogram.handlers.chat_member_updated_handler import ChatMemberUpdatedHandler
 from pyrogram.handlers.handler import Handler
 from pyrogram.types import ChatMemberUpdated
 
-from src import Event, event_bus
-from src.now_the_game import db, logger
+from src import Container
+from src.now_the_game import logger
+from src.shared.event_bus import EventBus
+from src.shared.event_registry import ChatTopics, MembershipTopics, UserTopics
+from src.shared.events import Event
+from src.shared.uow import UnitOfWork
 
 
 class ChatMembershipHandlers:
@@ -13,8 +20,13 @@ class ChatMembershipHandlers:
     Chat membership handlers class
     """
 
+    @inject
     async def new_chat_membership(
-        self, client: Client, chat_member_updated: ChatMemberUpdated
+        self,
+        client: Client,
+        chat_member_updated: ChatMemberUpdated,
+        uow_factory: Callable[[], UnitOfWork] = Provide[Container.uow_factory],
+        event_bus: EventBus = Provide[Container.event_bus],
     ) -> None:
         """
         Process a new chat membership event and add it to the database.
@@ -31,9 +43,10 @@ class ChatMembershipHandlers:
         actor_user = chat_member_updated.from_user
         target_user = updated_info.user
 
-        # Create a shared session
-        async with db.session() as shared_session:
-            # Create the event with the shared session
+        uow = uow_factory()
+
+        async with uow.start():
+            shared_session = await uow.get_session()
             change_membership_event_payload = {
                 "client": client,
                 "chat_member_updated": chat_member_updated,
@@ -42,7 +55,7 @@ class ChatMembershipHandlers:
                 "new_member": new_member,
             }
             change_membership_event = Event(
-                topic="telegram.memberships.changed",
+                topic=MembershipTopics.MEMBERSHIP_UPDATE.value,
                 payload=change_membership_event_payload,
             )
 
@@ -52,7 +65,7 @@ class ChatMembershipHandlers:
                 "db_session": shared_session,
             }
             add_actor_user_event = Event(
-                topic="telegram.users.added",
+                topic=UserTopics.USER_CREATE.value,
                 payload=add_actor_user_event_payload,
             )
 
@@ -62,7 +75,7 @@ class ChatMembershipHandlers:
                 "db_session": shared_session,
             }
             add_target_user_event = Event(
-                topic="telegram.users.added",
+                topic=UserTopics.USER_CREATE.value,
                 payload=add_target_user_event_payload,
             )
 
@@ -72,7 +85,7 @@ class ChatMembershipHandlers:
                 "db_session": shared_session,
             }
             add_chat_event = Event(
-                topic="telegram.chats.added",
+                topic=ChatTopics.CHAT_CREATE.value,
                 payload=add_chat_event_payload,
             )
 

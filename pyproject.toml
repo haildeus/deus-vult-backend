@@ -9,8 +9,12 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "aiosqlite>=0.21.0",
+    "alembic>=1.15.1",
+    "asyncpg>=0.30.0",
     "black>=25.1.0",
     "chromadb>=0.6.3",
+    "colorlog>=6.9.0",
+    "dependency-injector>=4.46.0",
     "diskcache>=5.6.3",
     "dspy>=2.6.13",
     "fastapi>=0.115.11",
@@ -55,3 +59,6 @@ ignore = []  # Add any rules you want to ignore here
 
 [tool.isort]
 profile = "black"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]

@@ -2,9 +2,10 @@ from sqlalchemy import CheckConstraint, UniqueConstraint
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
-from src import BaseSchema, EventPayload
 from src.api.craft.craft_interfaces import ICraftElementEvent
+from src.shared.base import BaseSchema
 from src.shared.event_registry import RecipeTopics
+from src.shared.events import EventPayload
 
 """
 MODELS

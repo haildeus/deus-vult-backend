@@ -2,7 +2,7 @@ from typing import Any
 
 from pydantic import BaseModel
 
-from src import Event
+from src.shared.events import Event
 
 
 class ICraftEvent(Event):

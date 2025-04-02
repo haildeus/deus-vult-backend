@@ -1,12 +1,12 @@
 from typing import Any
 
 from pydantic import model_validator
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
-from src import BaseSchema, EventPayload
 from src.api.craft.craft_interfaces import ICraftElementEvent
+from src.shared.base import BaseSchema
 from src.shared.event_registry import ElementTopics
+from src.shared.events import EventPayload
 
 """
 MODELS
@@ -35,11 +35,11 @@ PAYLOADS
 
 
 class CreateElementPayload(CreateElement):
-    db_session: AsyncSession
+    pass
 
 
 class FetchElementPayload(FetchElement):
-    db_session: AsyncSession
+    pass
 
 
 class FetchElementResponsePayload(EventPayload):

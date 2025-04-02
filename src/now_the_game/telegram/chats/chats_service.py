@@ -1,7 +1,6 @@
 from pyrogram.client import Client
 from pyrogram.types import Chat, ChatMember
 
-from src import BaseService, Event, event_bus
 from src.now_the_game import logger
 from src.now_the_game.telegram.chats.chats_model import chat_model
 from src.now_the_game.telegram.chats.chats_schemas import (
@@ -9,6 +8,9 @@ from src.now_the_game.telegram.chats.chats_schemas import (
     ChatTable,
     ChatTopics,
 )
+from src.shared.base import BaseService
+from src.shared.event_bus import EventBus
+from src.shared.events import Event
 
 
 class ChatsService(BaseService):
@@ -17,7 +19,7 @@ class ChatsService(BaseService):
         self.client = client
         self.model = chat_model
 
-    @event_bus.subscribe(ChatTopics.CHAT_CREATE.value)
+    @EventBus.subscribe(ChatTopics.CHAT_CREATE.value)
     async def on_add_chat(self, event: Event) -> None:
         if not isinstance(event.payload, AddChatEventPayload):
             payload = AddChatEventPayload(**event.payload)  # type: ignore

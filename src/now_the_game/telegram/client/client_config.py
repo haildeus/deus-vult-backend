@@ -7,8 +7,8 @@ from pydantic import model_validator
 from pydantic_settings import BaseSettings
 from pyrogram.client import Client
 
-from src import MissingCredentialsError
 from src.now_the_game import logger
+from src.shared.base import MissingCredentialsError
 
 
 class TelegramBotStatus(Enum):

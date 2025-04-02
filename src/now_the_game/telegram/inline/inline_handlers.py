@@ -4,8 +4,7 @@ from pyrogram.handlers.handler import Handler
 from pyrogram.handlers.inline_query_handler import InlineQueryHandler
 from pyrogram.types import InlineQuery
 
-from src import Event, event_bus
-from src.now_the_game import db, logger
+from src.now_the_game import logger
 
 
 class InlineHandlers:

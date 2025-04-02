@@ -3,7 +3,6 @@ from datetime import datetime
 from pyrogram.client import Client
 from pyrogram.types import Message
 
-from src import BaseService, Event, event_bus
 from src.now_the_game import logger
 from src.now_the_game.telegram.messages.messages_model import message_model
 from src.now_the_game.telegram.messages.messages_schemas import (
@@ -11,6 +10,9 @@ from src.now_the_game.telegram.messages.messages_schemas import (
     MessageTable,
     MessageTopics,
 )
+from src.shared.base import BaseService
+from src.shared.event_bus import EventBus
+from src.shared.events import Event
 
 
 class MessagesService(BaseService):
@@ -19,7 +21,7 @@ class MessagesService(BaseService):
         self.client = client
         self.message_model = message_model
 
-    @event_bus.subscribe(MessageTopics.MESSAGE_CREATE.value)
+    @EventBus.subscribe(MessageTopics.MESSAGE_CREATE.value)
     async def on_add_message(self, event: Event) -> None:
         if not isinstance(event.payload, AddMessagePayload):
             payload = AddMessagePayload(**event.payload)  # type: ignore

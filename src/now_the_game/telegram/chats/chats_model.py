@@ -2,13 +2,9 @@ from typing import overload
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src import BaseModel, OverloadParametersError
 from src.now_the_game import logger
-from src.now_the_game.telegram.chats.chats_schemas import (
-    ChatBase,
-    ChatTable,
-    ChatType,
-)
+from src.now_the_game.telegram.chats.chats_schemas import ChatBase, ChatTable, ChatType
+from src.shared.base import BaseModel, OverloadParametersError
 
 
 class ChatModel(BaseModel[ChatTable]):
@@ -62,5 +58,6 @@ class ChatModel(BaseModel[ChatTable]):
             return await self.get_by_id(session, chat_id)
         else:
             return await self.get_all(session)
+
 
 chat_model = ChatModel()

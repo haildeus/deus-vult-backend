@@ -8,7 +8,6 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field, SQLModel, col, exists, select
 
 from src.shared.database import metadata
-from src.shared.event_bus import EventBusInterface, event_bus
 from src.shared.logging import logger
 
 T = TypeVar("T", bound="BaseSchema")
@@ -77,18 +76,10 @@ class BaseService:
     A base class for services that automatically registers event bus subscribers.
     """
 
-    def __init__(self, bus: EventBusInterface = event_bus):
+    def __init__(self):
         """
         Initializes the service and registers its decorated event handlers.
-
-        Args:
-            bus: The event bus instance to use. Defaults to the global singleton.
-                 Allows injecting a different bus for testing or specific scenarios.
         """
-        self.event_bus = bus
-        # Automatically find methods decorated with @event_bus.subscribe
-        # on the concrete subclass instance (self) and register them.
-        self.event_bus.register_subscribers_from(self)
         logger.debug(
             f"Automatically registered subscribers from {self.__class__.__name__}"
         )

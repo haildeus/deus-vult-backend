@@ -2,9 +2,9 @@ from typing import overload
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src import BaseModel
 from src.api import logger_wrapper
 from src.api.craft.recipes.recipes_schemas import RecipeBase, RecipeTable
+from src.shared.base import BaseModel
 
 
 class RecipeModel(BaseModel[RecipeTable]):

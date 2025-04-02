@@ -1,4 +1,3 @@
-from src import BaseService, Event, event_bus
 from src.now_the_game import logger
 from src.now_the_game.telegram.memberships.memberships_model import (
     chat_membership_model,
@@ -9,6 +8,9 @@ from src.now_the_game.telegram.memberships.memberships_schemas import (
     ChatMembershipTable,
     MembershipTopics,
 )
+from src.shared.base import BaseService
+from src.shared.event_bus import EventBus
+from src.shared.events import Event
 
 
 class MembershipsService(BaseService):
@@ -16,7 +18,7 @@ class MembershipsService(BaseService):
         super().__init__()
         self.model = chat_membership_model
 
-    @event_bus.subscribe(MembershipTopics.MEMBERSHIP_UPDATE.value)
+    @EventBus.subscribe(MembershipTopics.MEMBERSHIP_UPDATE.value)
     async def on_change_chat_membership(self, event: Event) -> None:
         if not isinstance(event.payload, ChangeChatMembershipPayload):
             payload = ChangeChatMembershipPayload(**event.payload)  # type: ignore
@@ -42,7 +44,7 @@ class MembershipsService(BaseService):
         else:
             await self.model.remove_secure(db, user_id, chat_id)
 
-    @event_bus.subscribe(MembershipTopics.MEMBERSHIP_CREATE.value)
+    @EventBus.subscribe(MembershipTopics.MEMBERSHIP_CREATE.value)
     async def on_add_chat_membership(self, event: Event) -> None:
         if not isinstance(event.payload, AddChatMembershipPayload):
             payload = AddChatMembershipPayload(**event.payload)  # type: ignore

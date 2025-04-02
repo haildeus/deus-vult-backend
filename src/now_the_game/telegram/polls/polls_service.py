@@ -3,8 +3,8 @@ from datetime import datetime
 from pyrogram.client import Client
 from pyrogram.types import Message, Poll
 
-from src import BaseService, Event, event_bus
-from src.now_the_game import db, logger
+from src import BaseService, Event, EventBus
+from src.now_the_game import logger
 from src.now_the_game.telegram.polls.polls_model import poll_model, poll_option_model
 from src.now_the_game.telegram.polls.polls_schemas import (
     PollOptionTable,
@@ -20,10 +20,8 @@ class PollsService(BaseService):
         self.client = client
         self.poll_model = poll_model
         self.poll_option_model = poll_option_model
-        self.db = db
-        self.event_bus = event_bus
 
-    @event_bus.subscribe(PollTopics.POLL_SEND.value)
+    @EventBus.subscribe(PollTopics.POLL_SEND.value)
     async def on_send_poll(self, event: Event) -> None:
         logger.debug(f"Received send poll event: {event}")
         if not isinstance(event.payload, SendPollEventPayload):
@@ -32,6 +30,7 @@ class PollsService(BaseService):
             payload = event.payload
 
         save_to_db = payload.save
+        db_session = payload.db_session
 
         logger.debug(f"Sending poll to {payload.chat_id}")
         poll_message = await self.client.send_poll(
@@ -51,7 +50,7 @@ class PollsService(BaseService):
             )
 
             logger.debug("Adding poll to database")
-            async with self.db.session() as session:
+            async with db_session as session:
                 await self.poll_model.add(session, poll_from_pyrogram)
                 await self.poll_option_model.add(session, poll_options_from_pyrogram)
                 await session.flush()

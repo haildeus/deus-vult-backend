@@ -2,11 +2,11 @@ from typing import overload
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src import BaseModel
 from src.now_the_game.telegram.messages.messages_schemas import (
     MessageBase,
     MessageTable,
 )
+from src.shared.base import BaseModel
 
 
 class MessageModel(BaseModel[MessageTable]):

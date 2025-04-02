@@ -10,11 +10,12 @@ from pyrogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
-from src import BaseSchema, EventPayload
 from src.now_the_game import logger
 from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
 from src.now_the_game.telegram.telegram_interfaces import IMessageEvent
+from src.shared.base import BaseSchema
 from src.shared.event_registry import MessageTopics
+from src.shared.events import EventPayload
 
 
 class MessageType(Enum):

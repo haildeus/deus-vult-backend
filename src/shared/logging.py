@@ -6,10 +6,20 @@ import time
 from collections.abc import Callable, Coroutine
 from typing import Any, TypeVar, cast
 
+import colorlog
+
 from src.shared.config import shared_config
 
 # Type variable for the decorated function's return type
 R = TypeVar("R")
+
+LOG_COLORS = {
+    "DEBUG": "cyan",
+    "INFO": "green",
+    "WARNING": "yellow",
+    "ERROR": "red",
+    "CRITICAL": "bold_red",
+}
 
 
 class LoggerWrapper:
@@ -22,6 +32,7 @@ class LoggerWrapper:
         name: str = "shared-components",
         level: int = shared_config.log_level,
         log_format: str | None = None,
+        date_format: str | None = None,
     ):
         """
         Initializes and configures a logger instance.
@@ -39,13 +50,22 @@ class LoggerWrapper:
             self.logger.handlers.clear()
 
         # Console handler
-        console_handler = logging.StreamHandler(sys.stdout)
+        console_handler = colorlog.StreamHandler(sys.stdout)
 
         # Setup formatter
         if log_format is None:
             # Default detailed format good for debugging
-            log_format = "%(levelname)s - %(asctime)s - %(name)s - [%(funcName)s:%(lineno)d] - %(message)s"
-        formatter = logging.Formatter(log_format)
+            log_format = "%(log_color)s%(levelname)-8s%(reset)s | %(asctime)s | %(name)s:%(funcName)s:%(lineno)d | %(message)s"
+        if date_format is None:
+            date_format = "%Y-%m-%d %H:%M:%S"
+        formatter = colorlog.ColoredFormatter(
+            fmt=log_format,
+            datefmt=date_format,
+            reset=True,
+            log_colors=LOG_COLORS,
+            secondary_log_colors={},  # You can color specific parts of the message too
+            style="%",  # Use %-style formatting
+        )
         console_handler.setFormatter(formatter)
 
         self.logger.addHandler(console_handler)

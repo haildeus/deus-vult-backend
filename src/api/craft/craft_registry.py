@@ -1,4 +1,4 @@
-from sqlmodel import Relationship
+from sqlmodel import Relationship, SQLModel
 
 from src.api.craft.elements.elements_schemas import ElementTable
 from src.api.craft.recipes.recipes_schemas import RecipeTable
@@ -54,3 +54,7 @@ RecipeTable.result = Relationship(
         "foreign_keys": "[RecipeTable.result_id]",
     },
 )
+
+
+def get_craft_registry():
+    return SQLModel.metadata

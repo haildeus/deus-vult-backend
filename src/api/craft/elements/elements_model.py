@@ -3,9 +3,9 @@ from typing import overload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from src import BaseModel, EntityAlreadyExistsError, EntityNotFoundError
 from src.api import logger
 from src.api.craft.elements.elements_schemas import ElementBase, ElementTable
+from src.shared.base import BaseModel, EntityAlreadyExistsError, EntityNotFoundError
 
 
 class ElementModel(BaseModel[ElementTable]):

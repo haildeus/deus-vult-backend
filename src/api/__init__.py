@@ -1,4 +1,4 @@
-from src import LoggerWrapper
+from src.shared.logging import LoggerWrapper
 
 logger_wrapper = LoggerWrapper("api")
 logger = logger_wrapper.logger

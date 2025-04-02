@@ -13,11 +13,12 @@ from pyrogram.types import ChatMemberUpdated, Message
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
-from src import BaseSchema, EventPayload
 from src.now_the_game import logger
 from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
 from src.now_the_game.telegram.telegram_interfaces import IChatEvent
+from src.shared.base import BaseSchema
 from src.shared.event_registry import ChatTopics
+from src.shared.events import EventPayload
 
 
 class ChatType(Enum):

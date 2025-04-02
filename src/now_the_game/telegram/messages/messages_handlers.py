@@ -1,13 +1,24 @@
 import asyncio
+from collections.abc import Callable
 
+from dependency_injector.wiring import Provide, inject
 from pyrogram import filters
 from pyrogram.client import Client
 from pyrogram.handlers.handler import Handler
 from pyrogram.handlers.message_handler import MessageHandler
 from pyrogram.types import Message
 
-from src import Event, event_bus
-from src.now_the_game import db, logger
+from src import Container
+from src.now_the_game import logger
+from src.shared.event_bus import EventBus
+from src.shared.event_registry import (
+    ChatTopics,
+    MembershipTopics,
+    MessageTopics,
+    UserTopics,
+)
+from src.shared.events import Event
+from src.shared.uow import UnitOfWork
 
 
 class MessageHandlers:
@@ -23,35 +34,45 @@ class MessageHandlers:
         response = await message.reply_text("Help message")  # type: ignore
         return response
 
-    async def save(self, client: Client, message: Message) -> None:
+    @inject
+    async def save(
+        self,
+        client: Client,
+        message: Message,
+        uow_factory: Callable[[], UnitOfWork] = Provide[Container.uow_factory],
+        event_bus: EventBus = Provide[Container.event_bus],
+    ) -> None:
         """
         Process a new message event and add it to the database.
         """
         logger.debug(f"Processing new message: {message.text}")
+        uow = uow_factory()
 
-        async with db.session() as session:
+        async with uow.start():
+            session = await uow.get_session()
+
             pyrogram_payload = {
                 "client": client,
                 "message": message,
                 "db_session": session,
             }
             add_message_event = Event(
-                topic="telegram.messages.added",
+                topic=MessageTopics.MESSAGE_CREATE.value,
                 payload=pyrogram_payload,
             )
 
             add_chat_event = Event(
-                topic="telegram.chats.added",
+                topic=ChatTopics.CHAT_CREATE.value,
                 payload=pyrogram_payload,
             )
 
             add_user_event = Event(
-                topic="telegram.users.added",
+                topic=UserTopics.USER_CREATE.value,
                 payload=pyrogram_payload,
             )
 
             add_membership_event = Event(
-                topic="telegram.memberships.added",
+                topic=MembershipTopics.MEMBERSHIP_CREATE.value,
                 payload=pyrogram_payload,
             )
 
@@ -61,8 +82,6 @@ class MessageHandlers:
                 event_bus.publish_and_wait(add_user_event),
                 event_bus.publish_and_wait(add_membership_event),
             )
-
-            await session.flush()
             logger.debug("All events published")
 
     @property

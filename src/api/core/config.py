@@ -1,9 +1,9 @@
-from pathlib import Path
 from typing import Any
 
 from pydantic import model_validator
 
-from src import BaseConfig, BaseStorageConfig, MissingCredentialsError
+from src.shared.base import MissingCredentialsError
+from src.shared.config import BaseConfig
 
 
 class ApiConfig(BaseConfig):
@@ -19,18 +19,4 @@ class ApiConfig(BaseConfig):
         return values
 
 
-class ApiStorageConfig(BaseStorageConfig):
-    @property
-    def storage_path(self) -> Path:
-        return Path("src/api/storage")
-
-    @property
-    def db_path(self) -> Path:
-        return self.storage_path / "database.db"
-
-    class Config(BaseStorageConfig.Config):
-        env_prefix = "MINIAPPS_BACKEND_"
-
-
-api_storage_config = ApiStorageConfig()
 api_config = ApiConfig()

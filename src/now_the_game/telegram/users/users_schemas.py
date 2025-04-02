@@ -10,9 +10,10 @@ from pyrogram.types import Message, User
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
-from src import BaseSchema, EventPayload
 from src.now_the_game.telegram.telegram_interfaces import IUserEvent
+from src.shared.base import BaseSchema
 from src.shared.event_registry import UserTopics
+from src.shared.events import EventPayload
 
 """
 MODELS

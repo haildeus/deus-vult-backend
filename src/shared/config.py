@@ -1,7 +1,6 @@
 import logging
-from abc import ABC, abstractmethod
+from abc import ABC
 from enum import Enum
-from pathlib import Path
 
 from pydantic_settings import BaseSettings
 
@@ -18,20 +17,20 @@ class BaseConfig(BaseSettings, ABC):
         env_file = ".env"
 
 
-class BaseStorageConfig(BaseConfig, ABC):
-    """Abstract base class for storage configuration settings"""
+class PostgresConfig(BaseConfig):
+    user: str = "postgres"
+    password: str = "postgres"
+    host: str = "localhost"
+    port: int = 5432
+
+    class Config(BaseConfig.Config):
+        env_prefix = "POSTGRES_"
 
     @property
-    @abstractmethod
-    def storage_path(self) -> Path:
-        """Storage path"""
-        pass
-
-    @property
-    @abstractmethod
-    def db_path(self) -> Path:
-        """Database path"""
-        pass
+    def db_url(self) -> str:
+        return (
+            f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}"
+        )
 
 
 """

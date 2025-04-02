@@ -60,6 +60,11 @@ class EventBusInterface(ABC):
         """Register methods decorated with @subscribe from an object."""
         pass
 
+    @abstractmethod
+    async def request(self, event: Event, timeout: float = 5.0) -> Any:
+        """Send a request event, return the result"""
+        pass
+
 
 class EventBus(EventBusInterface):
     def __init__(self):
@@ -185,9 +190,6 @@ class EventBus(EventBusInterface):
         for _, method in getmembers(obj, predicate=ismethod):
             if hasattr(method, "_subscribed_topic"):
                 topic = getattr(method, "_subscribed_topic")
-                # Type ignore needed as EventBus.subscribe_to_topic expects specific Callable type,
-                # but decorated instance methods have 'self'.
-                # The runtime logic correctly handles this.
                 self.subscribe_to_topic(topic, method)  # type: ignore
                 logger.debug(
                     f"Subscribed {method.__name__} from {obj.__class__.__name__} to topic {topic}"
@@ -199,7 +201,3 @@ def get_event_bus(config_obj: SharedConfig) -> EventBus | EventBusInterface:
         return EventBus()
     else:
         raise ValueError(f"Unsupported event bus type: {config_obj.event_bus}")
-
-
-# singleton
-event_bus = EventBus()
