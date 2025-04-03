@@ -2,9 +2,17 @@ import pkgutil
 from pathlib import Path
 
 from dependency_injector import containers, providers
+from pyrogram.client import Client
 
 from src.api.craft.elements.elements_service import ElementsService
 from src.api.craft.recipes.recipes_service import RecipesService
+from src.now_the_game.telegram.chats.chats_service import ChatsService
+from src.now_the_game.telegram.client.client_config import TelegramConfig
+from src.now_the_game.telegram.client.client_object import TelegramBot
+from src.now_the_game.telegram.memberships.memberships_service import MembershipsService
+from src.now_the_game.telegram.messages.messages_service import MessagesService
+from src.now_the_game.telegram.polls.polls_service import PollsService
+from src.now_the_game.telegram.users.users_service import UsersService
 from src.shared.config import PostgresConfig
 from src.shared.database import Database
 from src.shared.event_bus import EventBus
@@ -14,6 +22,7 @@ from src.shared.uow import UnitOfWork
 
 
 class Container(containers.DeclarativeContainer):
+    # --- DATABASE ---
     postgres_config = providers.Factory(
         PostgresConfig,
     )
@@ -35,9 +44,24 @@ class Container(containers.DeclarativeContainer):
     # -- Event Bus --
     event_bus = providers.Singleton(EventBus)
 
-    # -- Services --
+    # -- API Services --
     elements_service = providers.Singleton(ElementsService)
     recipes_service = providers.Singleton(RecipesService)
+
+    # -- Telegram --
+    telegram_config = providers.Factory(TelegramConfig)
+    telegram_object = providers.Singleton(TelegramBot, config=telegram_config)
+    telegram_client = providers.Factory[Client](
+        lambda telegram_bot: telegram_bot.get_client(),  # type: ignore
+        telegram_bot=telegram_object,
+    )
+
+    # -- Telegram Services --
+    chats_service = providers.Singleton(ChatsService)
+    memberships_service = providers.Singleton(MembershipsService)
+    messages_service = providers.Singleton(MessagesService)
+    polls_service = providers.Singleton(PollsService)
+    users_service = providers.Singleton(UsersService)
 
 
 def find_modules_in_packages(packages_paths: list[str]) -> list[str]:

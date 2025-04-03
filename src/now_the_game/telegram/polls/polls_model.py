@@ -3,7 +3,6 @@ from typing import overload
 from pyrogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src import BaseModel, OverloadParametersError
 from src.now_the_game import logger
 from src.now_the_game.telegram.polls.polls_schemas import (
     PollBase,
@@ -11,6 +10,7 @@ from src.now_the_game.telegram.polls.polls_schemas import (
     PollOptionTable,
     PollTable,
 )
+from src.shared.base import BaseModel, OverloadParametersError
 
 
 class PollModel(BaseModel[PollTable]):

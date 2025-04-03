@@ -7,7 +7,6 @@ from enum import Enum
 
 from pyrogram.client import Client
 from pyrogram.types import Message
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 from src.now_the_game import logger
@@ -32,7 +31,6 @@ MODELS
 class AddMessagePayload(EventPayload):
     client: Client
     message: Message
-    db_session: AsyncSession
 
 
 """

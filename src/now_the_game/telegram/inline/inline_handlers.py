@@ -8,8 +8,8 @@ from src.now_the_game import logger
 
 
 class InlineHandlers:
-    def __init__(self, client: Client):
-        self.client = client
+    def __init__(self):
+        pass
 
     async def inline_query(self, client: Client, inline_query: InlineQuery) -> None:
         logger.info(f"Inline query: {inline_query}")

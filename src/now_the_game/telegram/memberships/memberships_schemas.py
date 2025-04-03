@@ -4,9 +4,7 @@ ChatMembership-specific schema definitions.
 
 from datetime import datetime
 
-from pyrogram.client import Client
 from pyrogram.types import ChatMember, ChatMemberUpdated, Message
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 from src.now_the_game import logger
@@ -22,16 +20,12 @@ MODELS
 
 
 class AddChatMembershipPayload(EventPayload):
-    client: Client
     message: Message
-    db_session: AsyncSession
 
 
 class ChangeChatMembershipPayload(EventPayload):
-    client: Client
     chat_member_updated: ChatMemberUpdated
     updated_info: ChatMember
-    db_session: AsyncSession
     new_member: bool
 
 

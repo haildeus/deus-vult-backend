@@ -1,5 +1,6 @@
 import asyncio
-from collections.abc import Callable
+from collections.abc import Callable, Coroutine
+from typing import Any
 
 from dependency_injector.wiring import Provide, inject
 from pyrogram import filters
@@ -52,36 +53,22 @@ class MessageHandlers:
             session = await uow.get_session()
 
             pyrogram_payload = {
-                "client": client,
                 "message": message,
                 "db_session": session,
             }
-            add_message_event = Event(
-                topic=MessageTopics.MESSAGE_CREATE.value,
-                payload=pyrogram_payload,
-            )
 
-            add_chat_event = Event(
-                topic=ChatTopics.CHAT_CREATE.value,
-                payload=pyrogram_payload,
-            )
+            message_array = [
+                MessageTopics.MESSAGE_CREATE.value,
+                ChatTopics.CHAT_CREATE.value,
+                UserTopics.USER_CREATE.value,
+                MembershipTopics.MEMBERSHIP_CREATE.value,
+            ]
+            async_tasks: list[Coroutine[Any, Any, None]] = []
 
-            add_user_event = Event(
-                topic=UserTopics.USER_CREATE.value,
-                payload=pyrogram_payload,
-            )
-
-            add_membership_event = Event(
-                topic=MembershipTopics.MEMBERSHIP_CREATE.value,
-                payload=pyrogram_payload,
-            )
-
-            await asyncio.gather(
-                event_bus.publish_and_wait(add_message_event),
-                event_bus.publish_and_wait(add_chat_event),
-                event_bus.publish_and_wait(add_user_event),
-                event_bus.publish_and_wait(add_membership_event),
-            )
+            for topic in message_array:
+                event = Event.from_dict(topic, pyrogram_payload)
+                async_tasks.append(event_bus.publish_and_wait(event))
+            await asyncio.gather(*async_tasks)
             logger.debug("All events published")
 
     @property

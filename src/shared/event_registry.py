@@ -53,6 +53,10 @@ TELEGRAM_POLL_PREFIX = f"{TELEGRAM_PREFIX}.polls"
 TELEGRAM_USER_PREFIX = f"{TELEGRAM_PREFIX}.users"
 
 
+class CallbackTopics(Enum):
+    CALLBACK_GAME_UPDATE = f"{TELEGRAM_CALLBACK_PREFIX}.game.update"
+
+
 class ChatTopics(Enum):
     CHAT_CREATE = f"{TELEGRAM_CHAT_PREFIX}.{CREATE_PREFIX}"
 

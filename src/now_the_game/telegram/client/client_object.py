@@ -19,9 +19,8 @@ class TelegramBot:
     def __init__(
         self,
         config: TelegramConfig,
-        plugins: dict[str, str | list[str]] | None = None,
     ) -> None:
-        logger.info("Initializing Telegram bot with .env config")
+        logger.debug("Initializing Telegram bot with .env config")
         self.data = TelegramBotData()
         self.api_token = config.bot_token
         self.client = Client(
@@ -30,13 +29,12 @@ class TelegramBot:
             api_hash=config.api_hash,
             bot_token=config.bot_token,
             workdir=config.bot_session_dir,
-            plugins=plugins,
         )
-        logger.info("Client object initialized")
+        logger.debug("Client object initialized")
 
     async def _fill_session_data(self):
         await self.data.fill_from_client(self.client)
-        logger.info("Filled session data")
+        logger.debug("Filled session data")
 
     async def _setup_client(self):
         self.client.set_parse_mode(ParseMode.HTML)
@@ -47,12 +45,12 @@ class TelegramBot:
     def get_data(self):
         return self.data
 
-    def get_client(self):
+    def get_client(self) -> Client:
         return self.client
 
     def change_status(self, status: TelegramBotStatus):
         self.status = status
-        logger.info(f"Client status: {self.status.value}")
+        logger.debug(f"Client status: {self.status.value}")
 
     async def register_handlers(self, handlers: list[Handler]):
         for handler in handlers:
@@ -63,10 +61,10 @@ class TelegramBot:
         self, blocking: bool = False, handlers: list[Handler] | None = None
     ):
         await self.client.start()
-        logger.info("Client started")
+        logger.debug("Client started")
         await self._fill_session_data()
         await self._setup_client()
-        logger.info("Client setup complete")
+        logger.debug("Client setup complete")
         self.change_status(TelegramBotStatus.RUNNING)
 
         if handlers:

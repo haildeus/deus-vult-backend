@@ -35,14 +35,38 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
         raise e
+
+    # --- Telegram Initialization ---
+    telegram_object = container.telegram_object()
+    try:
+        await telegram_object.start()
+    except Exception as e:
+        logger.error(f"Error initializing telegram: {e}")
+        raise e
+
     # --- Service Initialization ---
     try:
-        subscriber_services = [
+        logger.debug("Initializing services")
+        # -- API Services --
+        api_services = [
             container.elements_service(),
             container.recipes_service(),
         ]
-        for service in subscriber_services:
+        for service in api_services:
             event_bus_instance.register_subscribers_from(service)
+
+        # -- Telegram Services --
+        telegram_services = [
+            container.chats_service(),
+            container.memberships_service(),
+            container.messages_service(),
+            container.polls_service(),
+            container.users_service(),
+        ]
+        for service in telegram_services:
+            event_bus_instance.register_subscribers_from(service)
+        logger.debug("Services initialized")
+
     except Exception as e:
         logger.error(f"Error initializing services: {e}")
         raise e

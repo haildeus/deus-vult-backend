@@ -5,9 +5,7 @@ This module re-exports the User-related schemas from the central schema module.
 
 from typing import Any
 
-from pyrogram.client import Client
 from pyrogram.types import Message, User
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 from src.now_the_game.telegram.telegram_interfaces import IUserEvent
@@ -21,9 +19,7 @@ MODELS
 
 
 class AddUserPayload(EventPayload):
-    client: Client
     user: User
-    db_session: AsyncSession
 
 
 """

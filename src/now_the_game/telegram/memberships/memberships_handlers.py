@@ -1,4 +1,6 @@
-from collections.abc import Callable
+import asyncio
+from collections.abc import Callable, Coroutine
+from typing import Any
 
 from dependency_injector.wiring import Provide, inject
 from pyrogram import filters
@@ -47,53 +49,39 @@ class ChatMembershipHandlers:
 
         async with uow.start():
             shared_session = await uow.get_session()
-            change_membership_event_payload = {
-                "client": client,
-                "chat_member_updated": chat_member_updated,
-                "updated_info": updated_info,
-                "db_session": shared_session,
-                "new_member": new_member,
-            }
-            change_membership_event = Event(
-                topic=MembershipTopics.MEMBERSHIP_UPDATE.value,
-                payload=change_membership_event_payload,
+
+            change_membership_event = Event.from_dict(
+                MembershipTopics.MEMBERSHIP_UPDATE.value,
+                {
+                    "chat_member_updated": chat_member_updated,
+                    "updated_info": updated_info,
+                    "new_member": new_member,
+                },
             )
 
-            add_actor_user_event_payload = {
-                "client": client,
-                "user": actor_user,
-                "db_session": shared_session,
-            }
-            add_actor_user_event = Event(
-                topic=UserTopics.USER_CREATE.value,
-                payload=add_actor_user_event_payload,
+            add_actor_user_event = Event.from_dict(
+                UserTopics.USER_CREATE.value,
+                {"user": actor_user},
             )
 
-            add_target_user_event_payload = {
-                "client": client,
-                "user": target_user,
-                "db_session": shared_session,
-            }
-            add_target_user_event = Event(
-                topic=UserTopics.USER_CREATE.value,
-                payload=add_target_user_event_payload,
+            add_target_user_event = Event.from_dict(
+                UserTopics.USER_CREATE.value,
+                {"user": target_user},
             )
 
-            add_chat_event_payload = {
-                "client": client,
-                "message": chat_member_updated,
-                "db_session": shared_session,
-            }
-            add_chat_event = Event(
-                topic=ChatTopics.CHAT_CREATE.value,
-                payload=add_chat_event_payload,
+            add_chat_event = Event.from_dict(
+                ChatTopics.CHAT_CREATE.value,
+                {"message": chat_member_updated},
             )
 
             # Publish the event and wait for all handlers to complete
-            await event_bus.publish_and_wait(change_membership_event)
-            await event_bus.publish_and_wait(add_actor_user_event)
-            await event_bus.publish_and_wait(add_target_user_event)
-            await event_bus.publish_and_wait(add_chat_event)
+            async_tasks: list[Coroutine[Any, Any, None]] = [
+                event_bus.publish_and_wait(change_membership_event),
+                event_bus.publish_and_wait(add_actor_user_event),
+                event_bus.publish_and_wait(add_target_user_event),
+                event_bus.publish_and_wait(add_chat_event),
+            ]
+            await asyncio.gather(*async_tasks)
 
             logger.debug("All subscribers completed, flushing session")
             await shared_session.flush()

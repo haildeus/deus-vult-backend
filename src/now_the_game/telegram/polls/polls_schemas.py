@@ -2,7 +2,6 @@ from datetime import datetime
 from enum import Enum
 
 from pyrogram.types import Message, PollOption
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
@@ -23,7 +22,6 @@ MODELS
 
 
 class SendPollEventPayload(EventPayload):
-    db_session: AsyncSession
     chat_id: int | str
     question: str
     options: list[str]

@@ -7,10 +7,8 @@ from enum import Enum
 from typing import Any
 
 from pydantic import model_validator
-from pyrogram.client import Client
 from pyrogram.enums import ChatType as PyrogramChatType
 from pyrogram.types import ChatMemberUpdated, Message
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 from src.now_the_game import logger
@@ -33,9 +31,7 @@ MODELS
 
 
 class AddChatEventPayload(EventPayload):
-    client: Client
     message: Message | ChatMemberUpdated
-    db_session: AsyncSession
 
 
 """

@@ -8,8 +8,8 @@ from src.now_the_game import logger
 
 
 class CallbackHandlers:
-    def __init__(self, client: Client):
-        self.client = client
+    def __init__(self):
+        pass
 
     async def callback_query(
         self, client: Client, callback_query: CallbackQuery
