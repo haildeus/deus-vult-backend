@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import model_validator
+from pydantic import BaseModel, model_validator
 from sqlmodel import Field
 
 from src.api.craft.craft_interfaces import ICraftElementEvent
@@ -78,6 +78,15 @@ class FetchElementEventResponse(ICraftElementEvent):
     payload: FetchElementResponsePayload  # type: ignore
 
 
+class CombineElementsEvent(ICraftElementEvent):
+    topic: str = ElementTopics.ELEMENT_COMBINATION.value
+    payload: "ElementInput"  # type: ignore
+
+
+class CombineElementsEventResponse(ICraftElementEvent):
+    topic: str = ElementTopics.ELEMENT_COMBINATION_RESPONSE.value
+    payload: "ElementOutput"  # type: ignore
+
 """
 TABLES
 """
@@ -90,3 +99,17 @@ class ElementBase(BaseSchema):
 
 class ElementTable(ElementBase, table=True):
     __tablename__ = "elements"  # type: ignore
+
+
+"""
+AGENTIC MODELS
+"""
+
+
+class ElementInput(EventPayload):
+    element_a: Element
+    element_b: Element
+
+
+class ElementOutput(EventPayload):
+    result: Element

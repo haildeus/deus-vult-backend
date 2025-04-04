@@ -20,8 +20,6 @@ class ElementsService(BaseService):
         super().__init__()
         self.model = element_model
 
-    @EventBus.subscribe(ElementTopics.ELEMENT_CREATE.value)
-    @logger_wrapper.log_debug
     async def on_create_element(self, event: Event) -> None:
         if not isinstance(event.payload, CreateElementPayload):
             payload = CreateElementPayload(**event.payload)  # type: ignore

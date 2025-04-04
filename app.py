@@ -60,13 +60,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             container.messages_service(),
             container.polls_service(),
             container.users_service(),
+            container.elements_agent(),
         ]
         for service in telegram_services:
             event_bus_instance.register_subscribers_from(service)
         logger.debug("Services initialized")
 
-        # -- LLM Provider --
-        container.model()
 
     except Exception as e:
         logger.error(f"Error initializing services: {e}")

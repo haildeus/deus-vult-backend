@@ -118,6 +118,9 @@ class ProviderBase(ABC):
         """Pydantic LLM model"""
         pass
 
+    def get_model(self) -> Model:
+        return self.model
+
     def __init__(self, config: ProviderConfigBase):
         self.config = config
         self._validate_credentials()

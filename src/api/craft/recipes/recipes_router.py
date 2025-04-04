@@ -21,6 +21,7 @@ recipes_router = APIRouter()
     name="Get recipes",
     response_model=SuccessResponse,
     status_code=200,
+    tags=["Recipes"],
 )
 @inject
 @logger_wrapper.log_debug
@@ -59,6 +60,7 @@ async def get_recipes(
     name="Create a new recipe",
     response_model=SuccessResponse,
     status_code=201,
+    tags=["Recipes"],
 )
 @inject
 @logger_wrapper.log_debug

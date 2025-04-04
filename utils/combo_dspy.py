@@ -8,7 +8,7 @@ from typing import Any
 
 import dspy  # type: ignore
 from dspy.evaluate import Evaluate  # type: ignore
-from dspy.teleprompt import BootstrapFewShotWithRandomSearch  # type: ignore
+from dspy.teleprompt import BootstrapFewShot  # type: ignore
 from jsonschema import ValidationError
 from pydantic import BaseModel, Field
 
@@ -220,15 +220,13 @@ OPTIMIZATION
 """
 
 boostrapping_config = {
-    "max_bootstrapped_demos": 4,  # Max demos per prompt
-    "max_labeled_demos": 4,  # Max labeled examples to consider for demos
-    "num_candidate_programs": 10,  # Number of prompt variations to try
-    "num_threads": 4,  # Parallel evaluations
+    "max_bootstrapped_demos": 4,
+    "max_labeled_demos": 4,
 }
 
 print("---Initializing fewshot optimizer with COMBINED metric---")
 # Use the new, more robust metric
-fewshot_optimizer = BootstrapFewShotWithRandomSearch(
+fewshot_optimizer = BootstrapFewShot(
     metric=combined_metric,  # Use the new metric here
     **boostrapping_config,
 )
@@ -242,13 +240,12 @@ if not testset:
 else:
     effective_valset = testset
 
-combine_elements_program = dspy.ChainOfThought(GenerateCombinationSignature)
+combine_elements_program = dspy.Predict(GenerateCombinationSignature)
 
 print("---Running fewshot optimizer---")
 optimized_program = fewshot_optimizer.compile(  # type: ignore
     student=combine_elements_program,
     trainset=trainset,
-    valset=effective_valset,
 )
 print("---Fewshot optimizer finished---")
 """
@@ -288,6 +285,6 @@ else:
 SAVE
 """
 print("---Saving optimized program---")
-save_path = "optimized_combo_program_v2.json"
+save_path = "utils/optimized_combo_program.json"
 optimized_program.save(save_path)
 print(f"Optimized program saved to {save_path}")

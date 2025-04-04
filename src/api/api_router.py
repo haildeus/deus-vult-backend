@@ -12,7 +12,7 @@ for router in imported_routers:
     api_router.include_router(router)
 
 
-@api_router.get("/ping")
+@api_router.get("/ping", tags=["Health Check"])
 async def ping():
     """Health check endpoint for VMs"""
     return {"message": "pong"}
