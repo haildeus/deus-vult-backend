@@ -1,7 +1,6 @@
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-import uvloop
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -16,7 +15,6 @@ from src.shared.logging import logger
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("Starting up the application")
-    uvloop.install()
 
     # --- Container Initialization ---
     container: Container = create_container()
@@ -29,9 +27,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     db_instance = container.db()
     try:
         # Metadata initialization
-        get_craft_registry()
-        get_telegram_registry()
-        await db_instance.initialize()
+        await get_craft_registry()
+        await get_telegram_registry()
+        await db_instance.create_all()
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
         raise e
@@ -66,6 +64,9 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         for service in telegram_services:
             event_bus_instance.register_subscribers_from(service)
         logger.debug("Services initialized")
+
+        # -- LLM Provider --
+        container.model()
 
     except Exception as e:
         logger.error(f"Error initializing services: {e}")

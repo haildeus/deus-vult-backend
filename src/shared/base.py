@@ -7,7 +7,6 @@ from sqlalchemy import delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field, SQLModel, col, exists, select
 
-from src.shared.database import metadata
 from src.shared.logging import logger
 
 T = TypeVar("T", bound="BaseSchema")
@@ -66,9 +65,6 @@ class BaseSchema(SQLModel):
 
     created_at: datetime = Field(default_factory=datetime.now)
     updated_at: datetime = Field(default_factory=datetime.now)
-
-    # We need this to set shared metadata for all models
-    metadata = metadata
 
 
 class BaseService:

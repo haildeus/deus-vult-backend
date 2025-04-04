@@ -156,8 +156,7 @@ dmypy.json
 
 ### Local testing ###
 test.py
-testing_cpa.py
-testing_db.py
+run.py
 # End of https://www.toptal.com/developers/gitignore/api/vscode,python,now
 
 ### Pandas ###
@@ -168,16 +167,12 @@ testing_db.py
 ideas.md
 planning.md
 
-
-.idea/
-### Elastic Beanstalk Files ###
-.elasticbeanstalk/*
-!.elasticbeanstalk/*.cfg.yml
-!.elasticbeanstalk/*.global.yml
-
 ### SQLite ###
 *.db
 *.db-journal
 
 ### Session files ###
 *.session
+
+### Deus Vult Misc ###
+data/*

@@ -1,0 +1,252 @@
+[
+    {
+      "input_a": { "name": "Fire", "emoji": "🔥" },
+      "input_b": { "name": "Water", "emoji": "💧" },
+      "result": { "name": "Steam", "emoji": "💨" }
+    },
+    {
+      "input_a": { "name": "Earth", "emoji": "🌍" },
+      "input_b": { "name": "Water", "emoji": "💧" },
+      "result": { "name": "Mud", "emoji": "💩" }
+    },
+    {
+      "input_a": { "name": "Air", "emoji": "💨" },
+      "input_b": { "name": "Stone", "emoji": "🪨" },
+      "result": { "name": "Sand", "emoji": "🏖️" }
+    },
+    {
+      "input_a": { "name": "Plant", "emoji": "🌱" },
+      "input_b": { "name": "Fire", "emoji": "🔥" },
+      "result": { "name": "Ash", "emoji": "〰️" }
+    },
+    {
+      "input_a": { "name": "Fire", "emoji": "🔥" },
+      "input_b": { "name": "Earth", "emoji": "🌍" },
+      "result": { "name": "Lava", "emoji": "🌋" }
+    },
+    {
+      "input_a": { "name": "Water", "emoji": "💧" },
+      "input_b": { "name": "Air", "emoji": "💨" },
+      "result": { "name": "Cloud", "emoji": "☁️" }
+    },
+    {
+      "input_a": { "name": "Earth", "emoji": "🌍" },
+      "input_b": { "name": "Air", "emoji": "💨" },
+      "result": { "name": "Dust", "emoji": "🌫️" }
+    },
+    {
+      "input_a": { "name": "Plant", "emoji": "🌱" },
+      "input_b": { "name": "Water", "emoji": "💧" },
+      "result": { "name": "Swamp", "emoji": "🐊" }
+    },
+    {
+      "input_a": { "name": "Plant", "emoji": "🌱" },
+      "input_b": { "name": "Earth", "emoji": "🌍" },
+      "result": { "name": "Tree", "emoji": "🌳" }
+    },
+    {
+      "input_a": { "name": "Fire", "emoji": "🔥" },
+      "input_b": { "name": "Stone", "emoji": "🪨" },
+      "result": { "name": "Metal", "emoji": "⚙️" }
+    },
+    {
+      "input_a": { "name": "Water", "emoji": "💧" },
+      "input_b": { "name": "Stone", "emoji": "🪨" },
+      "result": { "name": "Clay", "emoji": "🏺" }
+    },
+    {
+      "input_a": { "name": "Air", "emoji": "💨" },
+      "input_b": { "name": "Plant", "emoji": "🌱" },
+      "result": { "name": "Pollen", "emoji": "🌼" }
+    },
+    {
+      "input_a": { "name": "Metal", "emoji": "⚙️" },
+      "input_b": { "name": "Fire", "emoji": "🔥" },
+      "result": { "name": "Sword", "emoji": "⚔️" }
+    },
+    {
+      "input_a": { "name": "Metal", "emoji": "⚙️" },
+      "input_b": { "name": "Water", "emoji": "💧" },
+      "result": { "name": "Rust", "emoji": "🔩" }
+    },
+    {
+      "input_a": { "name": "Metal", "emoji": "⚙️" },
+      "input_b": { "name": "Earth", "emoji": "🌍" },
+      "result": { "name": "Ore", "emoji": "⛏️" }
+    },
+    {
+      "input_a": { "name": "Metal", "emoji": "⚙️" },
+      "input_b": { "name": "Air", "emoji": "💨" },
+      "result": { "name": "Sound", "emoji": "🔔" }
+    },
+    {
+      "input_a": { "name": "Life", "emoji": "🧬" },
+      "input_b": { "name": "Earth", "emoji": "🌍" },
+      "result": { "name": "Human", "emoji": "👤" }
+    },
+    {
+      "input_a": { "name": "Life", "emoji": "🧬" },
+      "input_b": { "name": "Water", "emoji": "💧" },
+      "result": { "name": "Fish", "emoji": "🐠" }
+    },
+    {
+      "input_a": { "name": "Life", "emoji": "🧬" },
+      "input_b": { "name": "Fire", "emoji": "🔥" },
+      "result": { "name": "Phoenix", "emoji": "🔥" }
+    },
+    {
+      "input_a": { "name": "Life", "emoji": "🧬" },
+      "input_b": { "name": "Air", "emoji": "💨" },
+      "result": { "name": "Bird", "emoji": "🐦" }
+    },
+    {
+      "input_a": { "name": "Light", "emoji": "✨" },
+      "input_b": { "name": "Darkness", "emoji": "🌑" },
+      "result": { "name": "Twilight", "emoji": "🌆" }
+    },
+    {
+      "input_a": { "name": "Light", "emoji": "✨" },
+      "input_b": { "name": "Water", "emoji": "💧" },
+      "result": { "name": "Rainbow", "emoji": "🌈" }
+    },
+    {
+      "input_a": { "name": "Light", "emoji": "✨" },
+      "input_b": { "name": "Stone", "emoji": "🪨" },
+      "result": { "name": "Crystal", "emoji": "💎" }
+    },
+    {
+      "input_a": { "name": "Darkness", "emoji": "🌑" },
+      "input_b": { "name": "Earth", "emoji": "🌍" },
+      "result": { "name": "Cave", "emoji": "🕳️" }
+    },
+    {
+      "input_a": { "name": "Darkness", "emoji": "🌑" },
+      "input_b": { "name": "Fire", "emoji": "🔥" },
+      "result": { "name": "Shadow", "emoji": "👤" }
+    },
+    {
+      "input_a": { "name": "Magic", "emoji": "🪄" },
+      "input_b": { "name": "Stone", "emoji": "🪨" },
+      "result": { "name": "Rune", "emoji": "📜" }
+    },
+    {
+      "input_a": { "name": "Magic", "emoji": "🪄" },
+      "input_b": { "name": "Plant", "emoji": "🌱" },
+      "result": { "name": "Potion", "emoji": "🧪" }
+    },
+    {
+      "input_a": { "name": "Magic", "emoji": "🪄" },
+      "input_b": { "name": "Fire", "emoji": "🔥" },
+      "result": { "name": "Spell", "emoji": "✨" }
+    },
+    {
+      "input_a": { "name": "Time", "emoji": "⏳" },
+      "input_b": { "name": "Stone", "emoji": "🪨" },
+      "result": { "name": "Fossil", "emoji": "🦴" }
+    },
+    {
+      "input_a": { "name": "Time", "emoji": "⏳" },
+      "input_b": { "name": "Life", "emoji": "🧬" },
+      "result": { "name": "Age", "emoji": "👴" }
+    },
+    {
+      "input_a": { "name": "Electricity", "emoji": "⚡" },
+      "input_b": { "name": "Water", "emoji": "💧" },
+      "result": { "name": "Storm", "emoji": "⛈️" }
+    },
+    {
+      "input_a": { "name": "Electricity", "emoji": "⚡" },
+      "input_b": { "name": "Metal", "emoji": "⚙️" },
+      "result": { "name": "Computer", "emoji": "💻" }
+    },
+    {
+      "input_a": { "name": "Ice", "emoji": "❄️" },
+      "input_b": { "name": "Fire", "emoji": "🔥" },
+      "result": { "name": "Water", "emoji": "💧" }
+    },
+    {
+      "input_a": { "name": "Ice", "emoji": "❄️" },
+      "input_b": { "name": "Earth", "emoji": "🌍" },
+      "result": { "name": "Glacier", "emoji": "🧊" }
+    },
+    {
+      "input_a": { "name": "Sand", "emoji": "🏖️" },
+      "input_b": { "name": "Fire", "emoji": "🔥" },
+      "result": { "name": "Glass", "emoji": "🔍" }
+    },
+    {
+      "input_a": { "name": "Sand", "emoji": "🏖️" },
+      "input_b": { "name": "Water", "emoji": "💧" },
+      "result": { "name": "Beach", "emoji": "🏝️" }
+    },
+    {
+      "input_a": { "name": "Wood", "emoji": "🪵" },
+      "input_b": { "name": "Fire", "emoji": "🔥" },
+      "result": { "name": "Campfire", "emoji": "🔥" }
+    },
+    {
+      "input_a": { "name": "Wood", "emoji": "🪵" },
+      "input_b": { "name": "Water", "emoji": "💧" },
+      "result": { "name": "Boat", "emoji": "🛶" }
+    },
+    {
+      "input_a": { "name": "Wood", "emoji": "🪵" },
+      "input_b": { "name": "Earth", "emoji": "🌍" },
+      "result": { "name": "Forest", "emoji": "🌲" }
+    },
+    {
+      "input_a": { "name": "Electricity", "emoji": "⚡" },
+      "input_b": { "name": "Air", "emoji": "💨" },
+      "result": { "name": "Lightning", "emoji": "⚡" }
+    },
+    {
+      "input_a": { "name": "Human", "emoji": "👤" },
+      "input_b": { "name": "Metal", "emoji": "⚙️" },
+      "result": { "name": "Robot", "emoji": "🤖" }
+    },
+    {
+      "input_a": { "name": "Human", "emoji": "👤" },
+      "input_b": { "name": "Life", "emoji": "🧬" },
+      "result": { "name": "Love", "emoji": "❤️" }
+    },
+    {
+      "input_a": { "name": "Time", "emoji": "⏳" },
+      "input_b": { "name": "Sand", "emoji": "🏖️" },
+      "result": { "name": "Hourglass", "emoji": "⏳" }
+    },
+    {
+      "input_a": { "name": "Magic", "emoji": "🪄" },
+      "input_b": { "name": "Life", "emoji": "🧬" },
+      "result": { "name": "Chimera", "emoji": "🦁🐍🐐" }
+    },
+    {
+      "input_a": { "name": "Light", "emoji": "✨" },
+      "input_b": { "name": "Metal", "emoji": "⚙️" },
+      "result": { "name": "Mirror", "emoji": "🪞" }
+    },
+    {
+      "input_a": { "name": "Fire", "emoji": "🔥" },
+      "input_b": { "name": "Fire", "emoji": "🔥" },
+      "result": { "name": "Sun", "emoji": "☀️" }
+    },
+    {
+      "input_a": { "name": "Water", "emoji": "💧" },
+      "input_b": { "name": "Water", "emoji": "💧" },
+      "result": { "name": "Ocean", "emoji": "🌊" }
+    },
+    {
+      "input_a": { "name": "Air", "emoji": "💨" },
+      "input_b": { "name": "Air", "emoji": "💨" },
+      "result": { "name": "Wind", "emoji": "🌬️" }
+    },
+    {
+      "input_a": { "name": "Stone", "emoji": "🪨" },
+      "input_b": { "name": "Stone", "emoji": "🪨" },
+      "result": { "name": "Mountain", "emoji": "⛰️" }
+    },
+    {
+      "input_a": { "name": "Magic", "emoji": "🪄" },
+      "input_b": { "name": "Time", "emoji": "⏳" },
+      "result": { "name": "Paradox", "emoji": "❓" }
+    }
+  ]

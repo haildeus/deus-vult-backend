@@ -1,4 +1,4 @@
-from src import Event
+from src.shared.events import Event
 
 
 class IAgentEvent(Event):

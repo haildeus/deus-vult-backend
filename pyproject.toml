@@ -1,7 +1,7 @@
 [project]
-name = "now-the-game"
+name = "deus-vult"
 version = "0.1.0"
-description = "'Now the Game' MVP Telegram bot"
+description = "'Deus Vult' Telegram bot"
 readme = "README.md"
 authors = [
     { name = "Chris Cherniakov", email = "taequn@gmail.com" }
@@ -31,11 +31,12 @@ dependencies = [
     "sqlmodel>=0.0.24",
     "starlette>=0.46.1",
     "tgcrypto>=1.2.5",
+    "uvicorn>=0.34.0",
     "uvloop>=0.21.0",
 ]
 
 [project.scripts]
-now-the-game = "now_the_game:main"
+deus-vult = "app:app"
 
 [build-system]
 requires = ["hatchling"]

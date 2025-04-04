@@ -56,5 +56,5 @@ RecipeTable.result = Relationship(
 )
 
 
-def get_craft_registry():
+async def get_craft_registry():
     return SQLModel.metadata

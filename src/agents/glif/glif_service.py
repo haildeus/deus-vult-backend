@@ -5,10 +5,12 @@ import requests
 from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings
 
-from src import BaseService, Event, EventPayload, event_bus
+from src.agents.agents_interfaces import IAgentEvent
 from src.now_the_game import logger
-from src.now_the_game.agents.agents_interfaces import IAgentEvent
+from src.shared.base import BaseService
+from src.shared.event_bus import EventBus
 from src.shared.event_registry import GlifTopics
+from src.shared.events import Event, EventPayload
 
 """
 ENUMS
@@ -95,7 +97,7 @@ class GlifService(BaseService):
     def __init__(self):
         super().__init__()
 
-    @event_bus.subscribe(GlifTopics.QUERY.value)
+    @EventBus.subscribe(GlifTopics.QUERY.value)
     async def on_glif_query(self, event: Event) -> GlifResponseEvent:
         if not isinstance(event.payload, GlifQueryPayload):
             payload = GlifQueryPayload(**event.payload)  # type: ignore

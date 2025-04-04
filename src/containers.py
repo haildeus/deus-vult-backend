@@ -13,6 +13,7 @@ from src.now_the_game.telegram.memberships.memberships_service import Membership
 from src.now_the_game.telegram.messages.messages_service import MessagesService
 from src.now_the_game.telegram.polls.polls_service import PollsService
 from src.now_the_game.telegram.users.users_service import UsersService
+from src.shared.base_llm import VertexConfig, VertexLLM
 from src.shared.config import PostgresConfig
 from src.shared.database import Database
 from src.shared.event_bus import EventBus
@@ -63,6 +64,10 @@ class Container(containers.DeclarativeContainer):
     polls_service = providers.Singleton(PollsService)
     users_service = providers.Singleton(UsersService)
 
+    # -- LLM Provider --
+    model_config = providers.Factory(VertexConfig)
+    model = providers.Singleton(VertexLLM, config=model_config)
+
 
 def find_modules_in_packages(packages_paths: list[str]) -> list[str]:
     """
@@ -75,7 +80,7 @@ def find_modules_in_packages(packages_paths: list[str]) -> list[str]:
         A list of fully qualified module names found within those packages.
     """
     discovered_modules = set[str]()
-    project_root = Path(__file__).parent.parent.parent
+    project_root = Path(__file__).parent.parent
     for package_path in packages_paths:
         try:
             package_parts = package_path.split(".")
@@ -95,8 +100,13 @@ def find_modules_in_packages(packages_paths: list[str]) -> list[str]:
         except Exception as e:
             logger.warning(f"Warning: Error scanning package {package_path}: {e}")
 
-    logger.debug(f"Discovered modules for wiring: {len(list(discovered_modules))}")
-    return list(discovered_modules)
+    discovered_modules = list(discovered_modules)
+    discovered_modules_len = len(discovered_modules)
+    if discovered_modules_len == 0:
+        logger.critical(f"No modules found for wiring in {project_root}")
+    else:
+        logger.debug(f"Discovered modules for wiring: {discovered_modules_len}")
+    return discovered_modules
 
 
 def create_container() -> Container:
@@ -105,6 +115,7 @@ def create_container() -> Container:
     container = Container()
 
     packages_to_wire = [
+        "src.agents",
         "src.api",
         "src.now_the_game",
         "src.shared",

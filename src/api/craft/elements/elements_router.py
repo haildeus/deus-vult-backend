@@ -8,7 +8,7 @@ from src import Container
 from src.api import logger, logger_wrapper
 from src.api.core.dependencies import validate_init_data
 from src.api.core.interfaces import SuccessResponse
-from src.api.craft.elements.elements_schemas import CreateElement, ElementTopics
+from src.api.craft.elements.elements_schemas import Element, ElementTopics
 from src.shared.event_bus import EventBus
 from src.shared.events import Event
 from src.shared.uow import UnitOfWork
@@ -69,7 +69,7 @@ async def create_element(
     uow_factory: Annotated[
         Callable[[], UnitOfWork], Depends(Provide[Container.uow_factory])
     ],
-    element: CreateElement,
+    element: Element,
 ) -> SuccessResponse:
     """Create a new element"""
     logger.debug(f"Creating new element: {element}")

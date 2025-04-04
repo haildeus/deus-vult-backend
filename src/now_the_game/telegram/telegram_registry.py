@@ -84,5 +84,5 @@ PollOptionTable.poll = Relationship(
 )
 
 
-def get_telegram_registry():
+async def get_telegram_registry():
     return SQLModel.metadata

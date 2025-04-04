@@ -22,15 +22,14 @@ class PostgresConfig(BaseConfig):
     password: str = "postgres"
     host: str = "localhost"
     port: int = 5432
+    db_name: str = "deus-vult"
 
     class Config(BaseConfig.Config):
         env_prefix = "POSTGRES_"
 
     @property
     def db_url(self) -> str:
-        return (
-            f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}"
-        )
+        return f"postgresql+asyncpg://{self.user}:{self.password}@{self.host}:{self.port}/{self.db_name}"
 
 
 """

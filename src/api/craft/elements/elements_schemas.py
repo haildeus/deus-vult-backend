@@ -13,9 +13,21 @@ MODELS
 """
 
 
-class CreateElement(EventPayload):
-    name: str
-    emoji: str
+class Element(EventPayload):
+    """
+    Base model for an element class.
+
+    Attributes:
+        - name: The name of the element
+        - emoji: The emoji representing the element.
+    """
+
+    name: str = Field(max_length=100, description="The name of the element")
+    emoji: str = Field(max_length=10, description="The emoji representing the element")
+
+
+class CreateElement(Element):
+    pass
 
 
 class FetchElement(EventPayload):

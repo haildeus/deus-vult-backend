@@ -2,7 +2,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlmodel import MetaData, SQLModel
+from sqlmodel import SQLModel
 
 from src.shared.config import PostgresConfig
 from src.shared.logging import logger
@@ -16,6 +16,7 @@ class Database:
         self.password = db_config.password
         self.host = db_config.host
         self.port = db_config.port
+        self.db_name = db_config.db_name
 
         self.url = db_config.db_url
         self.safe_url = self.url.replace(self.password, "********")
@@ -33,6 +34,7 @@ class Database:
         self.async_session = async_sessionmaker(
             bind=self.engine, class_=AsyncSession, expire_on_commit=False
         )
+        logger.debug("Database connection initialized")
 
     def __config_check(self, config: PostgresConfig):
         try:
@@ -47,7 +49,7 @@ class Database:
             logger.error(f"Error initializing database: {e}")
             raise
 
-    async def initialize(self):
+    async def create_all(self):
         """
         Initializes the database connection and optionally creates tables.
         """
@@ -97,6 +99,3 @@ class Database:
         """Closes the database connection pool."""
         logger.info(f"Closing database connection pool for {self.safe_url}")
         await self.engine.dispose()
-
-
-metadata = MetaData()
