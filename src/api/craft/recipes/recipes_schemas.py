@@ -1,5 +1,4 @@
 from sqlalchemy import CheckConstraint, UniqueConstraint
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field
 
 from src.api.craft.craft_interfaces import ICraftElementEvent
@@ -30,11 +29,11 @@ PAYLOADS
 
 
 class CreateRecipePayload(CreateRecipe):
-    db_session: AsyncSession
+    pass
 
 
 class FetchRecipePayload(FetchRecipe):
-    db_session: AsyncSession
+    pass
 
 
 class FetchRecipeResponsePayload(EventPayload):

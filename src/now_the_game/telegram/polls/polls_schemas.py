@@ -46,8 +46,8 @@ TABLES
 
 
 class PollBase(BaseSchema):
-    chat_id: int = Field(foreign_key="chats.object_id")
-    message_id: int = Field(foreign_key="messages.object_id")
+    chat_id: int = Field(foreign_key="chats.object_id", index=True)
+    message_id: int = Field(foreign_key="messages.object_id", index=True)
     question: str = Field(min_length=1, max_length=300)
     poll_type: PollType = Field(default=PollType.POLL)
     is_anonymous: bool = Field(default=True)
@@ -56,7 +56,7 @@ class PollBase(BaseSchema):
 
 
 class PollOptionsBase(BaseSchema):
-    poll_id: int = Field(foreign_key="polls.object_id")
+    poll_id: int = Field(foreign_key="polls.object_id", index=True)
     option_text: str = Field(min_length=1, max_length=100)
     votes: int = Field(default=0, ge=0)
 

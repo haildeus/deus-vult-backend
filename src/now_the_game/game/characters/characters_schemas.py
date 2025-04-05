@@ -2,7 +2,7 @@ from enum import Enum
 
 from sqlmodel import Field
 
-from src import BaseSchema
+from src.shared.base import BaseSchema
 
 
 class SupportedClasses(Enum):
@@ -13,7 +13,7 @@ class SupportedClasses(Enum):
 
 
 class LoreBase(BaseSchema):
-    character_id: int = Field(foreign_key="characters.character_id")
+    character_id: int = Field(foreign_key="characters.character_id", index=True)
 
     name: str = Field(..., description="Name of the character")
     appearance: str = Field(..., description="Appearance of the character")
@@ -22,7 +22,7 @@ class LoreBase(BaseSchema):
 
 
 class PrimaryStatsBase(BaseSchema):
-    character_id: int = Field(foreign_key="characters.character_id")
+    character_id: int = Field(foreign_key="characters.character_id", index=True)
 
     strength: int = Field(..., description="Strength of the character", ge=0, le=30)
     perception: int = Field(..., description="Perception of the character", ge=0, le=30)
@@ -36,8 +36,8 @@ class PrimaryStatsBase(BaseSchema):
 
 
 class CharacterBase(BaseSchema):
-    chat_id: int = Field(foreign_key="chats.object_id")
-    user_id: int = Field(foreign_key="users.object_id")
+    chat_id: int = Field(foreign_key="chats.object_id", index=True)
+    user_id: int = Field(foreign_key="users.object_id", index=True)
 
 
 class CharacterTable(CharacterBase, table=True):

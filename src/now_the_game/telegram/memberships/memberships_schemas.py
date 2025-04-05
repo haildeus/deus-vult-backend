@@ -50,8 +50,8 @@ TABLES
 
 
 class ChatMembershipBase(BaseSchema):
-    user_id: int = Field(foreign_key="users.object_id", primary_key=True)
-    chat_id: int = Field(foreign_key="chats.object_id", primary_key=True)
+    user_id: int = Field(foreign_key="users.object_id", primary_key=True, index=True)
+    chat_id: int = Field(foreign_key="chats.object_id", primary_key=True, index=True)
     joined_at: datetime = Field(default=datetime.now())
 
 

@@ -1,5 +1,4 @@
 # Wednesday plan:
-- Check Google SQL connection + table creation
 - Set up service & endpoints for elements + recipe mixing
 - Create API endpoints within infinite craft endpoints
 - Pass telegram client within UoW

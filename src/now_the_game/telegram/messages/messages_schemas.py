@@ -49,8 +49,8 @@ TABLES
 
 
 class MessageBase(BaseSchema):
-    user_id: int = Field(foreign_key="users.object_id")
-    chat_id: int = Field(foreign_key="chats.object_id")
+    user_id: int = Field(foreign_key="users.object_id", index=True)
+    chat_id: int = Field(foreign_key="chats.object_id", index=True)
 
     message_type: MessageType = Field(default=MessageType.TEXT)
     content: str = Field(min_length=1, max_length=4096)

@@ -1,3 +1,6 @@
+"""
+This module contains the ElementsAgent class which is responsible for LLM-driven interactions
+"""
 from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
 

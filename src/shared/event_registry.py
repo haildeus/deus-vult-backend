@@ -105,3 +105,13 @@ class LanguageModelTopics(Enum):
 class GlifTopics(Enum):
     QUERY = f"{AGENTS_GLIF_PREFIX}.{QUERY_PREFIX}"
     RESPONSE = f"{AGENTS_GLIF_PREFIX}.{RESPONSE_PREFIX}"
+
+
+"""
+GAME
+"""
+GAME_PREFIX = "game"
+GAME_SESSION_PREFIX = f"{GAME_PREFIX}.sessions"
+GAME_CHARACTER_PREFIX = f"{GAME_PREFIX}.characters"
+GAME_LORE_PREFIX = f"{GAME_PREFIX}.lore"
+GAME_PRIMARY_STATS_PREFIX = f"{GAME_PREFIX}.primary_stats"

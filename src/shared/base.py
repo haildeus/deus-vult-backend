@@ -60,7 +60,7 @@ class OverloadParametersError(Exception):
 
 class BaseSchema(SQLModel):
     object_id: int = Field(
-        primary_key=True, default_factory=lambda: randint(1, 100000000)
+        primary_key=True, default_factory=lambda: randint(1, 100000000), index=True
     )
 
     created_at: datetime = Field(default_factory=datetime.now)

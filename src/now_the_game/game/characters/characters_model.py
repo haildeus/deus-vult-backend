@@ -3,12 +3,12 @@ from typing import overload
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from src import BaseModel
 from src.now_the_game.game.characters.characters_schemas import (
     CharacterBase,
     LoreBase,
     PrimaryStatsBase,
 )
+from src.shared.base import BaseModel
 
 
 class CharacterModel(BaseModel[CharacterBase]):
