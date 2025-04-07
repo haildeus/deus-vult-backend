@@ -15,12 +15,13 @@ from src.now_the_game.telegram.messages.messages_service import MessagesService
 from src.now_the_game.telegram.polls.polls_service import PollsService
 from src.now_the_game.telegram.users.users_service import UsersService
 from src.shared.base_llm import VertexConfig, VertexLLM
-from src.shared.config import PostgresConfig
+from src.shared.config import Logger, PostgresConfig
 from src.shared.database import Database
 from src.shared.event_bus import EventBus
-from src.shared.logging import logger
 from src.shared.types import SessionFactory
 from src.shared.uow import UnitOfWork
+
+logger = Logger("containers").logger
 
 
 class Container(containers.DeclarativeContainer):
@@ -69,7 +70,7 @@ class Container(containers.DeclarativeContainer):
     model_config = providers.Factory(VertexConfig)
     model_object = providers.Singleton(VertexLLM, config=model_config)
     elements_agent = providers.Singleton(ElementsAgent, provider=model_object)
-    
+
 
 def find_modules_in_packages(packages_paths: list[str]) -> list[str]:
     """

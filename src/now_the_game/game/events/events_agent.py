@@ -1,7 +1,6 @@
 from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
 
-from src.now_the_game import logger_wrapper
 from src.now_the_game.game.events.events_prompts import EVENTS_SYSTEM_PROMPT
 from src.now_the_game.game.events.events_schemas import EventAgentOutput
 from src.shared.base import BaseService
@@ -30,6 +29,5 @@ class EventsAgent(BaseService):
         )
 
     @EventBus.subscribe(EventTopics.EVENT_AGENT_CREATE.value)
-    @logger_wrapper.log_debug
     async def on_create_event(self, event: Event) -> None:
         pass

@@ -1,7 +1,7 @@
 from pyrogram.client import Client
 from pyrogram.types import Chat
 
-from src.now_the_game import logger, logger_wrapper
+from src.now_the_game import logger
 from src.now_the_game.telegram.users.users_model import user_model
 from src.now_the_game.telegram.users.users_schemas import (
     AddUserPayload,
@@ -20,7 +20,6 @@ class UsersService(BaseService):
         self.model = user_model
 
     @EventBus.subscribe(UserTopics.USER_CREATE.value)
-    @logger_wrapper.log_debug
     async def on_add_user(self, event: Event) -> None:
         if not isinstance(event.payload, AddUserPayload):
             payload = AddUserPayload(**event.payload)  # type: ignore

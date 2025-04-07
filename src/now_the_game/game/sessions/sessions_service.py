@@ -1,4 +1,3 @@
-from src.now_the_game import logger_wrapper
 from src.now_the_game.game.sessions.sessions_model import session_model
 from src.shared.base import BaseService
 from src.shared.event_bus import EventBus
@@ -12,11 +11,9 @@ class SessionsService(BaseService):
         self.model = session_model
 
     @EventBus.subscribe(SessionTopics.SESSION_CREATE.value)
-    @logger_wrapper.log_debug
     async def on_create_session(self, event: Event) -> None:
         pass
 
     @EventBus.subscribe(SessionTopics.SESSION_FETCH.value)
-    @logger_wrapper.log_debug
     async def on_fetch_session(self, event: Event) -> None:
         pass

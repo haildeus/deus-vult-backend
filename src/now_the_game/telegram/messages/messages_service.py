@@ -3,7 +3,7 @@ from datetime import datetime
 from pyrogram.client import Client
 from pyrogram.types import Message
 
-from src.now_the_game import logger, logger_wrapper
+from src.now_the_game import logger
 from src.now_the_game.telegram.messages.messages_model import message_model
 from src.now_the_game.telegram.messages.messages_schemas import (
     AddMessagePayload,
@@ -22,7 +22,6 @@ class MessagesService(BaseService):
         self.message_model = message_model
 
     @EventBus.subscribe(MessageTopics.MESSAGE_CREATE.value)
-    @logger_wrapper.log_debug
     async def on_add_message(self, event: Event) -> None:
         if not isinstance(event.payload, AddMessagePayload):
             payload = AddMessagePayload(**event.payload)  # type: ignore

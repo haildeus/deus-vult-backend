@@ -1,6 +1,5 @@
-from src.shared.logging import LoggerWrapper
+from src.shared.config import Logger
 
-logger_wrapper = LoggerWrapper("now-the-game")
-logger = logger_wrapper.logger
+logger = Logger("now-the-game").logger
 
 __all__ = ["logger"]

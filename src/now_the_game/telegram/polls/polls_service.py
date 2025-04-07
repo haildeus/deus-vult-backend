@@ -3,7 +3,7 @@ from datetime import datetime
 from pyrogram.client import Client
 from pyrogram.types import Message, Poll
 
-from src.now_the_game import logger, logger_wrapper
+from src.now_the_game import logger
 from src.now_the_game.telegram.polls.polls_model import poll_model, poll_option_model
 from src.now_the_game.telegram.polls.polls_schemas import (
     PollOptionTable,
@@ -24,7 +24,6 @@ class PollsService(BaseService):
         self.poll_option_model = poll_option_model
 
     @EventBus.subscribe(PollTopics.POLL_SEND.value)
-    @logger_wrapper.log_debug
     async def on_send_poll(
         self,
         event: Event,

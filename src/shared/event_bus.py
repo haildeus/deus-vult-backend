@@ -12,9 +12,10 @@ from collections.abc import Callable, Coroutine
 from inspect import getmembers, isawaitable, ismethod
 from typing import Any, TypeVar
 
-from src.shared.config import EventBusType, SharedConfig
+from src.shared.config import Logger, SharedConfig
 from src.shared.events import Event
-from src.shared.logging import logger
+
+logger = Logger("base-event-bus").logger
 
 E = TypeVar("E", bound=Event)
 R = TypeVar("R", covariant=True)  # Return type
@@ -197,7 +198,7 @@ class EventBus(EventBusInterface):
 
 
 def get_event_bus(config_obj: SharedConfig) -> EventBus | EventBusInterface:
-    if config_obj.event_bus == EventBusType.LOCAL:
+    if config_obj.event_bus == "local":
         return EventBus()
     else:
         raise ValueError(f"Unsupported event bus type: {config_obj.event_bus}")

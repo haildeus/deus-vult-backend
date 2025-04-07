@@ -1,19 +1,18 @@
 from abc import ABC, abstractmethod
 from enum import Enum
-from typing import Any
+from typing import Any, Self
 
 import google.generativeai as genai  # type: ignore
 import vertexai  # type: ignore
 import vertexai.generative_models  # type: ignore
 from google.generativeai.embedding import EmbeddingTaskType
-from pydantic import model_validator
+from pydantic import Field, model_validator
 from pydantic_ai.models import KnownModelName, Model
 from pydantic_ai.models.gemini import GeminiModel
 from pydantic_ai.providers import Provider
 from pydantic_ai.providers.google_gla import GoogleGLAProvider
 from pydantic_ai.providers.google_vertex import GoogleVertexProvider
 from pydantic_settings import BaseSettings
-from sqlmodel import Field
 from vertexai.language_models import (  # type: ignore
     TextEmbeddingInput,
     TextEmbeddingModel,
@@ -21,7 +20,22 @@ from vertexai.language_models import (  # type: ignore
 from vertexai.language_models._language_models import TextEmbedding  # type: ignore
 
 from src.shared.base import MissingCredentialsError
-from src.shared.logging import logger
+from src.shared.config import Logger
+
+logger = Logger("base_llm").logger
+
+try:
+    import google.auth
+    import google.auth.exceptions
+    from google.auth.exceptions import DefaultCredentialsError
+
+    GOOGLE_AUTH_AVAILABLE = True
+except ImportError:
+    GOOGLE_AUTH_AVAILABLE = False  # type: ignore
+    logger.warning(
+        "`google-auth` library not found. Google Cloud Project ID auto-detection will be disabled."  # noqa: E501
+    )
+
 
 """
 ENUMS
@@ -90,6 +104,61 @@ class VertexConfig(GoogleModelConfig):
 
     class Config(GoogleModelConfig.Config):
         env_prefix = "VERTEX_"
+
+    @model_validator(mode="after")
+    def _resolve_project_id(self) -> Self:
+        """
+        Attempts to auto-detect project_id if not explicitly provided via
+        VERTEX_PROJECT_ID environment variable. Raises error if required
+        and not found.
+        """
+        if self.project_id:
+            # Project ID was successfully loaded from VERTEX_PROJECT_ID env var
+            logger.info(f"Using explicitly set VERTEX_PROJECT_ID: {self.project_id}")
+            return self
+
+        if not GOOGLE_AUTH_AVAILABLE:
+            # Cannot auto-detect, and it wasn't set via env var
+            raise ValueError(
+                "VertexConfig requires project_id. "
+                "Set VERTEX_PROJECT_ID or install 'google-auth' for auto-detection."
+            )
+
+        # Attempt auto-detection using google-auth library
+        logger.info(
+            "VERTEX_PROJECT_ID not set, attempting Google Cloud auto-detection..."
+        )
+        try:
+            # google.auth.default() attempts to find credentials and project ID
+            _credentials, detected_project_id = google.auth.default()  # type: ignore
+
+            if detected_project_id:
+                print(f"Auto-detected Google Cloud Project ID: {detected_project_id}")
+                self.project_id = detected_project_id
+            else:
+                # Credentials found, but project ID was not associated
+                raise ValueError(
+                    "VertexConfig requires project_id. "
+                    "Could not auto-detect project ID. Set VERTEX_PROJECT_ID env var."
+                )
+
+        except DefaultCredentialsError as e:  # type: ignore
+            # Running locally without `gcloud auth application-default login`
+            raise ValueError(
+                "VertexConfig requires project_id. "
+                "Could not find default Google credentials for auto-detection. "
+                "Set VERTEX_PROJECT_ID or configure Application Default Credentials."
+            ) from e
+        except Exception as e:
+            raise ValueError(
+                f"Unexpected error during project ID auto-detection: {e}"
+            ) from e
+
+        # Final check - If project_id is still None here, something went wrong
+        if not self.project_id:  # type: ignore
+            raise ValueError("Failed to determine project_id for VertexConfig.")
+
+        return self  # Return the validated/modified model instance
 
 
 """

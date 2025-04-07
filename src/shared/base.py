@@ -7,7 +7,9 @@ from sqlalchemy import delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field, SQLModel, col, exists, select
 
-from src.shared.logging import logger
+from src.shared.config import Logger
+
+logger = Logger("base-components").logger
 
 T = TypeVar("T", bound="BaseSchema")
 

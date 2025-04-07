@@ -4,49 +4,41 @@ from contextlib import asynccontextmanager
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlmodel import SQLModel
 
-from src.shared.config import PostgresConfig
-from src.shared.logging import logger
+from src.shared.config import Logger, PostgresConfig
+
+logger = Logger("database").logger
 
 
 class Database:
     def __init__(self, db_config: PostgresConfig):
-        self.__config_check(db_config)
-
         self.user = db_config.user
-        self.password = db_config.password
         self.host = db_config.host
         self.port = db_config.port
         self.db_name = db_config.db_name
 
         self.url = db_config.db_url
-        self.safe_url = self.url.replace(self.password, "********")
+        self.safe_url = db_config.safe_db_url  # safe version for logging
 
-        logger.debug(f"Connecting to {self.safe_url}")
+        logger.debug(f"Attempting to connect using effective URL: {self.safe_url}")
 
-        self.engine = create_async_engine(
-            self.url,
-            echo=False,  # Change to True to see queries
-            pool_pre_ping=True,
-            pool_recycle=3600,
-            # connect_args={"ssl": "require"}, # TODO: Add ssl
-        )
-
-        self.async_session = async_sessionmaker(
-            bind=self.engine, class_=AsyncSession, expire_on_commit=False
-        )
-        logger.debug("Database connection initialized")
-
-    def __config_check(self, config: PostgresConfig):
         try:
-            assert config
-            assert config.user
-            assert config.password
-            assert config.host
-            assert config.port
-            assert config.port == 5432
-            assert config.db_url
-        except AssertionError as e:
-            logger.error(f"Error initializing database: {e}")
+            self.engine = create_async_engine(
+                self.url,
+                echo=False,
+                pool_pre_ping=True,
+                pool_recycle=3600,
+            )
+
+            self.async_session = async_sessionmaker(
+                bind=self.engine, class_=AsyncSession, expire_on_commit=False
+            )
+            logger.info(f"Async Database engine initialized for {self.safe_url}")
+        except Exception as e:
+            logger.error(
+                f"Failed to initialize database engine for {self.safe_url}: {e}",
+                exc_info=True,
+            )
+            # Consider raising the exception or handling it based on application needs
             raise
 
     async def create_all(self):

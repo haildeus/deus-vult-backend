@@ -2,7 +2,7 @@ from pyrogram.client import Client
 from pyrogram.types import Chat, ChatMember
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.now_the_game import logger, logger_wrapper
+from src.now_the_game import logger
 from src.now_the_game.telegram.chats.chats_model import chat_model
 from src.now_the_game.telegram.chats.chats_schemas import (
     AddChatEventPayload,
@@ -21,7 +21,6 @@ class ChatsService(BaseService):
         self.model = chat_model
 
     @EventBus.subscribe(ChatTopics.CHAT_CREATE.value)
-    @logger_wrapper.log_debug
     async def on_add_chat(self, event: Event) -> None:
         if not isinstance(event.payload, AddChatEventPayload):
             payload = AddChatEventPayload(**event.payload)  # type: ignore

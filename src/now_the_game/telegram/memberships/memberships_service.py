@@ -1,4 +1,4 @@
-from src.now_the_game import logger, logger_wrapper
+from src.now_the_game import logger
 from src.now_the_game.telegram.memberships.memberships_model import (
     chat_membership_model,
 )
@@ -20,7 +20,6 @@ class MembershipsService(BaseService):
         self.model = chat_membership_model
 
     @EventBus.subscribe(MembershipTopics.MEMBERSHIP_UPDATE.value)
-    @logger_wrapper.log_debug
     async def on_change_chat_membership(self, event: Event) -> None:
         if not isinstance(event.payload, ChangeChatMembershipPayload):
             payload = ChangeChatMembershipPayload(**event.payload)  # type: ignore

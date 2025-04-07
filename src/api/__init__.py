@@ -1,6 +1,5 @@
-from src.shared.logging import LoggerWrapper
+from src.shared.config import Logger
 
-logger_wrapper = LoggerWrapper("api")
-logger = logger_wrapper.logger
+logger = Logger("api").logger
 
 __all__ = ["logger"]
