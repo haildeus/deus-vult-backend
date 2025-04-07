@@ -8,6 +8,7 @@ from src import Container
 from src.api.api_router import api_router
 from src.api.craft.craft_registry import get_craft_registry
 from src.containers import create_container
+from src.now_the_game.game.game_registry import get_game_registry
 from src.now_the_game.telegram.telegram_registry import get_telegram_registry
 from src.shared.logging import logger
 
@@ -29,6 +30,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         # Metadata initialization
         await get_craft_registry()
         await get_telegram_registry()
+        await get_game_registry()
         await db_instance.create_all()
     except Exception as e:
         logger.error(f"Error initializing database: {e}")
@@ -65,7 +67,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         for service in telegram_services:
             event_bus_instance.register_subscribers_from(service)
         logger.debug("Services initialized")
-
 
     except Exception as e:
         logger.error(f"Error initializing services: {e}")

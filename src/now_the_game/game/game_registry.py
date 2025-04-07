@@ -5,7 +5,7 @@ from src.now_the_game.game.characters.characters_schemas import (
     LoreTable,
     PrimaryStatsTable,
 )
-from src.now_the_game.game.sessions.sessions_schemas import GameSessionTable
+from src.now_the_game.game.sessions.sessions_schemas import SessionTable
 
 CharacterTable.lore = Relationship(back_populates="character")
 CharacterTable.primary_stats = Relationship(back_populates="character")
@@ -14,8 +14,8 @@ LoreTable.character = Relationship(back_populates="lore")
 
 PrimaryStatsTable.character = Relationship(back_populates="primary_stats")
 
-GameSessionTable.chat = Relationship(back_populates="game_session")
+SessionTable.chat = Relationship(back_populates="game_session")
 
 
-def get_game_registry():
+async def get_game_registry():
     return SQLModel.metadata
