@@ -1,15 +1,18 @@
 """
 This module contains the ElementsAgent class which is responsible for LLM-driven interactions
 """
+
+from fastapi import HTTPException
 from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
 
-from src.api import logger, logger_wrapper
+from src.api import logger
 from src.api.craft.elements.elements_prompts import ELEMENTS_COMBINATION_SYSTEM_PROMPT
 from src.api.craft.elements.elements_schemas import (
     CombineElementsEventResponse,
+    Element,
+    ElementBaseInput,
     ElementInput,
-    ElementOutput,
 )
 from src.shared.base import BaseService
 from src.shared.base_llm import VertexLLM
@@ -28,7 +31,7 @@ class ElementsAgent(BaseService):
             name="Elements Combination Agent",
             model=self.provider.model,
             system_prompt=ELEMENTS_COMBINATION_SYSTEM_PROMPT,
-            result_type=ElementOutput,
+            result_type=Element,
             model_settings=ModelSettings(
                 temperature=0.8,
                 max_tokens=100,
@@ -37,18 +40,24 @@ class ElementsAgent(BaseService):
         )
 
     @EventBus.subscribe(ElementTopics.ELEMENT_COMBINATION.value)
-    @logger_wrapper.log_debug
     async def handle_element_combination(self, event: Event):
-        if not isinstance(event.payload, ElementInput):
-            payload = ElementInput(**event.payload)  # type: ignore
+        if not isinstance(event.payload, ElementBaseInput):
+            payload = ElementBaseInput(**event.payload)  # type: ignore
         else:
             payload = event.payload
+        try:
+            assert payload.element_a
+            assert payload.element_b
+        except AssertionError as e:
+            raise HTTPException(status_code=400, detail="Invalid elements") from e
 
-        result = await self.combine_elements(payload)
-        return CombineElementsEventResponse(payload=result, topic=ElementTopics.ELEMENT_COMBINATION_RESPONSE.value)
-    
+        element_input = ElementInput.from_base(payload)
+        result = await self.combine_elements(element_input)
+        return CombineElementsEventResponse(
+            payload=result, topic=ElementTopics.ELEMENT_COMBINATION_RESPONSE.value
+        )
 
-    async def combine_elements(self, input: ElementInput) -> ElementOutput:
+    async def combine_elements(self, input: ElementInput) -> Element:
         try:
             response = await self.agent_object.run(
                 f"**Input:**\n{input.model_dump_json()}"
@@ -57,5 +66,5 @@ class ElementsAgent(BaseService):
         except Exception as e:
             logger.error(f"Error running elements combination agent: {e}")
             raise e
-        
-        return ElementOutput.model_validate(return_value)
+
+        return Element.model_validate(return_value)

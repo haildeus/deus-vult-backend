@@ -29,6 +29,7 @@ class CreateProgress(Progress):
 class FetchProgress(EventPayload):
     user_id: int | None = None
     chat_instance: int | None = None
+    element_id: int | None = None
 
     @model_validator(mode="before")
     def validate_payload(cls, values: dict[str, Any]) -> dict[str, Any]:
@@ -41,6 +42,15 @@ class FetchProgress(EventPayload):
 """
 EVENTS
 """
+
+
+class FetchProgressEventResponse(EventPayload):
+    progress: list["ProgressBase"]
+
+
+class ProgressExistsEventResponse(EventPayload):
+    exists: bool
+
 
 """
 TABLES

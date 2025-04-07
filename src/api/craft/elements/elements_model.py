@@ -1,5 +1,3 @@
-from typing import overload
-
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -11,17 +9,6 @@ from src.shared.base import BaseModel, EntityAlreadyExistsError, EntityNotFoundE
 class ElementModel(BaseModel[ElementTable]):
     def __init__(self):
         super().__init__(ElementTable)
-
-    @overload
-    async def get(self, session: AsyncSession) -> list[ElementBase]: ...
-
-    @overload
-    async def get(
-        self, session: AsyncSession, *, element_id: int
-    ) -> list[ElementBase]: ...
-
-    @overload
-    async def get(self, session: AsyncSession, *, name: str) -> list[ElementBase]: ...
 
     async def get(
         self,

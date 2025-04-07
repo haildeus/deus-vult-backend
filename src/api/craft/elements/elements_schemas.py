@@ -85,7 +85,7 @@ class CombineElementsEvent(ICraftElementEvent):
 
 class CombineElementsEventResponse(ICraftElementEvent):
     topic: str = ElementTopics.ELEMENT_COMBINATION_RESPONSE.value
-    payload: "ElementOutput"  # type: ignore
+    payload: "Element"  # type: ignore
 
 
 """
@@ -107,9 +107,24 @@ AGENTIC MODELS
 """
 
 
+class ElementBaseInput(EventPayload):
+    element_a: ElementBase
+    element_b: ElementBase
+
+
 class ElementInput(EventPayload):
     element_a: Element
     element_b: Element
+
+    @classmethod
+    def from_base(cls, element_input: ElementBaseInput) -> "ElementInput":
+        element_a = Element(
+            name=element_input.element_a.name, emoji=element_input.element_a.emoji
+        )
+        element_b = Element(
+            name=element_input.element_b.name, emoji=element_input.element_b.emoji
+        )
+        return cls(element_a=element_a, element_b=element_b)
 
 
 class ElementOutput(EventPayload):

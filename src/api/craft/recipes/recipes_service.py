@@ -1,6 +1,6 @@
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.api import logger, logger_wrapper
+from src.api import logger
 from src.api.craft.recipes.recipes_model import recipe_model
 from src.api.craft.recipes.recipes_schemas import (
     CreateRecipePayload,
@@ -21,7 +21,6 @@ class RecipesService(BaseService):
         self.model = recipe_model
 
     @EventBus.subscribe(RecipeTopics.RECIPE_CREATE.value)
-    @logger_wrapper.log_debug
     async def on_create_recipe(self, event: Event) -> None:
         if not isinstance(event.payload, CreateRecipePayload):
             payload = CreateRecipePayload(**event.payload)  # type: ignore
@@ -59,7 +58,6 @@ class RecipesService(BaseService):
             raise RuntimeError("No active UoW found during recipe creation")
 
     @EventBus.subscribe(RecipeTopics.RECIPE_FETCH.value)
-    @logger_wrapper.log_debug
     async def on_fetch_recipe(self, event: Event) -> FetchRecipeResponsePayload:
         if not isinstance(event.payload, FetchRecipePayload):
             payload = FetchRecipePayload(**event.payload)  # type: ignore
@@ -71,38 +69,26 @@ class RecipesService(BaseService):
         element_a_id = payload.element_a_id
         element_b_id = payload.element_b_id
         result_id = payload.result_id
-        logger.debug(f"Fetching recipe: {element_a_id} + {element_b_id} = {result_id}")
-
         active_uow = current_uow.get()
 
         if active_uow:
             db = await active_uow.get_session()
 
             try:
-                if element_a_id:
-                    result = await self.model.get(db, element_a_id=element_a_id)
-                elif element_b_id:
-                    # TODO: Think about how to implement this
-                    raise NotImplementedError(
-                        "Fetching by element_b_id is not implemented"
-                    )
-                elif result_id:
-                    result = await self.model.get(db, result_id=result_id)
-                else:
-                    result = await self.model.get(db)
-
-                logger.debug(f"Fetched recipes: {result}")
+                result = await self.model.get(
+                    db,
+                    element_a_id=element_a_id,
+                    element_b_id=element_b_id,
+                    result_id=result_id,
+                )
+                logger.debug(f"Fetched recipes: {result} (length: {len(result)})")
 
                 return FetchRecipeResponsePayload(recipes=result)
             except SQLAlchemyError as e:
-                logger.error(
-                    f"SQLAlchemy: {element_a_id} + {element_b_id} = {result_id}: {e}"
-                )
+                logger.error(f"SQLAlchemy: {e}")
                 raise e
             except Exception as e:
-                logger.error(
-                    f"Error: {element_a_id} + {element_b_id} = {result_id}: {e}"
-                )
+                logger.error(f"Error: {e}")
                 raise e
         else:
             raise RuntimeError("No active UoW found during recipe fetching")

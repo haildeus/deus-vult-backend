@@ -1,6 +1,6 @@
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.api import logger, logger_wrapper
+from src.api import logger
 from src.api.craft.elements.elements_model import element_model
 from src.api.craft.elements.elements_schemas import (
     CreateElementPayload,
@@ -56,7 +56,6 @@ class ElementsService(BaseService):
             raise RuntimeError("No active UoW found during element creation")
 
     @EventBus.subscribe(ElementTopics.ELEMENT_FETCH.value)
-    @logger_wrapper.log_debug
     async def on_fetch_element(self, event: Event) -> FetchElementResponsePayload:
         if not isinstance(event.payload, FetchElementPayload):
             payload = FetchElementPayload(**event.payload)  # type: ignore
@@ -71,17 +70,9 @@ class ElementsService(BaseService):
 
         if active_uow:
             db = await active_uow.get_session()
-
             try:
-                if element_id:
-                    result = await self.model.get(db, element_id=element_id)
-                elif name:
-                    result = await self.model.get(db, name=name)
-                else:
-                    result = await self.model.get(db)
-
+                result = await self.model.get(db, element_id=element_id, name=name)
                 logger.debug(f"Fetched elements: {result}")
-
                 return FetchElementResponsePayload(elements=result)
             except SQLAlchemyError as e:
                 logger.error(f"Error fetching {element_id} {name}: {e}")

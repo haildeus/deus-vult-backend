@@ -13,7 +13,7 @@ class SupportedClasses(Enum):
 
 
 class LoreBase(BaseSchema):
-    character_id: int = Field(foreign_key="characters.character_id", index=True)
+    character_id: int = Field(foreign_key="characters.object_id", index=True)
 
     name: str = Field(..., description="Name of the character")
     appearance: str = Field(..., description="Appearance of the character")
@@ -22,7 +22,7 @@ class LoreBase(BaseSchema):
 
 
 class PrimaryStatsBase(BaseSchema):
-    character_id: int = Field(foreign_key="characters.character_id", index=True)
+    character_id: int = Field(foreign_key="characters.object_id", index=True)
 
     strength: int = Field(..., description="Strength of the character", ge=0, le=30)
     perception: int = Field(..., description="Perception of the character", ge=0, le=30)

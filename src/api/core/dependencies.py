@@ -10,7 +10,7 @@ from src.shared.config import shared_config
 DEBUG_MODE = shared_config.debug_mode
 
 
-def validate_init_data(init_data: str | None = None) -> dict[str, str] | None:
+def validate_init_data(init_data: str | None = None) -> int:
     """
     Validates the data received from Telegram WebApp.
 
@@ -21,7 +21,7 @@ def validate_init_data(init_data: str | None = None) -> dict[str, str] | None:
         bool: True if the data is valid, False otherwise
     """
     if DEBUG_MODE and not init_data:
-        return None
+        return 714862471
 
     try:
         assert init_data
@@ -51,5 +51,5 @@ def validate_init_data(init_data: str | None = None) -> dict[str, str] | None:
     if not check:
         raise HTTPException(status_code=401, detail="Invalid init data")
 
-    return data_dict
-
+    # TODO: Implement the rest of the init data logic
+    raise NotImplementedError
