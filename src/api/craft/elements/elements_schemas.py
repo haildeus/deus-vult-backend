@@ -1,6 +1,6 @@
 from typing import Any
 
-from pydantic import BaseModel, model_validator
+from pydantic import model_validator
 from sqlmodel import Field
 
 from src.api.craft.craft_interfaces import ICraftElementEvent
@@ -86,6 +86,7 @@ class CombineElementsEvent(ICraftElementEvent):
 class CombineElementsEventResponse(ICraftElementEvent):
     topic: str = ElementTopics.ELEMENT_COMBINATION_RESPONSE.value
     payload: "ElementOutput"  # type: ignore
+
 
 """
 TABLES
