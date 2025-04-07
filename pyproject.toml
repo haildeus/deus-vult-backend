@@ -4,7 +4,7 @@ version = "0.2.0"
 description = "'Deus Vult' Telegram bot"
 readme = "README.md"
 authors = [
-    { name = "Chris Cherniakov", email = "taequn@gmail.com" }
+    { name = "Chris Cherniakov", email = "haildeus@telemetree.io" }
 ]
 requires-python = ">=3.13"
 dependencies = [
