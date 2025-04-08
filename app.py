@@ -10,7 +10,9 @@ from src.api.craft.craft_registry import get_craft_registry
 from src.containers import create_container
 from src.now_the_game.game.game_registry import get_game_registry
 from src.now_the_game.telegram.telegram_registry import get_telegram_registry
-from src.shared.logging import logger
+from src.shared.config import Logger
+
+logger = Logger("main-app-component").logger
 
 
 @asynccontextmanager

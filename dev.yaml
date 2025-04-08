@@ -15,12 +15,13 @@
 runtime: python312
 service: dev
 instance_class: F1
+cloud_sql_instances: "gen-lang-client-0674779185:us-east1:deus-vult-dev"
 
 entrypoint: uvicorn app:app --host 0.0.0.0 --port $PORT --loop uvloop
 
 automatic_scaling:
-  min_instances: 0 # Scale to zero when idle for dev
-  max_instances: 1 # Limit max instances for dev
+  min_instances: 0 
+  max_instances: 1 
 
 env_variables:
   # Global variables 
@@ -34,12 +35,18 @@ env_variables:
   VERTEX_MODEL_NAME: 'gemini-2.0-flash'
   VERTEX_EMBEDDING_MODEL_NAME: 'text-embedding-005'
   VERTEX_REGION: 'us-central1'
+  VERTEX_PROJECT_ID: 'gen-lang-client-0674779185'
   # Postgres variables
   POSTGRES_USER: 'postgres'
-  POSTGRES_DB: 'deus-vult'
+  POSTGRES_DB_NAME: 'deus-vult'
   POSTGRES_PORT: '5432'
+  POSTGRES_APP_ENGINE: "google"
+  # App Engine variables
+  INSTANCE_CONNECTION_NAME: "gen-lang-client-0674779185:us-east1:deus-vult-dev"
+  GOOGLE_CLOUD_PROJECT: "gen-lang-client-0674779185"
+  DB_PASSWORD_SECRET_ID: 'deus-vult-database-pass-dev'
 
-cloud_sql_instances: "gen-lang-client-0674779185:us-east1:deus-vult-dev"
+
 
 handlers:
 - url: /.*
