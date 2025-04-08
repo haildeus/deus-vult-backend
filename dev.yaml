@@ -14,8 +14,8 @@
 
 runtime: python312
 service: dev
-instance_class: F1
-cloud_sql_instances: "gen-lang-client-0674779185:us-east1:deus-vult-dev"
+instance_class: F2
+# cloud_sql_instances: 'gen-lang-client-0674779185:us-east1:deus-vult-dev'
 
 entrypoint: uvicorn app:app --host 0.0.0.0 --port $PORT --loop uvloop
 
@@ -26,6 +26,7 @@ automatic_scaling:
 env_variables:
   # Global variables 
   GLOBAL_APP_ENV: 'cloud'
+  GLOBAL_STAGE: 'dev'
   GLOBAL_EVENT_BUS: 'local'
   GLOBAL_DEBUG_MODE: 'true'
   # Gemini variables
@@ -36,15 +37,23 @@ env_variables:
   VERTEX_EMBEDDING_MODEL_NAME: 'text-embedding-005'
   VERTEX_REGION: 'us-central1'
   VERTEX_PROJECT_ID: 'gen-lang-client-0674779185'
+  # Glif variables
+  GLIF_API_KEY_SECRET_ID: 'deus-vult-glif-api'
   # Postgres variables
   POSTGRES_USER: 'postgres'
   POSTGRES_DB_NAME: 'deus-vult'
   POSTGRES_PORT: '5432'
-  POSTGRES_APP_ENGINE: "google"
-  # App Engine variables
-  INSTANCE_CONNECTION_NAME: "gen-lang-client-0674779185:us-east1:deus-vult-dev"
-  GOOGLE_CLOUD_PROJECT: "gen-lang-client-0674779185"
+  POSTGRES_APP_ENGINE: 'google'
+  # App Engine 
+  GOOGLE_CLOUD_PROJECT: 'gen-lang-client-0674779185'
+  # App Engine: Cloud SQL
+  INSTANCE_CONNECTION_NAME: 'gen-lang-client-0674779185:us-east1:deus-vult-dev'
   DB_PASSWORD_SECRET_ID: 'deus-vult-database-pass-dev'
+  # App Engine: Telegram
+  API_ID_SECRET_ID: 'deus-vult-telegram-api-id-dev'
+  API_HASH_SECRET_ID: 'deus-vult-telegram-api-hash-dev'
+  API_BOT_TOKEN: 'deus-vult-telegram-bot-api-token-dev'
+
 
 
 

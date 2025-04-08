@@ -9,6 +9,7 @@ from src.now_the_game.telegram.client.client_config import (
     TelegramBotStatus,
     TelegramConfig,
 )
+from src.shared.config import shared_config
 
 
 class TelegramBot:
@@ -23,12 +24,14 @@ class TelegramBot:
         logger.debug("Initializing Telegram bot with .env config")
         self.data = TelegramBotData()
         self.api_token = config.bot_token
+        in_memory = shared_config.app_env == "cloud" and shared_config.stage == "dev"
+
         self.client = Client(
             name=config.bot_session_name,
             api_id=config.api_id,
             api_hash=config.api_hash,
             bot_token=config.bot_token,
-            workdir=config.bot_session_dir,
+            in_memory=in_memory,
         )
         logger.debug("Client object initialized")
 

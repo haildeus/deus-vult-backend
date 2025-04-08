@@ -1,0 +1,9 @@
+# app.yaml (Minimal Placeholder)
+runtime: python312
+service: default # Or omit this line
+entrypoint: echo "Default service placeholder deployed." # Simple command that exits
+
+# You might want minimal scaling to avoid costs if it runs
+automatic_scaling:
+  min_instances: 0
+  max_instances: 1

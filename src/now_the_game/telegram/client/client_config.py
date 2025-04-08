@@ -29,9 +29,7 @@ class TelegramConfig(BaseSettings):
     google_project_id: str | None = Field(None, validation_alias="GOOGLE_CLOUD_PROJECT")
     api_id_secret_id: str | None = Field(None, validation_alias="API_ID_SECRET_ID")
     api_hash_secret_id: str | None = Field(None, validation_alias="API_HASH_SECRET_ID")
-    bot_token_secret_id: str | None = Field(
-        None, validation_alias="BOT_TOKEN_SECRET_ID"
-    )
+    bot_token_secret_id: str | None = Field(None, validation_alias="API_BOT_TOKEN")
 
     class Config:
         extra = "ignore"

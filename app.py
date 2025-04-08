@@ -10,7 +10,7 @@ from src.api.craft.craft_registry import get_craft_registry
 from src.containers import create_container
 from src.now_the_game.game.game_registry import get_game_registry
 from src.now_the_game.telegram.telegram_registry import get_telegram_registry
-from src.shared.config import Logger
+from src.shared.config import Logger, shared_config
 
 logger = Logger("main-app-component").logger
 
@@ -18,15 +18,21 @@ logger = Logger("main-app-component").logger
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("Starting up the application")
+    logger.info(f"App environment: {shared_config.app_env}")
+    logger.info(f"Debug mode: {shared_config.debug_mode}")
+    logger.info(f"Event bus type: {shared_config.event_bus}")
 
     # --- Container Initialization ---
+    logger.info("Initializing container")
     container: Container = create_container()
     app.state.container = container
 
     # --- Event Bus Initialization ---
+    logger.info("Initializing event bus")
     event_bus_instance = container.event_bus()
 
     # --- Database Initialization ---
+    logger.info("Initializing database")
     db_instance = container.db()
     try:
         # Metadata initialization
@@ -69,7 +75,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         for service in telegram_services:
             event_bus_instance.register_subscribers_from(service)
         logger.debug("Services initialized")
-
     except Exception as e:
         logger.error(f"Error initializing services: {e}")
         raise e
@@ -79,7 +84,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
     # Shutdown events
     logger.info("Shutting down the application")
-
     # --- Database Shutdown ---
     try:
         await db_instance.close()

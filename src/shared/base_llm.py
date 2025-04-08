@@ -19,7 +19,6 @@ from vertexai.language_models import (  # type: ignore
 )
 from vertexai.language_models._language_models import TextEmbedding  # type: ignore
 
-from src.shared.base import MissingCredentialsError
 from src.shared.config import Logger
 
 logger = Logger("base_llm").logger
@@ -69,41 +68,32 @@ class ProviderConfigBase(BaseSettings):
         extra = "ignore"
         env_file = ".env"
 
-    @model_validator(mode="before")
-    def validate_base_fields(cls, values: dict[str, Any]) -> dict[str, Any]:
-        if not values.get("model_name"):
-            raise ValueError("model_name must be provided")
-        if not values.get("api_key"):
-            raise MissingCredentialsError("api_key must be provided")
-        return values
 
-
-class GoogleModelConfig(ProviderConfigBase):
-    """Google model configuration. Helper class for embedding models."""
+class GeminiConfig(ProviderConfigBase):
+    """Gemini-specific configuration with explicit environment binding"""
 
     embedding_model_name: str = "text-embedding-004"
 
-
-class GeminiConfig(GoogleModelConfig):
-    """Gemini-specific configuration with explicit environment binding"""
-
-    class Config(GoogleModelConfig.Config):
+    class Config(ProviderConfigBase.Config):
         env_prefix = "GEMINI_"
         env_file = ".env"
         extra = "ignore"
 
 
-class VertexConfig(GoogleModelConfig):
+class VertexConfig(BaseSettings):
     """Vertex-specific configuration with explicit environment binding"""
 
     # extra environment variables
+    embedding_model_name: str = "text-embedding-004"
     project_id: str = Field(default="", description="The project ID")
     region: str = Field(default="", description="The region")
     # constants
     dimensionality: int = Field(default=768, ge=1, le=768)
 
-    class Config(GoogleModelConfig.Config):
+    class Config:
         env_prefix = "VERTEX_"
+        extra = "ignore"
+        env_file = ".env"
 
     @model_validator(mode="after")
     def _resolve_project_id(self) -> Self:
@@ -129,11 +119,12 @@ class VertexConfig(GoogleModelConfig):
             "VERTEX_PROJECT_ID not set, attempting Google Cloud auto-detection..."
         )
         try:
-            # google.auth.default() attempts to find credentials and project ID
             _credentials, detected_project_id = google.auth.default()  # type: ignore
 
             if detected_project_id:
-                print(f"Auto-detected Google Cloud Project ID: {detected_project_id}")
+                logger.info(
+                    f"Auto-detected Google Cloud Project ID: {detected_project_id}"
+                )
                 self.project_id = detected_project_id
             else:
                 # Credentials found, but project ID was not associated
@@ -190,16 +181,8 @@ class ProviderBase(ABC):
     def get_model(self) -> Model:
         return self.model
 
-    def __init__(self, config: ProviderConfigBase):
+    def __init__(self, config: ProviderConfigBase | BaseSettings):
         self.config = config
-        self._validate_credentials()
-
-    def _validate_credentials(self):
-        """Validate credentials using Pydantic validation"""
-        if not self.config.api_key:
-            raise MissingCredentialsError(self.provider_name)
-        if not self.config.model_name:
-            raise MissingCredentialsError(self.provider_name)
 
     @abstractmethod
     async def embed_content(

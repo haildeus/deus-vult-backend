@@ -44,12 +44,31 @@ uv lock
 - Use `cz bump` for meaningful version update, it will handle the rest.
 
 ## 2. Deploying
-- We're deploying to Google App Engine.
-- Don't forget to log into your account and init it.
+- Initilize gcloud CLI and log into your account
 ```
 gcloud init
 ```
-- If the project is not set, please set it.
+- Deploying to `dev` stage
+```
+gcloud app deploy dev.yaml
+```
+- Deploying to `prod` stage
+```
+gcloud app deploy prod.yaml
+```
 
 ### 2.1 Manage Dependencies 
-- If you added dependencies, run `uv export --format requirements-txt --locked > requirements.txt`
+- Export `uv` dependencies to `requirements.txt` for gcloud
+```
+uv pip compile pyproject.toml -o requirements.txt
+```
+
+### 2.2 Key commands
+- Open deployed app
+```
+gcloud app browse
+```
+- Check logs
+```
+gcloud app logs tail -s {stage}
+```

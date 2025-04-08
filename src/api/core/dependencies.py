@@ -1,16 +1,23 @@
 import hashlib
 import hmac
 
+from dependency_injector.wiring import Provide, inject
 from fastapi import HTTPException
 
+from src import Container
 from src.api import logger
-from src.api.core.config import api_config
+from src.now_the_game.telegram.client.client_config import TelegramConfig
 from src.shared.config import shared_config
 
 DEBUG_MODE = shared_config.debug_mode
 
 
-def validate_init_data(init_data: str | None = None) -> int:
+# TODO: Decouple this part, implement event bus for communication
+@inject
+def validate_init_data(
+    init_data: str | None = None,
+    telegram_config: TelegramConfig = Provide[Container.telegram_config],
+) -> int:
     """
     Validates the data received from Telegram WebApp.
 
@@ -25,7 +32,7 @@ def validate_init_data(init_data: str | None = None) -> int:
 
     try:
         assert init_data
-        assert api_config.bot_token
+        assert telegram_config.bot_token
     except AssertionError as e:
         logger.error("Invariant violation: init_data or bot_token is not set")
         raise HTTPException(status_code=401, detail="Invalid init data") from e
@@ -42,7 +49,7 @@ def validate_init_data(init_data: str | None = None) -> int:
     received_hash = data_dict.pop("hash")
 
     data_check_string = "\n".join(f"{k}={v}" for k, v in sorted(data_dict.items()))
-    secret_key = hashlib.sha256(api_config.bot_token.encode()).digest()
+    secret_key = hashlib.sha256(telegram_config.bot_token.encode()).digest()
     computed_hash = hmac.new(
         secret_key, data_check_string.encode(), hashlib.sha256
     ).hexdigest()
