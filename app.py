@@ -52,6 +52,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         logger.error(f"Error initializing telegram: {e}")
         raise e
 
+    # --- Disk Cache Initialization ---
+    try:
+        container.disk_cache_instance()
+        logger.debug("Initializing disk cache")
+    except Exception as e:
+        logger.error(f"Error initializing disk cache: {e}")
+        raise e
     # --- Service Initialization ---
     try:
         logger.debug("Initializing services")

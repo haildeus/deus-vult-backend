@@ -7,6 +7,7 @@ from typing import Any, TypeVar, cast
 
 import orjson
 from diskcache import Cache  # type: ignore
+from pydantic_settings import BaseSettings
 
 from src.shared.config import Logger
 
@@ -18,6 +19,10 @@ F = TypeVar("F", bound=Callable[..., Any])
 
 # Global cache instance
 _cache_instance = None
+
+
+class CacheSettings(BaseSettings):
+    cache_dir: Path = Path(__file__).parent.parent / ".cache"
 
 
 def get_disk_cache() -> Cache:
@@ -64,7 +69,7 @@ def deserialize_value(value: Any) -> Any:
     return value
 
 
-def _generate_cache_key(
+def generate_cache_key(
     func: Callable[..., Any], param_name: str | None, kwargs: dict[str, Any]
 ) -> str:
     """Generate a cache key for the function call."""
@@ -145,7 +150,7 @@ def disk_cache(
     def decorator(func: F) -> F:
         @wraps(func)
         async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
-            cache_key = _generate_cache_key(func, param_name, kwargs)
+            cache_key = generate_cache_key(func, param_name, kwargs)
             try:
                 cache = get_disk_cache()
                 cached_result = _get_from_cache(cache, cache_key)
@@ -165,7 +170,7 @@ def disk_cache(
 
         @wraps(func)
         def sync_wrapper(*args: Any, **kwargs: Any) -> Any:
-            cache_key = _generate_cache_key(func, param_name, kwargs)
+            cache_key = generate_cache_key(func, param_name, kwargs)
             try:
                 cache = get_disk_cache()
                 cached_result = _get_from_cache(cache, cache_key)

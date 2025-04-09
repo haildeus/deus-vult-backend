@@ -15,6 +15,7 @@ from src.now_the_game.telegram.messages.messages_service import MessagesService
 from src.now_the_game.telegram.polls.polls_service import PollsService
 from src.now_the_game.telegram.users.users_service import UsersService
 from src.shared.base_llm import VertexConfig, VertexLLM
+from src.shared.cache import get_disk_cache
 from src.shared.config import Logger, PostgresConfig
 from src.shared.database import Database
 from src.shared.event_bus import EventBus
@@ -44,6 +45,10 @@ class Container(containers.DeclarativeContainer):
         UnitOfWork,
         session_factory=db_session_provider,
     )
+
+    # -- Disk Cache --
+    disk_cache_instance = providers.Singleton(get_disk_cache)
+
     # -- Event Bus --
     event_bus = providers.Singleton(EventBus)
 

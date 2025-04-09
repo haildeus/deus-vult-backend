@@ -6,6 +6,7 @@ from src.api import logger
 from src.api.craft.elements.elements_schemas import ElementBase, ElementBaseInput
 from src.api.craft.progress.progress_schemas import ProgressBase
 from src.api.craft.recipes.recipes_schemas import RecipeBase
+from src.shared.cache import disk_cache, generate_cache_key, get_disk_cache
 from src.shared.event_bus import EventBus
 from src.shared.event_registry import ElementTopics, ProgressTopics, RecipeTopics
 from src.shared.events import Event
@@ -57,10 +58,11 @@ async def check_access_to_elements(
             )
 
 
+@disk_cache(param_name="user_id", ttl=60 * 60 * 24)  # Cache for 1 day
 async def fetch_progress(
+    user_id: int,
     uow: UnitOfWork,
     event_bus: EventBus,
-    user_id: int,
 ) -> list[ProgressBase]:
     """Fetch progress"""
     async with uow.start():
@@ -70,6 +72,40 @@ async def fetch_progress(
         )
         progress_response = await event_bus.request(progress_event)
         return progress_response.payload
+
+
+async def create_progress(
+    user_id: int,
+    element_id: int,
+    uow: UnitOfWork,
+    event_bus: EventBus,
+    chat_instance: int = 0,
+) -> None:
+    """Save user progress"""
+    async with uow.start():
+        create_progress_event = Event.from_dict(
+            ProgressTopics.PROGRESS_CREATE.value,
+            {
+                "user_id": user_id,
+                "element_id": element_id,
+                "chat_instance": chat_instance,
+            },
+        )
+        # TODO: Check if we need await here
+        await event_bus.publish(create_progress_event)
+
+        # Invalidate fetch_progress cache for this user
+        cache = get_disk_cache()
+        cache_key_to_invalidate = generate_cache_key(
+            fetch_progress, "user_id", {"user_id": user_id}
+        )
+        deleted_count = cache.delete(cache_key_to_invalidate)  # type: ignore
+        if deleted_count > 0:
+            logger.info(f"Invalidated cache for key: {cache_key_to_invalidate}")
+        else:
+            logger.warning(
+                f"Cache key not found for invalidation: {cache_key_to_invalidate}"
+            )
 
 
 """
@@ -130,12 +166,19 @@ AGENT
 async def get_element_from_gemini(
     uow: UnitOfWork, event_bus: EventBus, element_a: ElementBase, element_b: ElementBase
 ) -> ElementBase:
-    """Get element from Gemini"""
+    """Get element from Gemini & save to elements database"""
     async with uow.start():
         elements_input = ElementBaseInput(element_a=element_a, element_b=element_b)
-        event = Event.from_dict(
+        agent_event = Event.from_dict(
             ElementTopics.ELEMENT_COMBINATION.value, elements_input.model_dump()
         )
-        response = await event_bus.request(event)
-        logger.debug(f"Element: {response.payload}")
-        return response.payload
+        agent_response = await event_bus.request(agent_event)
+        element = agent_response.payload
+        add_element_event = Event.from_dict(
+            ElementTopics.ELEMENT_CREATE.value, element.model_dump()
+        )
+        # TODO: Check if we need await here
+        await event_bus.publish(add_element_event)
+
+        logger.debug(f"Element: {element}")
+        return element
