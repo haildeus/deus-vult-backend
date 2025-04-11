@@ -34,6 +34,34 @@ async def fetch_progress(
         progress_response = await event_bus.request(progress_event)
         return progress_response.payload
 
+async def init_progress(
+    user_id: int,
+    uow: UnitOfWork,
+    event_bus: EventBus,
+    chat_instance: int = 0,
+) -> None:
+    """Initialize progress for the user"""
+    logger.debug(f"Initializing progress for user {user_id} using event bus pattern.")
+    async with uow.start():
+        try:
+            elements_init_event = Event.from_dict(
+                ElementTopics.ELEMENTS_INIT,
+            )
+            elements_init_response: list[ElementTable] = await event_bus.request(elements_init_event)
+            element_ids = [element.object_id for element in elements_init_response]
+            init_progress_event = Event.from_dict(
+                ProgressTopics.PROGRESS_INIT,
+                {"user_id": user_id, "chat_instance": chat_instance, "starting_elements_ids": element_ids},
+            )
+        except Exception as e:
+            logger.error(f"Error initializing elements: {e}")
+            raise e
+        try:
+            await event_bus.request(init_progress_event)
+        except Exception as e:
+            logger.error(f"Error initializing progress: {e}")
+            raise e
+
 
 async def get_element_from_gemini(
     uow: UnitOfWork, event_bus: EventBus, element_a: ElementBase, element_b: ElementBase
@@ -68,6 +96,7 @@ async def orchestrate_element_combination(
     element_b_id: int,
     uow: UnitOfWork,
     event_bus: EventBus,
+    chat_instance: int = 0,
 ) -> None:
     """
     Orchestrates the element combination process within a single transaction.
@@ -176,7 +205,7 @@ async def orchestrate_element_combination(
                     ProgressTopics.PROGRESS_CREATE,
                     {
                         "user_id": user_id,
-                        "chat_instance": 0,
+                        "chat_instance": chat_instance,
                         "element_id": result_element_table.object_id,
                     },
                 )

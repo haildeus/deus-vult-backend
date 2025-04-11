@@ -21,14 +21,6 @@ class Progress(EventPayload):
     element_id: int
 
 
-"""
-PAYLOADS
-"""
-
-
-class CreateProgress(Progress):
-    pass
-
 
 class CheckProgress(EventPayload):
     user_id: int
@@ -48,6 +40,10 @@ class FetchProgress(EventPayload):
             raise ValueError("Either user_id or chat_instance must be provided")
         return values
 
+class InitProgress(EventPayload):
+    user_id: int
+    chat_instance: int
+    starting_elements_ids: list[int]
 
 """
 TABLES

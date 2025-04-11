@@ -3,6 +3,7 @@ from typing import cast
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.api import logger
+from src.api.craft.elements.elements_constants import STARTING_ELEMENTS
 from src.api.craft.elements.elements_model import element_model
 from src.api.craft.elements.elements_schemas import (
     Element,
@@ -20,6 +21,41 @@ class ElementsService(BaseService):
     def __init__(self):
         super().__init__()
         self.model = element_model
+
+    @EventBus.subscribe(ElementTopics.ELEMENTS_FETCH_INIT)
+    async def on_fetch_init_elements(self, event: Event) -> list[ElementTable]:
+        active_uow = current_uow.get()
+        if active_uow:
+            db = await active_uow.get_session()
+            return await self.model.get_by_param_in_list(db, "name", [element.name for element in STARTING_ELEMENTS])
+        else:
+            raise RuntimeError("No active UoW found during element initialization")    
+
+    @EventBus.subscribe(ElementTopics.ELEMENTS_INIT)
+    async def on_init_elements(self, event: Event) -> None:
+        starting_names = [element.name for element in STARTING_ELEMENTS]
+        active_uow = current_uow.get()
+        
+        if active_uow:
+            db = await active_uow.get_session()
+            existing_elements: list[ElementTable] = await self.model.get_by_param_in_list(db, "name", starting_names)
+            if len(existing_elements) == len(STARTING_ELEMENTS):
+                logger.debug("Starting elements already exist, skipping")
+                return
+            # Deduct the elements that do not exist
+            missing_elements = [element for element in STARTING_ELEMENTS if element.name not in [e.name for e in existing_elements]]
+            for element in missing_elements:
+                try:
+                    element_entry = ElementTable(name=element.name, emoji=element.emoji)
+                    await self.model.add(db, element_entry) 
+                except EntityAlreadyExistsError as e:
+                    logger.debug(f"Element {element.name} already exists, skipping")
+                    raise e
+                except Exception as e:
+                    logger.error(f"Unexpected error adding {element.name}: {e}")
+                    raise e
+        else:
+            raise RuntimeError("No active UoW found during element initialization")
     
     @EventBus.subscribe(ElementTopics.ELEMENT_CREATE)
     async def on_create_element(self, event: Event) -> list[ElementTable]:

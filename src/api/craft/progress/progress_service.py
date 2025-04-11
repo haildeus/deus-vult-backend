@@ -8,6 +8,7 @@ from src.api.craft.progress.progress_model import progress_model
 from src.api.craft.progress.progress_schemas import (
     CheckProgress,
     FetchProgress,
+    InitProgress,
     Progress,
     ProgressBase,
     ProgressTable,
@@ -23,6 +24,24 @@ class ProgressService(BaseService):
     def __init__(self):
         super().__init__()
         self.model = progress_model
+    
+    @EventBus.subscribe(ProgressTopics.PROGRESS_INIT)
+    async def on_init_progress(self, event: Event) -> None:
+        payload = cast(InitProgress, event.extract_payload(event, InitProgress))
+        user_id = payload.user_id
+        chat_instance = payload.chat_instance
+        starting_elements_ids = payload.starting_elements_ids
+        
+        active_uow = current_uow.get()
+        if active_uow:
+            db = await active_uow.get_session()
+            for element_id in starting_elements_ids:
+                progress = ProgressTable(
+                    object_id=user_id, chat_instance=chat_instance, element_id=element_id
+                )
+                await self.model.add(db, progress)
+        else:
+            raise RuntimeError("No active UoW found during progress initialization")
 
     @EventBus.subscribe(ProgressTopics.PROGRESS_CREATE)
     async def on_create_progress(self, event: Event) -> list[ProgressTable]:
