@@ -7,7 +7,7 @@ from src.api.craft.elements.elements_schemas import (
     ElementBaseInput,
     ElementTable,
 )
-from src.api.craft.progress.progress_schemas import ProgressBase
+from src.api.craft.progress.progress_schemas import ProgressTable
 from src.api.craft.recipes.recipes_schemas import RecipeTable
 from src.shared.event_bus import EventBus
 from src.shared.event_registry import ElementTopics, ProgressTopics, RecipeTopics
@@ -23,7 +23,7 @@ async def fetch_progress(
     user_id: int,
     uow: UnitOfWork,
     event_bus: EventBus,
-) -> list[ProgressBase]:
+) -> list[ProgressTable]:
     """Fetch progress"""
     logger.debug(f"Fetching progress for user {user_id} using event bus pattern.")
     async with uow.start():
@@ -31,8 +31,25 @@ async def fetch_progress(
             ProgressTopics.PROGRESS_FETCH,
             {"user_id": user_id},
         )
-        progress_response = await event_bus.request(progress_event)
-        return progress_response.payload
+        progress_response: list[ProgressTable] = await event_bus.request(progress_event)
+        return progress_response
+
+async def init_elements(
+    uow: UnitOfWork,
+    event_bus: EventBus,
+) -> None:
+    """Initialize elements for the user"""
+    logger.debug(f"Initializing starting elements")
+    async with uow.start():
+        try:
+            elements_init_event = Event.from_dict(
+                ElementTopics.ELEMENTS_INIT,
+            )
+            await event_bus.request(elements_init_event)
+            logger.debug(f"Initialized starting elements.")
+        except Exception as e:
+            logger.error(f"Error initializing starting elements: {e}")
+            raise e
 
 async def init_progress(
     user_id: int,
@@ -41,23 +58,25 @@ async def init_progress(
     chat_instance: int = 0,
 ) -> None:
     """Initialize progress for the user"""
-    logger.debug(f"Initializing progress for user {user_id} using event bus pattern.")
+    logger.debug(f"Initializing progress for user {user_id}.")
     async with uow.start():
         try:
-            elements_init_event = Event.from_dict(
-                ElementTopics.ELEMENTS_INIT,
+            elements_fetch_event = Event.from_dict(
+                ElementTopics.ELEMENTS_FETCH_INIT,
             )
-            elements_init_response: list[ElementTable] = await event_bus.request(elements_init_event)
-            element_ids = [element.object_id for element in elements_init_response]
-            init_progress_event = Event.from_dict(
-                ProgressTopics.PROGRESS_INIT,
-                {"user_id": user_id, "chat_instance": chat_instance, "starting_elements_ids": element_ids},
-            )
+            elements_fetch_response: list[ElementTable] = await event_bus.request(elements_fetch_event)
+            element_ids = [element.object_id for element in elements_fetch_response]
+            logger.debug(f"Fetched {len(element_ids)} elements for user {user_id}.")
         except Exception as e:
             logger.error(f"Error initializing elements: {e}")
             raise e
         try:
+            init_progress_event = Event.from_dict(
+                ProgressTopics.PROGRESS_INIT,
+                {"user_id": user_id, "chat_instance": chat_instance, "starting_elements_ids": element_ids},
+            )
             await event_bus.request(init_progress_event)
+            logger.debug(f"Initialized progress for user {user_id}.")
         except Exception as e:
             logger.error(f"Error initializing progress: {e}")
             raise e

@@ -36,10 +36,12 @@ class ProgressService(BaseService):
         if active_uow:
             db = await active_uow.get_session()
             for element_id in starting_elements_ids:
+                print(f"Adding progress for user {user_id} with element {element_id}")
                 progress = ProgressTable(
                     object_id=user_id, chat_instance=chat_instance, element_id=element_id
                 )
-                await self.model.add(db, progress)
+                print(f"Progress: {progress}")
+                await self.model.add(db, progress, pass_checks=False)
         else:
             raise RuntimeError("No active UoW found during progress initialization")
 
@@ -158,7 +160,7 @@ class ProgressService(BaseService):
             raise RuntimeError("No active UoW found during progress fetching")
 
     async def __process_fetch_payload(
-        self, event: Event
+self, event: Event
     ) -> tuple[int | None, int | None, int | None]:
         if not isinstance(event.payload, FetchProgress):
             payload = FetchProgress(**event.payload)  # type: ignore

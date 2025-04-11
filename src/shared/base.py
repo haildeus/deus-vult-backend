@@ -93,12 +93,12 @@ class BaseModel(Generic[T]):
         ]
 
     @overload
-    async def add(self, session: AsyncSession, entity: T) -> list[T]: ...
+    async def add(self, session: AsyncSession, entity: T, pass_checks: bool = True) -> list[T]: ...
 
     @overload
     async def add(self, session: AsyncSession, entity: list[T]) -> list[T]: ...
 
-    async def add(self, session: AsyncSession, entity: T | list[T]) -> list[T] | None:
+    async def add(self, session: AsyncSession, entity: T | list[T], pass_checks: bool = True) -> list[T] | None:
         """
         Adds an entity to the session. Needs to be flushed.
         Great for adding dependent entities.
@@ -121,7 +121,7 @@ class BaseModel(Generic[T]):
             return await self.add_many(session, entity)
         else:
             try:
-                response = await self.add_one(session, entity)
+                response = await self.add_one(session, entity, pass_checks)
 
                 object_id = response[0].object_id
                 object_name = self.model_class.__name__
@@ -133,10 +133,13 @@ class BaseModel(Generic[T]):
                 logger.error(f"Error adding entity: {e}")
                 raise e
 
-    async def add_one(self, session: AsyncSession, entity: T) -> list[T]:
+    async def add_one(self, session: AsyncSession, entity: T, pass_checks: bool = True) -> list[T]:
         """Adds an entity to the session. Needs to be flushed."""
         try:
-            checked_entity = await self.pass_insert_checks(session, entity)
+            if pass_checks:
+                checked_entity = await self.pass_insert_checks(session, entity)
+            else:
+                checked_entity = entity
         except EntityAlreadyExistsError as e:
             raise e
         except Exception as e:

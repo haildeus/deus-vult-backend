@@ -7,6 +7,7 @@ from pyrogram.client import Client
 from src.agents.glif.glif_service import GlifConfig, GlifService
 from src.api.craft.elements.elements_agent import ElementsAgent
 from src.api.craft.elements.elements_service import ElementsService
+from src.api.craft.progress.progress_service import ProgressService
 from src.api.craft.recipes.recipes_service import RecipesService
 from src.now_the_game.telegram.chats.chats_service import ChatsService
 from src.now_the_game.telegram.client.client_config import TelegramConfig
@@ -56,6 +57,7 @@ class Container(containers.DeclarativeContainer):
     # -- API Services --
     elements_service = providers.Singleton(ElementsService)
     recipes_service = providers.Singleton(RecipesService)
+    progress_service = providers.Singleton(ProgressService)
 
     # -- Telegram --
     telegram_config = providers.Factory(TelegramConfig)

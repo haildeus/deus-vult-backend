@@ -66,6 +66,8 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
         api_services = [
             container.elements_service(),
             container.recipes_service(),
+            container.elements_agent(),
+            container.progress_service(),
         ]
         for service in api_services:
             event_bus_instance.register_subscribers_from(service)
@@ -77,7 +79,6 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
             container.messages_service(),
             container.polls_service(),
             container.users_service(),
-            container.elements_agent(),
         ]
         for service in telegram_services:
             event_bus_instance.register_subscribers_from(service)
