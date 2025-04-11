@@ -14,12 +14,15 @@ class ElementModel(BaseModel[ElementTable]):
         self,
         session: AsyncSession,
         *,
-        element_id: int | None = None,
+        element_id: int | list[int] | None = None,
         name: str | list[str] | None = None,
     ) -> list[ElementTable]:
         """Get an element by ID, name, or all elements"""
         if element_id:
-            return await self.get_by_id(session, element_id)
+            if isinstance(element_id, list):
+                return await self.get_by_param_in_list(session, "object_id", element_id)
+            else:
+                return await self.get_by_id(session, element_id)
         elif name:
             if isinstance(name, list):
                 return await self.get_by_param_in_list(session, "name", name)

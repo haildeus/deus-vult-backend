@@ -35,7 +35,7 @@ class CreateElement(Element):
 
 
 class FetchElement(EventPayload):
-    element_id: int | None = None
+    element_id: int | list[int] | None = None
     name: str | list[str] | None = None
 
     @model_validator(mode="before")

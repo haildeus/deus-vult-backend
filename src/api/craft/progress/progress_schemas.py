@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import model_validator
-from sqlmodel import Field, Relationship, SQLModel, UniqueConstraint
+from sqlmodel import Field, Relationship
 
 from src.shared.base import BaseSchema
 from src.shared.events import EventPayload
@@ -50,8 +50,6 @@ TABLES
 """
 
 
-# TODO: chat_instance should be connected to sessions
-# TODO: primary keys should be object_id and chat_instance
 class ProgressBase(BaseSchema):
     chat_instance: int = Field(primary_key=True, index=True)
     element_id: int = Field(primary_key=True, foreign_key="elements.object_id", index=True)

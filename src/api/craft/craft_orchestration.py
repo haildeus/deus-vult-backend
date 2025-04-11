@@ -5,6 +5,7 @@ from src.api.craft.elements.elements_schemas import (
     Element,
     ElementBase,
     ElementBaseInput,
+    ElementInput,
     ElementTable,
 )
 from src.api.craft.progress.progress_schemas import ProgressTable
@@ -116,12 +117,10 @@ async def orchestrate_element_combination(
     uow: UnitOfWork,
     event_bus: EventBus,
     chat_instance: int = 0,
-) -> None:
+) -> ElementTable | None:
     """
     Orchestrates the element combination process within a single transaction.
     """
-    result_element_table: ElementTable | None = None
-
     async with uow.start():
         # Check access
         check_progress_event = Event.from_dict(
@@ -150,47 +149,37 @@ async def orchestrate_element_combination(
                 f"Result: {recipe[0].result.name} ({recipe[0].result.object_id})"
             )
             result_element_table = recipe[0].result
+            progress_create_event = Event.from_dict(
+                ProgressTopics.PROGRESS_CREATE,
+                {
+                    "user_id": user_id,
+                    "chat_instance": chat_instance,
+                    "element_id": result_element_table.object_id,
+                },
+            )
+            await event_bus.request(progress_create_event)
+            return result_element_table
         else:
             logger.debug(
                 f"No recipe found for {element_a_id} + {element_b_id}. Querying Gemini."
             )
             # Query Gemini, create Element and Recipe
-            # Fetch Element A and B details needed for Gemini prompt
-            element_a_event = Event.from_dict(
+            elements_fetch_event = Event.from_dict(
                 ElementTopics.ELEMENT_FETCH,
-                {"element_id": element_a_id},
+                {"element_id": [element_a_id, element_b_id]},
+            ) 
+            fetched_elements: list[ElementTable] = await event_bus.request(
+                elements_fetch_event
             )
-            element_b_event = Event.from_dict(
-                ElementTopics.ELEMENT_FETCH,
-                {"element_id": element_b_id},
-            )
-            element_a_table: list[ElementTable] = await event_bus.request(
-                element_a_event
-            )
-            element_b_table: list[ElementTable] = await event_bus.request(
-                element_b_event
-            )
-
-            if not element_a_table or not element_b_table:
-                logger.error(
-                    f"Could not fetch element details for Gemini call. "
-                    f"A:{element_a_id}, B:{element_b_id}"
-                )
-                raise HTTPException(
-                    status_code=500, detail="Internal error fetching element details"
-                )
+            input_a = Element.model_validate(fetched_elements[0].model_dump())
+            input_b = Element.model_validate(fetched_elements[1].model_dump())
+            agent_input = ElementInput(element_a=input_a, element_b=input_b)
 
             try:
-                # Call the Gemini function
-                element_a_base = ElementBaseInput(
-                    element_a=element_a_table[0], element_b=element_b_table[0]
-                )
-                element_b_base = ElementBaseInput(
-                    element_a=element_b_table[0], element_b=element_a_table[0]
-                )
+                # Call the Gemini function 
                 new_element_event = Event.from_dict(
                     ElementTopics.ELEMENT_COMBINATION,
-                    {"element_a": element_a_base, "element_b": element_b_base},
+                    agent_input.model_dump(),
                 )
                 new_element_generated: Element = await event_bus.request(
                     new_element_event
@@ -203,8 +192,8 @@ async def orchestrate_element_combination(
                 new_created_element: list[ElementTable] = await event_bus.request(
                     add_element_event
                 )
+                result_element_table: ElementTable = new_created_element[0]
 
-                result_element_table = new_created_element[0]
                 logger.info(
                     f"Gemini process resulted in element: {result_element_table.name} "
                     f"({result_element_table.object_id})"
@@ -229,6 +218,8 @@ async def orchestrate_element_combination(
                     },
                 )
                 await event_bus.request(create_progress_event)
+
+                return result_element_table
 
             except Exception as e:
                 logger.error(

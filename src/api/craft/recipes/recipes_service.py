@@ -35,7 +35,7 @@ class RecipesService(BaseService):
             db = await active_uow.get_session()
 
             try:
-                await self.model.add(db, recipe)
+                await self.model.add(db, recipe, pass_checks=False)
             except SQLAlchemyError as e:
                 logger.error(
                     f"SQLAlchemy: {element_a_id} + {element_b_id} = {result_id}: {e}"
