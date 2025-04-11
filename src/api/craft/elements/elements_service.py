@@ -1,13 +1,14 @@
+from typing import cast
+
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.api import logger
 from src.api.craft.elements.elements_model import element_model
 from src.api.craft.elements.elements_schemas import (
-    CreateElementPayload,
+    Element,
     ElementTable,
     ElementTopics,
-    FetchElementPayload,
-    FetchElementResponsePayload,
+    FetchElement,
 )
 from src.shared.base import BaseService, EntityAlreadyExistsError
 from src.shared.event_bus import EventBus
@@ -19,14 +20,10 @@ class ElementsService(BaseService):
     def __init__(self):
         super().__init__()
         self.model = element_model
-
-    @EventBus.subscribe(ElementTopics.ELEMENT_CREATE.value)
-    async def on_create_element(self, event: Event) -> None:
-        if not isinstance(event.payload, CreateElementPayload):
-            payload = CreateElementPayload(**event.payload)  # type: ignore
-        else:
-            payload = event.payload
-
+    
+    @EventBus.subscribe(ElementTopics.ELEMENT_CREATE)
+    async def on_create_element(self, event: Event) -> list[ElementTable]:
+        payload = cast(Element, event.extract_payload(event, Element))
         logger.debug(f"Creating element: {payload}")
 
         name = payload.name
@@ -41,7 +38,8 @@ class ElementsService(BaseService):
 
             try:
                 if await self.model.not_exists(db, name):
-                    await self.model.add(db, element)
+                    response = await self.model.add(db, element)
+                    return response
                 else:
                     logger.debug(f"Element {name} already exists, skipping")
                     raise EntityAlreadyExistsError(
@@ -56,16 +54,14 @@ class ElementsService(BaseService):
         else:
             raise RuntimeError("No active UoW found during element creation")
 
-    @EventBus.subscribe(ElementTopics.ELEMENT_FETCH.value)
-    async def on_fetch_element(self, event: Event) -> FetchElementResponsePayload:
-        if not isinstance(event.payload, FetchElementPayload):
-            payload = FetchElementPayload(**event.payload)  # type: ignore
-        else:
-            payload = event.payload
-
+    @EventBus.subscribe(ElementTopics.ELEMENT_FETCH)
+    async def on_fetch_element(self, event: Event) -> list[ElementTable]:
+        payload = cast(FetchElement, event.extract_payload(event, FetchElement))
         element_id = payload.element_id
         name = payload.name
-        logger.debug(f"Fetching element: {element_id} or {name}")
+        logger.debug(f"Fetching elements. "
+                     f"ID: {element_id}, "
+                     f"Name(s): {name}")
 
         active_uow = current_uow.get()
 
@@ -74,7 +70,7 @@ class ElementsService(BaseService):
             try:
                 result = await self.model.get(db, element_id=element_id, name=name)
                 logger.debug(f"Fetched elements: {result}")
-                return FetchElementResponsePayload(elements=result)
+                return result
             except SQLAlchemyError as e:
                 logger.error(f"Error fetching {element_id} {name}: {e}")
                 raise e

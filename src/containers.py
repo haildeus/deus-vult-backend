@@ -4,6 +4,7 @@ from pathlib import Path
 from dependency_injector import containers, providers
 from pyrogram.client import Client
 
+from src.agents.glif.glif_service import GlifConfig, GlifService
 from src.api.craft.elements.elements_agent import ElementsAgent
 from src.api.craft.elements.elements_service import ElementsService
 from src.api.craft.recipes.recipes_service import RecipesService
@@ -75,6 +76,10 @@ class Container(containers.DeclarativeContainer):
     model_config = providers.Factory(VertexConfig)
     model_object = providers.Singleton(VertexLLM, config=model_config)
     elements_agent = providers.Singleton(ElementsAgent, provider=model_object)
+
+    # -- Glif --
+    glif_config = providers.Factory(GlifConfig)
+    glif_service = providers.Singleton(GlifService)
 
 
 def find_modules_in_packages(packages_paths: list[str]) -> list[str]:

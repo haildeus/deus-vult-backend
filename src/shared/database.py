@@ -2,6 +2,7 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.sql import text
 from sqlmodel import SQLModel
 
 from src.shared.config import Logger, PostgresConfig
@@ -59,21 +60,20 @@ class Database:
 
     async def drop_all(self):
         """
-        Drops all tables defined in SQLModel.metadata.
+        Drops all tables defined in SQLModel.metadata using CASCADE.
         WARNING: This is destructive and irreversible. Use with extreme caution.
         """
+        logger.warning(
+            f"Dropping all tables in database {self.safe_url} "
+            f"defined in metadata (using CASCADE)!"
+        )
         async with self.engine.begin() as conn:
-            logger.warning(
-                f"Dropping all tables in database {self.safe_url} defined in metadata!"
-            )
-            await conn.run_sync(SQLModel.metadata.drop_all)
-        logger.info("Finished dropping tables.")
-
-    async def get_all_tables(self):
-        """
-        Returns a list of all tables defined in SQLModel.metadata.
-        """
-        return SQLModel.metadata.tables.keys()
+            for table in reversed(SQLModel.metadata.sorted_tables):
+                # Use dialect-specific quoting for table names
+                quoted_name = self.engine.dialect.identifier_preparer.quote(table.name)
+                # Execute raw SQL with CASCADE
+                await conn.execute(text(f"DROP TABLE IF EXISTS {quoted_name} CASCADE"))
+        logger.info("Finished dropping tables (using CASCADE).")
 
     @asynccontextmanager
     async def session(self) -> AsyncGenerator[AsyncSession]:

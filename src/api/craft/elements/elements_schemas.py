@@ -1,13 +1,17 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import model_validator
-from sqlmodel import Field
+from sqlmodel import Field, Relationship
 
 from src.api.craft.craft_interfaces import ICraftElementEvent
 from src.shared.base import BaseSchema
 from src.shared.event_registry import ElementTopics
 from src.shared.events import EventPayload
 
+# Forward reference for type hints
+if TYPE_CHECKING:
+    from src.api.craft.progress.progress_schemas import ProgressTable
+    from src.api.craft.recipes.recipes_schemas import RecipeTable
 """
 MODELS
 """
@@ -32,7 +36,7 @@ class CreateElement(Element):
 
 class FetchElement(EventPayload):
     element_id: int | None = None
-    name: str | None = None
+    name: str | list[str] | None = None
 
     @model_validator(mode="before")
     def validate_payload(cls, values: dict[str, Any]) -> dict[str, Any]:
@@ -50,32 +54,13 @@ class CreateElementPayload(CreateElement):
     pass
 
 
-class FetchElementPayload(FetchElement):
-    pass
-
-
 class FetchElementResponsePayload(EventPayload):
-    elements: list["ElementBase"]
+    elements: list["ElementTable"]
 
 
 """
 EVENTS
 """
-
-
-class CreateElementEvent(ICraftElementEvent):
-    topic: str = ElementTopics.ELEMENT_CREATE.value
-    payload: CreateElementPayload  # type: ignore
-
-
-class FetchElementEvent(ICraftElementEvent):
-    topic: str = ElementTopics.ELEMENT_FETCH.value
-    payload: FetchElementPayload  # type: ignore
-
-
-class FetchElementEventResponse(ICraftElementEvent):
-    topic: str = ElementTopics.ELEMENT_FETCH_RESPONSE.value
-    payload: FetchElementResponsePayload  # type: ignore
 
 
 class CombineElementsEvent(ICraftElementEvent):
@@ -84,7 +69,6 @@ class CombineElementsEvent(ICraftElementEvent):
 
 
 class CombineElementsEventResponse(ICraftElementEvent):
-    topic: str = ElementTopics.ELEMENT_COMBINATION_RESPONSE.value
     payload: "Element"  # type: ignore
 
 
@@ -100,6 +84,37 @@ class ElementBase(BaseSchema):
 
 class ElementTable(ElementBase, table=True):
     __tablename__ = "elements"  # type: ignore
+
+    # --- Add Back-Populating Relationship Type Hints ---
+    recipes_as_a: list["RecipeTable"] = Relationship(
+        back_populates="element_a",
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "foreign_keys": "[RecipeTable.element_a_id]",
+        },
+    )
+    recipes_as_b: list["RecipeTable"] = Relationship(
+        back_populates="element_b",
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "foreign_keys": "[RecipeTable.element_b_id]",
+        },
+    )
+    recipes_as_result: list["RecipeTable"] = Relationship(
+        back_populates="result",
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "foreign_keys": "[RecipeTable.result_id]",
+        },
+    )
+    progress: list["ProgressTable"] = Relationship(
+        back_populates="element",
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "foreign_keys": "[ProgressTable.element_id]",
+        },
+    )
+    # --- End Back-Populating Relationship Type Hints ---
 
 
 """

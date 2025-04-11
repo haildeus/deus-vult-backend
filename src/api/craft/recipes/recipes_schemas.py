@@ -1,10 +1,14 @@
-from sqlalchemy import CheckConstraint, UniqueConstraint
-from sqlmodel import Field
+from typing import TYPE_CHECKING, Optional
 
-from src.api.craft.craft_interfaces import ICraftElementEvent
+from sqlalchemy import CheckConstraint, UniqueConstraint
+from sqlmodel import Field, Relationship
+
 from src.shared.base import BaseSchema
-from src.shared.event_registry import RecipeTopics
 from src.shared.events import EventPayload
+
+# Forward reference for type hints
+if TYPE_CHECKING:
+    from src.api.craft.elements.elements_schemas import ElementTable
 
 """
 MODELS
@@ -24,38 +28,6 @@ class FetchRecipe(EventPayload):
 
 
 """
-PAYLOADS
-"""
-
-
-class CreateRecipePayload(CreateRecipe):
-    pass
-
-
-class FetchRecipePayload(FetchRecipe):
-    pass
-
-
-class FetchRecipeResponsePayload(EventPayload):
-    recipes: list["RecipeBase"]
-
-
-"""
-EVENTS
-"""
-
-
-class CreateRecipeEvent(ICraftElementEvent):
-    topic: str = RecipeTopics.RECIPE_CREATE.value
-    payload: CreateRecipePayload  # type: ignore
-
-
-class FetchRecipeEvent(ICraftElementEvent):
-    topic: str = RecipeTopics.RECIPE_FETCH.value
-    payload: FetchRecipePayload  # type: ignore
-
-
-"""
 TABLES
 """
 
@@ -68,6 +40,30 @@ class RecipeBase(BaseSchema):
 
 class RecipeTable(RecipeBase, table=True):
     __tablename__ = "recipes"  # type: ignore
+
+    # --- Add Relationship Type Hints ---
+    element_a: Optional["ElementTable"] = Relationship(
+        back_populates="recipes_as_a",
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "foreign_keys": "[RecipeTable.element_a_id]",
+        },
+    )
+    element_b: Optional["ElementTable"] = Relationship(
+        back_populates="recipes_as_b",
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "foreign_keys": "[RecipeTable.element_b_id]",
+        },
+    )
+    result: Optional["ElementTable"] = Relationship(
+        back_populates="recipes_as_result",
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "foreign_keys": "[RecipeTable.result_id]",
+        },
+    )
+    # --- End Relationship Type Hints ---
 
     __table_args__ = (
         # Ensure a+b is unique

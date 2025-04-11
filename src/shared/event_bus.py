@@ -9,6 +9,7 @@ import uuid
 from abc import ABC, abstractmethod
 from asyncio import Task, create_task, gather
 from collections.abc import Callable, Coroutine
+from enum import Enum
 from inspect import getmembers, isawaitable, ismethod
 from typing import Any, TypeVar
 
@@ -26,7 +27,7 @@ class EventBusInterface(ABC):
     @staticmethod
     @abstractmethod
     def subscribe(
-        topic: str,
+        topic: str | Enum,
     ) -> Callable[
         [Callable[..., Any | Coroutine[Any, Any, Any]]],
         Callable[..., Any | Coroutine[Any, Any, Any]],
@@ -76,12 +77,16 @@ class EventBus(EventBusInterface):
     # Decorator to subscribe a method to an event bus topic
     @staticmethod
     def subscribe(
-        topic: str,
+        topic: str | Enum,
     ) -> Callable[
         [Callable[..., Any | Coroutine[Any, Any, Any]]],
         Callable[..., Any | Coroutine[Any, Any, Any]],
     ]:
         """Attaches subscription metadata to a method."""
+        if isinstance(topic, Enum):
+            topic = str(topic.value)
+        else:
+            topic = str(topic)
 
         def decorator(
             func: Callable[..., Any | Coroutine[Any, Any, Any]],

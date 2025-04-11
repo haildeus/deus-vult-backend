@@ -175,6 +175,27 @@ class BaseModel(Generic[T]):
         )
         result = await session.execute(query)
         return list(result.scalars().all())
+    
+    async def get_by_param_in_list(
+        self, session: AsyncSession, param: str, values: list[Any]
+    ) -> list[Any]:
+        """Gets an entity by a field that is a list.""" 
+        valid_keys = self.__dict_keys()
+        try:
+            assert param in valid_keys
+        except AssertionError as e:
+            logger.error(f"Error getting entity by param in list: {e}")
+            raise e
+        
+        try:
+            param_attr = getattr(self.model_class, param)
+            query = select(self.model_class).where(param_attr.in_(values))
+            result = await session.execute(query)
+            return list(result.scalars().all())
+        except Exception as e:
+            logger.error(f"Error getting entity by param in list: {e}")
+            raise e
+        
 
     async def get_by_id(self, session: AsyncSession, entity_id: int) -> list[Any]:
         """Gets an entity by its ID."""
@@ -193,7 +214,8 @@ class BaseModel(Generic[T]):
         """Gets all entities."""
         query = select(self.model_class)
         result = await session.execute(query)
-        return list(result.scalars().all())
+        return_value = list(result.scalars().all())
+        return return_value
 
     @overload
     async def create(self, session: AsyncSession, entity: T) -> list[T]: ...

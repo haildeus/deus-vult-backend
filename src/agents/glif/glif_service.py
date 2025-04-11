@@ -1,11 +1,10 @@
 from enum import Enum
-from typing import Any
+from typing import Any, cast
 
 import requests
 from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings
 
-from src.agents.agents_interfaces import IAgentEvent
 from src.now_the_game import logger
 from src.shared.base import BaseService
 from src.shared.event_bus import EventBus
@@ -69,23 +68,13 @@ class GlifResponse(BaseModel):
 
 
 """
-EVENTS
+PAYLOADS
 """
 
 
 class GlifQueryPayload(EventPayload):
     inputs: list[str] | dict[str, str]
     service_id: str | GlifGeneratorID
-
-
-class GlifQueryEvent(IAgentEvent):
-    topic: str = GlifTopics.QUERY.value
-    payload: GlifQueryPayload  # type: ignore
-
-
-class GlifResponseEvent(IAgentEvent):
-    topic: str = GlifTopics.RESPONSE.value
-    payload: GlifResponse  # type: ignore
 
 
 """
@@ -97,16 +86,13 @@ class GlifService(BaseService):
     def __init__(self):
         super().__init__()
 
-    @EventBus.subscribe(GlifTopics.QUERY.value)
-    async def on_glif_query(self, event: Event) -> GlifResponseEvent:
-        if not isinstance(event.payload, GlifQueryPayload):
-            payload = GlifQueryPayload(**event.payload)  # type: ignore
-        else:
-            payload = event.payload
-
+    @EventBus.subscribe(GlifTopics.QUERY)
+    async def on_glif_query(self, event: Event) -> GlifResponse:
+        payload = cast(GlifQueryPayload, Event.extract_payload(event, GlifQueryPayload))
+        logger.debug(f"Glif query: {payload}")
         response = self.glif_request(payload.service_id, payload.inputs)
-        logger.info(f"Glif response: {response}")
-        return GlifResponseEvent(payload=GlifResponse(output=response.output))
+        logger.debug(f"Glif response: {response}")
+        return response
 
     def glif_request(
         self, service_id: GlifGeneratorID | str, inputs: list[str] | dict[str, str]
@@ -146,6 +132,7 @@ class GlifService(BaseService):
                 inputs=inputs,
             ).model_dump(),
             headers=GlifConfig().auth_header,
+            timeout=30,
         )
         return GlifResponse(**response.json())
 

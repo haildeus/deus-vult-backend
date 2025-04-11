@@ -1,10 +1,14 @@
-from typing import Any
+from typing import TYPE_CHECKING, Any, Optional
 
 from pydantic import model_validator
-from sqlmodel import Field
+from sqlmodel import Field, Relationship
 
 from src.shared.base import BaseSchema
 from src.shared.events import EventPayload
+
+if TYPE_CHECKING:
+    from src.api.craft.elements.elements_schemas import ElementTable
+
 
 """
 MODELS
@@ -26,6 +30,12 @@ class CreateProgress(Progress):
     pass
 
 
+class CheckProgress(EventPayload):
+    user_id: int
+    element_a_id: int
+    element_b_id: int
+
+
 class FetchProgress(EventPayload):
     user_id: int | None = None
     chat_instance: int | None = None
@@ -37,19 +47,6 @@ class FetchProgress(EventPayload):
         if not values.get("user_id") and not values.get("chat_instance"):
             raise ValueError("Either user_id or chat_instance must be provided")
         return values
-
-
-"""
-EVENTS
-"""
-
-
-class FetchProgressEventResponse(EventPayload):
-    progress: list["ProgressBase"]
-
-
-class ProgressExistsEventResponse(EventPayload):
-    exists: bool
 
 
 """
@@ -66,3 +63,12 @@ class ProgressBase(BaseSchema):
 
 class ProgressTable(ProgressBase, table=True):
     __tablename__ = "progress"  # type: ignore
+
+    # --- Add Relationship Type Hints ---
+    element: Optional["ElementTable"] = Relationship(
+        back_populates="progress",
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "foreign_keys": "[ProgressTable.element_id]",
+        },
+    )

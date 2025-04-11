@@ -2,6 +2,8 @@
 This module contains the ElementsAgent class which is responsible for LLM-driven interactions
 """
 
+from typing import cast
+
 from fastapi import HTTPException
 from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
@@ -9,7 +11,6 @@ from pydantic_ai.settings import ModelSettings
 from src.api import logger
 from src.api.craft.elements.elements_prompts import ELEMENTS_COMBINATION_SYSTEM_PROMPT
 from src.api.craft.elements.elements_schemas import (
-    CombineElementsEventResponse,
     Element,
     ElementBaseInput,
     ElementInput,
@@ -39,12 +40,10 @@ class ElementsAgent(BaseService):
             retries=3,
         )
 
-    @EventBus.subscribe(ElementTopics.ELEMENT_COMBINATION.value)
-    async def handle_element_combination(self, event: Event):
-        if not isinstance(event.payload, ElementBaseInput):
-            payload = ElementBaseInput(**event.payload)  # type: ignore
-        else:
-            payload = event.payload
+    @EventBus.subscribe(ElementTopics.ELEMENT_COMBINATION)
+    async def handle_element_combination(self, event: Event) -> Element:
+        payload = cast(ElementBaseInput, event.extract_payload(event, ElementBaseInput))
+
         try:
             assert payload.element_a
             assert payload.element_b
@@ -53,9 +52,7 @@ class ElementsAgent(BaseService):
 
         element_input = ElementInput.from_base(payload)
         result = await self.combine_elements(element_input)
-        return CombineElementsEventResponse(
-            payload=result, topic=ElementTopics.ELEMENT_COMBINATION_RESPONSE.value
-        )
+        return result
 
     async def combine_elements(self, input: ElementInput) -> Element:
         try:

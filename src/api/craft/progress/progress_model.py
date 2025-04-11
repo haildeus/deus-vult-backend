@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import or_, select
 
 from src.api.craft.progress.progress_schemas import ProgressBase, ProgressTable
 from src.shared.base import BaseModel
@@ -49,6 +50,24 @@ class ProgressModel(BaseModel[ProgressTable]):
             raise ValueError("Element ID is not enough to get a progress")
         else:
             return await self.get_all(session)
+
+    async def check_access_internal(
+        self, session: AsyncSession, user_id: int, element_a_id: int, element_b_id: int
+    ) -> bool:
+        """Internal helper to check progress within a session."""
+        stmt = (
+            select(ProgressTable.element_id)
+            .where(ProgressTable.object_id == user_id)
+            .where(
+                or_(
+                    ProgressTable.element_id == element_a_id,
+                    ProgressTable.element_id == element_b_id,
+                )
+            )
+        )
+        result = await session.execute(stmt)
+        found_elements = {row[0] for row in result.fetchall()}
+        return element_a_id in found_elements and element_b_id in found_elements
 
 
 progress_model = ProgressModel()

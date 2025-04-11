@@ -115,5 +115,4 @@ class GlifQueryEvent(IAgentEvent):
 
 
 class GlifResponseEvent(IAgentEvent):
-    topic: str = GlifTopics.RESPONSE.value
     payload: GlifResponse  # type: ignore

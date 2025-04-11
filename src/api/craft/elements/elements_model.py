@@ -2,7 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from src.api import logger
-from src.api.craft.elements.elements_schemas import ElementBase, ElementTable
+from src.api.craft.elements.elements_schemas import ElementTable
 from src.shared.base import BaseModel, EntityAlreadyExistsError, EntityNotFoundError
 
 
@@ -15,15 +15,19 @@ class ElementModel(BaseModel[ElementTable]):
         session: AsyncSession,
         *,
         element_id: int | None = None,
-        name: str | None = None,
-    ) -> list[ElementBase]:
+        name: str | list[str] | None = None,
+    ) -> list[ElementTable]:
         """Get an element by ID, name, or all elements"""
         if element_id:
             return await self.get_by_id(session, element_id)
         elif name:
-            return await self.get_by_other_params(session, name=name)
+            if isinstance(name, list):
+                return await self.get_by_param_in_list(session, "name", name)
+            else:
+                return await self.get_by_other_params(session, name=name)
         else:
-            return await self.get_all(session)
+            return_obj = await self.get_all(session)
+            return return_obj
 
     async def remove_secure(self, session: AsyncSession, name: str) -> bool:
         query = select(self.model_class).where(self.model_class.name == name)
