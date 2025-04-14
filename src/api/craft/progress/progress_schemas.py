@@ -1,6 +1,6 @@
 from typing import TYPE_CHECKING, Any, Optional
 
-from pydantic import model_validator
+from pydantic import BaseModel, model_validator
 from sqlmodel import Field, Relationship
 
 from src.shared.base import BaseSchema
@@ -21,7 +21,6 @@ class Progress(EventPayload):
     element_id: int
 
 
-
 class CheckProgress(EventPayload):
     user_id: int
     element_a_id: int
@@ -40,19 +39,35 @@ class FetchProgress(EventPayload):
             raise ValueError("Either user_id or chat_instance must be provided")
         return values
 
+
 class InitProgress(EventPayload):
     user_id: int
     chat_instance: int
     starting_elements_ids: list[int]
 
-"""
-TABLES
-"""
+
+class ProgressResponse(BaseModel):
+    """
+    Response model for progress.
+    """
+
+    # --- User ---
+    user_id: int
+    chat_instance: int
+
+    # --- Element ---
+    object_id: int
+    name: str
+    emoji: str
 
 
 class ProgressBase(BaseSchema):
     chat_instance: int = Field(primary_key=True, index=True)
-    element_id: int = Field(primary_key=True, foreign_key="elements.object_id", index=True)
+    element_id: int = Field(
+        primary_key=True,
+        foreign_key="elements.object_id",
+        index=True,
+    )
 
 
 class ProgressTable(ProgressBase, table=True):

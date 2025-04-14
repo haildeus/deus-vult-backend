@@ -8,15 +8,35 @@ from src import Container
 from src.api import logger
 from src.api.core.dependencies import validate_init_data
 from src.api.craft.craft_orchestration import (
+    fetch_init_elements,
     fetch_progress,
     orchestrate_element_combination,
 )
-from src.api.craft.elements.elements_schemas import ElementBase
-from src.api.craft.progress.progress_schemas import ProgressBase
+from src.api.craft.elements.elements_schemas import ElementBase, ElementResponse
+from src.api.craft.progress.progress_schemas import ProgressResponse
 from src.shared.event_bus import EventBus
 from src.shared.uow import UnitOfWork
 
 craft_router = APIRouter(prefix="/craft")
+
+
+@craft_router.get(
+    "/elements/init",
+    name="Get initial elements",
+    response_model=list[ElementResponse],
+    status_code=200,
+    tags=["Elements"],
+)
+@inject
+async def get_init_elements(
+    event_bus: Annotated[EventBus, Depends(Provide[Container.event_bus])],
+    uow: Annotated[UnitOfWork, Depends(Provide[Container.uow_factory])],
+) -> list[ElementResponse]:
+    """Get initial elements"""
+    try:
+        return await fetch_init_elements(uow, event_bus)
+    except Exception as e:
+        raise e
 
 
 @craft_router.post(
@@ -30,9 +50,7 @@ craft_router = APIRouter(prefix="/craft")
 async def combine_elements(
     user_id: Annotated[int, Depends(validate_init_data)],
     event_bus: Annotated[EventBus, Depends(Provide[Container.event_bus])],
-    uow_factory: Annotated[
-        Callable[[], UnitOfWork], Depends(Provide[Container.uow_factory])
-    ],
+    uow: Annotated[UnitOfWork, Depends(Provide[Container.uow_factory])],
     element_a: ElementBase,
     element_b: ElementBase,
 ) -> ElementBase:
@@ -57,8 +75,6 @@ async def combine_elements(
         raise HTTPException(
             status_code=400, detail="Invalid elements provided for combination."
         ) from e
-
-    uow = uow_factory()
 
     try:
         # Call the single orchestrator function
@@ -87,9 +103,9 @@ async def combine_elements(
 
 
 @craft_router.get(
-    "/{user_id}/progress",
+    "/progress",
     name="Get user progress",
-    response_model=list[ProgressBase],
+    response_model=list[ProgressResponse],
     status_code=200,
     tags=["Progress"],
 )
@@ -97,12 +113,9 @@ async def combine_elements(
 async def get_user_progress(
     user_id: Annotated[int, Depends(validate_init_data)],
     event_bus: Annotated[EventBus, Depends(Provide[Container.event_bus])],
-    uow_factory: Annotated[
-        Callable[[], UnitOfWork], Depends(Provide[Container.uow_factory])
-    ],
-) -> list[ProgressBase]:
+    uow: Annotated[UnitOfWork, Depends(Provide[Container.uow_factory])],
+) -> list[ProgressResponse]:
     """Get user progress"""
-    uow = uow_factory()
     try:
         # Assuming fetch_progress handles caching and fetching logic
         progress = await fetch_progress(user_id, uow, event_bus)

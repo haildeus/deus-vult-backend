@@ -1,5 +1,7 @@
 import pkgutil
+from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
 from dependency_injector import containers, providers
 from pyrogram.client import Client
@@ -16,6 +18,7 @@ from src.now_the_game.telegram.memberships.memberships_service import Membership
 from src.now_the_game.telegram.messages.messages_service import MessagesService
 from src.now_the_game.telegram.polls.polls_service import PollsService
 from src.now_the_game.telegram.users.users_service import UsersService
+from src.shared.base import BaseService
 from src.shared.base_llm import VertexConfig, VertexLLM
 from src.shared.cache import get_disk_cache
 from src.shared.config import Logger, PostgresConfig
@@ -136,8 +139,45 @@ def create_container() -> Container:
         "src.shared",
     ]
     modules_to_wire = find_modules_in_packages(packages_to_wire)  # type: ignore
-    container.wire(modules=modules_to_wire)
     modules_to_wire.append("app")
+    container.wire(modules=modules_to_wire)
 
     logger.debug("Container wired")
     return container
+
+
+async def init_service(container: Container, name: str) -> Any:
+    """
+    Initializes a service.
+    """
+    service_dict = {
+        "db": container.db,
+        "telegram_object": container.telegram_object,
+        "disk_cache_instance": container.disk_cache_instance,
+        "event_bus": container.event_bus,
+    }
+    try:
+        logger.debug(f"Initializing service {name}")
+        service = service_dict[name]()
+        logger.debug(f"Initialized service {name}")
+        return service
+    except KeyError as e:
+        raise ValueError(f"Service {name} not found in container") from e
+    except Exception as e:
+        logger.error(f"Error initializing service {name}: {e}")
+        raise e
+
+
+async def init_service_and_register(
+    service_factory: Callable[[], BaseService], event_bus: EventBus
+) -> None:
+    """
+    Initializes a service and registers it with the event bus.
+
+    Args:
+        service_factory: A callable that returns a BaseService instance.
+        event_bus: The event bus to register the service with.
+    """
+    service = service_factory()
+    event_bus.register_subscribers_from(service)
+    logger.debug(f"Initialized and registered {service.__class__.__name__}")

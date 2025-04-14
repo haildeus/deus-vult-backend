@@ -1,20 +1,15 @@
 from typing import TYPE_CHECKING, Any
 
-from pydantic import model_validator
+from pydantic import BaseModel, model_validator
 from sqlmodel import Field, Relationship
 
-from src.api.craft.craft_interfaces import ICraftElementEvent
 from src.shared.base import BaseSchema
-from src.shared.event_registry import ElementTopics
 from src.shared.events import EventPayload
 
 # Forward reference for type hints
 if TYPE_CHECKING:
     from src.api.craft.progress.progress_schemas import ProgressTable
     from src.api.craft.recipes.recipes_schemas import RecipeTable
-"""
-MODELS
-"""
 
 
 class Element(EventPayload):
@@ -26,6 +21,12 @@ class Element(EventPayload):
         - emoji: The emoji representing the element.
     """
 
+    name: str = Field(max_length=100, description="The name of the element")
+    emoji: str = Field(max_length=10, description="The emoji representing the element")
+
+
+class ElementResponse(BaseModel):
+    object_id: int = Field(ge=1, description="The unique identifier for the element")
     name: str = Field(max_length=100, description="The name of the element")
     emoji: str = Field(max_length=10, description="The emoji representing the element")
 
@@ -56,20 +57,6 @@ class CreateElementPayload(CreateElement):
 
 class FetchElementResponsePayload(EventPayload):
     elements: list["ElementTable"]
-
-
-"""
-EVENTS
-"""
-
-
-class CombineElementsEvent(ICraftElementEvent):
-    topic: str = ElementTopics.ELEMENT_COMBINATION.value
-    payload: "ElementInput"  # type: ignore
-
-
-class CombineElementsEventResponse(ICraftElementEvent):
-    payload: "Element"  # type: ignore
 
 
 """

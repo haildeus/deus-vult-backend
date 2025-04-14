@@ -12,11 +12,20 @@ from src.shared.config import shared_config
 DEBUG_MODE = shared_config.debug_mode
 
 
+@inject
+def get_bot_token(
+    telegram_config: TelegramConfig = Provide[Container.telegram_config],
+) -> str:
+    """
+    Get the bot token from the Telegram config.
+    """
+    return telegram_config.bot_token
+
+
 # TODO: Decouple this part, implement event bus for communication
 @inject
 def validate_init_data(
     init_data: str | None = None,
-    telegram_config: TelegramConfig = Provide[Container.telegram_config],
 ) -> int:
     """
     Validates the data received from Telegram WebApp.
@@ -29,10 +38,11 @@ def validate_init_data(
     """
     if DEBUG_MODE and not init_data:
         return 714862471
+    bot_token = get_bot_token()
 
     try:
         assert init_data
-        assert telegram_config.bot_token
+        assert bot_token
     except AssertionError as e:
         logger.error("Invariant violation: init_data or bot_token is not set")
         raise HTTPException(status_code=401, detail="Invalid init data") from e
@@ -49,7 +59,7 @@ def validate_init_data(
     received_hash = data_dict.pop("hash")
 
     data_check_string = "\n".join(f"{k}={v}" for k, v in sorted(data_dict.items()))
-    secret_key = hashlib.sha256(telegram_config.bot_token.encode()).digest()
+    secret_key = hashlib.sha256(bot_token.encode()).digest()
     computed_hash = hmac.new(
         secret_key, data_check_string.encode(), hashlib.sha256
     ).hexdigest()

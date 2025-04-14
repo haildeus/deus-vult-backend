@@ -5,14 +5,10 @@ from sqlalchemy.exc import SQLAlchemyError
 from src.api import logger
 from src.api.craft.elements.elements_constants import STARTING_ELEMENTS
 from src.api.craft.elements.elements_model import element_model
-from src.api.craft.elements.elements_schemas import (
-    Element,
-    ElementTable,
-    ElementTopics,
-    FetchElement,
-)
+from src.api.craft.elements.elements_schemas import Element, ElementTable, FetchElement
 from src.shared.base import BaseService, EntityAlreadyExistsError
 from src.shared.event_bus import EventBus
+from src.shared.event_registry import ElementTopics
 from src.shared.events import Event
 from src.shared.uow import current_uow
 
@@ -27,27 +23,35 @@ class ElementsService(BaseService):
         active_uow = current_uow.get()
         if active_uow:
             db = await active_uow.get_session()
-            return await self.model.get_by_param_in_list(db, "name", [element.name for element in STARTING_ELEMENTS])
+            return await self.model.get_by_param_in_list(
+                db, "name", [element.name for element in STARTING_ELEMENTS]
+            )
         else:
-            raise RuntimeError("No active UoW found during element initialization")    
+            raise RuntimeError("No active UoW found during element initialization")
 
     @EventBus.subscribe(ElementTopics.ELEMENTS_INIT)
     async def on_init_elements(self, event: Event) -> None:
         starting_names = [element.name for element in STARTING_ELEMENTS]
         active_uow = current_uow.get()
-        
+
         if active_uow:
             db = await active_uow.get_session()
-            existing_elements: list[ElementTable] = await self.model.get_by_param_in_list(db, "name", starting_names)
+            existing_elements: list[
+                ElementTable
+            ] = await self.model.get_by_param_in_list(db, "name", starting_names)
             if len(existing_elements) == len(STARTING_ELEMENTS):
                 logger.debug("Starting elements already exist, skipping")
                 return
             # Deduct the elements that do not exist
-            missing_elements = [element for element in STARTING_ELEMENTS if element.name not in [e.name for e in existing_elements]]
+            missing_elements = [
+                element
+                for element in STARTING_ELEMENTS
+                if element.name not in [e.name for e in existing_elements]
+            ]
             for element in missing_elements:
                 try:
                     element_entry = ElementTable(name=element.name, emoji=element.emoji)
-                    await self.model.add(db, element_entry) 
+                    await self.model.add(db, element_entry)
                 except EntityAlreadyExistsError as e:
                     logger.debug(f"Element {element.name} already exists, skipping")
                     raise e
@@ -56,7 +60,7 @@ class ElementsService(BaseService):
                     raise e
         else:
             raise RuntimeError("No active UoW found during element initialization")
-    
+
     @EventBus.subscribe(ElementTopics.ELEMENT_CREATE)
     async def on_create_element(self, event: Event) -> list[ElementTable]:
         payload = cast(Element, event.extract_payload(event, Element))
@@ -95,9 +99,7 @@ class ElementsService(BaseService):
         payload = cast(FetchElement, event.extract_payload(event, FetchElement))
         element_id = payload.element_id
         name = payload.name
-        logger.debug(f"Fetching elements. "
-                     f"ID: {element_id}, "
-                     f"Name(s): {name}")
+        logger.debug(f"Fetching elements. ID: {element_id}, Name(s): {name}")
 
         active_uow = current_uow.get()
 
