@@ -1,4 +1,3 @@
-from collections.abc import Callable
 from typing import Annotated
 
 from dependency_injector.wiring import Provide, inject
@@ -12,8 +11,9 @@ from src.api.craft.craft_orchestration import (
     fetch_progress,
     orchestrate_element_combination,
 )
-from src.api.craft.elements.elements_schemas import ElementBase, ElementResponse
+from src.api.craft.elements.elements_schemas import ElementApiInput, ElementResponse
 from src.api.craft.progress.progress_schemas import ProgressResponse
+from src.shared.cache import disk_cache
 from src.shared.event_bus import EventBus
 from src.shared.uow import UnitOfWork
 
@@ -27,8 +27,13 @@ craft_router = APIRouter(prefix="/craft")
     status_code=200,
     tags=["Elements"],
 )
+@disk_cache(
+    key_params=["user_id"],
+    ttl=60 * 60 * 24,
+)
 @inject
 async def get_init_elements(
+    user_id: Annotated[int, Depends(validate_init_data)],
     event_bus: Annotated[EventBus, Depends(Provide[Container.event_bus])],
     uow: Annotated[UnitOfWork, Depends(Provide[Container.uow_factory])],
 ) -> list[ElementResponse]:
@@ -42,35 +47,39 @@ async def get_init_elements(
 @craft_router.post(
     "/elements/combine",
     name="Combining elements",
-    response_model=ElementBase,
+    response_model=ElementResponse,
     status_code=201,
     tags=["Elements"],
+)
+@disk_cache(
+    key_params=[
+        "user_id",
+        "element_ids.object_id_a",
+        "element_ids.object_id_b",
+    ],
+    ttl=60 * 60 * 24,
 )
 @inject
 async def combine_elements(
     user_id: Annotated[int, Depends(validate_init_data)],
     event_bus: Annotated[EventBus, Depends(Provide[Container.event_bus])],
     uow: Annotated[UnitOfWork, Depends(Provide[Container.uow_factory])],
-    element_a: ElementBase,
-    element_b: ElementBase,
-) -> ElementBase:
+    element_ids: ElementApiInput,
+) -> ElementResponse:
     """
     Combines two elements. Checks for existing recipes or generates a new one.
     Updates user progress atomically.
     """
     logger.debug(
-        f"Combining elements: {element_a.name} ({element_a.object_id}) + "
-        f"{element_b.name} ({element_b.object_id}) for user {user_id}"
+        f"Combining elements: {element_ids.object_id_a} + {element_ids.object_id_b}"
     )
     try:
-        assert element_a and element_a.object_id
-        assert element_b and element_b.object_id
-        assert (
-            element_a.object_id != element_b.object_id
-        )  # Prevent combining element with itself? Adjust if needed.
+        assert element_ids.object_id_a
+        assert element_ids.object_id_b
     except AssertionError as e:
         logger.error(
-            f"Invalid elements provided for combination: A={element_a}, B={element_b}"
+            f"Invalid elements provided for combination: "
+            f"A={element_ids.object_id_a}, B={element_ids.object_id_b}"
         )
         raise HTTPException(
             status_code=400, detail="Invalid elements provided for combination."
@@ -78,10 +87,10 @@ async def combine_elements(
 
     try:
         # Call the single orchestrator function
-        result_element = await orchestrate_element_combination(
+        result_element: ElementResponse = await orchestrate_element_combination(
             user_id=user_id,
-            element_a_id=element_a.object_id,
-            element_b_id=element_b.object_id,
+            element_a_id=element_ids.object_id_a,
+            element_b_id=element_ids.object_id_b,
             uow=uow,
             event_bus=event_bus,
         )

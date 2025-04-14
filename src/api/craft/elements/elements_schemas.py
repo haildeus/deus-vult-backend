@@ -25,10 +25,25 @@ class Element(EventPayload):
     emoji: str = Field(max_length=10, description="The emoji representing the element")
 
 
+"""
+API MODELS
+"""
+
+
 class ElementResponse(BaseModel):
     object_id: int = Field(ge=1, description="The unique identifier for the element")
     name: str = Field(max_length=100, description="The name of the element")
     emoji: str = Field(max_length=10, description="The emoji representing the element")
+
+
+class ElementApiInput(BaseModel):
+    object_id_a: int = Field(ge=1, description="The unique identifier for the element")
+    object_id_b: int = Field(ge=1, description="The unique identifier for the element")
+
+
+"""
+EVENT MODELS
+"""
 
 
 class CreateElement(Element):

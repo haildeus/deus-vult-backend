@@ -81,10 +81,13 @@ class ElementsService(BaseService):
                     response = await self.model.add(db, element)
                     return response
                 else:
-                    logger.debug(f"Element {name} already exists, skipping")
+                    logger.warning(f"Element {name} already exists, skipping")
                     raise EntityAlreadyExistsError(
                         entity=name, entity_type=ElementTable.__name__
                     )
+            except EntityAlreadyExistsError:
+                logger.warning(f"Element {name} already exists, returning element")
+                return [element]
             except SQLAlchemyError as e:
                 logger.error(f"SQLAlchemy error adding {name}: {e}")
                 raise e

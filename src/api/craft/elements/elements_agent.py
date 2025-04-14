@@ -42,7 +42,7 @@ class ElementsAgent(BaseService):
 
     @EventBus.subscribe(ElementTopics.ELEMENT_COMBINATION)
     async def handle_element_combination(self, event: Event) -> Element:
-        payload = cast(ElementBaseInput, event.extract_payload(event, ElementBaseInput))
+        payload = cast(ElementInput, event.extract_payload(event, ElementInput))
 
         try:
             assert payload.element_a
@@ -50,8 +50,7 @@ class ElementsAgent(BaseService):
         except AssertionError as e:
             raise HTTPException(status_code=400, detail="Invalid elements") from e
 
-        element_input = ElementInput.from_base(payload)
-        result = await self.combine_elements(element_input)
+        result = await self.combine_elements(payload)
         return result
 
     async def combine_elements(self, input: ElementInput) -> Element:

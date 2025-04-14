@@ -3,8 +3,6 @@ from fastapi import HTTPException
 from src.api import logger
 from src.api.craft.elements.elements_schemas import (
     Element,
-    ElementBase,
-    ElementBaseInput,
     ElementInput,
     ElementResponse,
     ElementTable,
@@ -13,7 +11,6 @@ from src.api.craft.progress.progress_schemas import ProgressResponse, ProgressTa
 from src.api.craft.recipes.recipes_schemas import RecipeTable
 from src.shared.event_bus import EventBus
 from src.shared.event_registry import ElementTopics, ProgressTopics, RecipeTopics
-from src.shared.events import Event
 from src.shared.uow import UnitOfWork
 
 """
@@ -29,11 +26,15 @@ async def fetch_progress(
     """Fetch progress"""
     logger.debug(f"Fetching progress for user {user_id} using event bus pattern.")
     async with uow.start():
-        progress_event = Event.from_dict(
-            ProgressTopics.PROGRESS_FETCH,
-            {"user_id": user_id},
-        )
-        progress_response: list[ProgressTable] = await event_bus.request(progress_event)
+        try:
+            progress_response: list[ProgressTable] = await event_bus.request(
+                ProgressTopics.PROGRESS_FETCH,
+                user_id=user_id,
+            )
+        except Exception as e:
+            logger.error(f"Error fetching progress: {e}")
+            raise e
+
         try:
             return [
                 ProgressResponse(
@@ -58,10 +59,7 @@ async def init_elements(
     logger.debug("Initializing starting elements")
     async with uow.start():
         try:
-            elements_init_event = Event.from_dict(
-                ElementTopics.ELEMENTS_INIT,
-            )
-            await event_bus.request(elements_init_event)
+            await event_bus.request(ElementTopics.ELEMENTS_INIT)
             logger.debug("Initialized starting elements.")
         except Exception as e:
             logger.error(f"Error initializing starting elements: {e}")
@@ -74,25 +72,26 @@ async def fetch_init_elements(
 ) -> list[ElementResponse]:
     """Fetch initial elements"""
     async with uow.start():
-        elements_fetch_event = Event.from_dict(
-            ElementTopics.ELEMENTS_FETCH_INIT,
-        )
         try:
             elements_fetch_response: list[ElementTable] = await event_bus.request(
-                elements_fetch_event
+                ElementTopics.ELEMENTS_FETCH_INIT
             )
         except Exception as e:
             logger.error(f"Error fetching initial elements: {e}")
             raise e
 
-        return [
-            ElementResponse(
-                object_id=element.object_id,
-                name=element.name,
-                emoji=element.emoji,
-            )
-            for element in elements_fetch_response
-        ]
+        try:
+            return [
+                ElementResponse(
+                    object_id=element.object_id,
+                    name=element.name,
+                    emoji=element.emoji,
+                )
+                for element in elements_fetch_response
+            ]
+        except Exception as e:
+            logger.error(f"Error fetching initial elements: {e}")
+            raise e
 
 
 async def init_progress(
@@ -105,11 +104,8 @@ async def init_progress(
     logger.debug(f"Initializing progress for user {user_id}.")
     async with uow.start():
         try:
-            elements_fetch_event = Event.from_dict(
-                ElementTopics.ELEMENTS_FETCH_INIT,
-            )
             elements_fetch_response: list[ElementTable] = await event_bus.request(
-                elements_fetch_event
+                ElementTopics.ELEMENTS_FETCH_INIT
             )
             element_ids = [element.object_id for element in elements_fetch_response]
             logger.debug(f"Fetched {len(element_ids)} elements for user {user_id}.")
@@ -117,46 +113,16 @@ async def init_progress(
             logger.error(f"Error initializing elements: {e}")
             raise e
         try:
-            init_progress_event = Event.from_dict(
+            await event_bus.request(
                 ProgressTopics.PROGRESS_INIT,
-                {
-                    "user_id": user_id,
-                    "chat_instance": chat_instance,
-                    "starting_elements_ids": element_ids,
-                },
+                user_id=user_id,
+                chat_instance=chat_instance,
+                starting_elements_ids=element_ids,
             )
-            await event_bus.request(init_progress_event)
             logger.debug(f"Initialized progress for user {user_id}.")
         except Exception as e:
             logger.error(f"Error initializing progress: {e}")
             raise e
-
-
-async def get_element_from_gemini(
-    uow: UnitOfWork, event_bus: EventBus, element_a: ElementBase, element_b: ElementBase
-) -> ElementBase:
-    """Get element from Gemini & save to elements database"""
-    async with uow.start():
-        elements_input = ElementBaseInput(element_a=element_a, element_b=element_b)
-        # Fetch element from Gemini
-        agent_event = Event.from_dict(
-            ElementTopics.ELEMENT_COMBINATION.value, elements_input.model_dump()
-        )
-        agent_response = await event_bus.request(agent_event)
-        element = agent_response.payload
-        # Add element to database
-        add_element_event = Event.from_dict(
-            ElementTopics.ELEMENT_CREATE.value, element.model_dump()
-        )
-        # TODO: Check if we need await here
-        await event_bus.publish(add_element_event)
-        # TODO: Add element to the recipe database
-
-        logger.debug(f"Element: {element}")
-        return element
-
-
-# --- Main Orchestration Logic ---
 
 
 async def orchestrate_element_combination(
@@ -166,59 +132,70 @@ async def orchestrate_element_combination(
     uow: UnitOfWork,
     event_bus: EventBus,
     chat_instance: int = 0,
-) -> ElementTable | None:
+) -> ElementResponse:
     """
     Orchestrates the element combination process within a single transaction.
     """
     async with uow.start():
         # Check access
-        check_progress_event = Event.from_dict(
-            ProgressTopics.PROGRESS_CHECK,
-            {
-                "user_id": user_id,
-                "element_a_id": element_a_id,
-                "element_b_id": element_b_id,
-            },
-        )
-        await event_bus.request(check_progress_event)
-
-        # Check for existing recipe (includes result element)
-        find_recipe_event = Event.from_dict(
-            RecipeTopics.RECIPE_FETCH,
-            {
-                "element_a_id": element_a_id,
-                "element_b_id": element_b_id,
-            },
-        )
-        recipe: list[RecipeTable] = await event_bus.request(find_recipe_event)
-
-        if recipe and recipe[0].result:
-            logger.debug(
-                f"Found existing recipe: {recipe[0].object_id} -> "
-                f"Result: {recipe[0].result.name} ({recipe[0].result.object_id})"
+        try:
+            await event_bus.request(
+                ProgressTopics.PROGRESS_CHECK,
+                user_id=user_id,
+                element_a_id=element_a_id,
+                element_b_id=element_b_id,
             )
+        except Exception as e:
+            logger.error(f"Error checking progress: {e}")
+            raise e
+
+        # Check for existing recipe
+        try:
+            recipe: list[RecipeTable] = await event_bus.request(
+                RecipeTopics.RECIPE_FETCH,
+                element_a_id=element_a_id,
+                element_b_id=element_b_id,
+            )
+        except Exception as e:
+            logger.error(f"Error fetching recipe: {e}")
+            raise e
+
+        try:
+            assert recipe
+            assert recipe[0].result
+        except AssertionError as e:
+            logger.error(f"Error fetching recipe: {e}")
+            raise e
+
+        if recipe:
             result_element_table = recipe[0].result
-            progress_create_event = Event.from_dict(
-                ProgressTopics.PROGRESS_CREATE,
-                {
-                    "user_id": user_id,
-                    "chat_instance": chat_instance,
-                    "element_id": result_element_table.object_id,
-                },
+            logger.debug(
+                f"Found existing recipe: {result_element_table.object_id} -> "
+                + f"Result: {result_element_table.name} "
+                + f"({result_element_table.object_id})",
             )
-            await event_bus.request(progress_create_event)
-            return result_element_table
+
+            # Adds progress if it doesn't exist, checks in progress model
+            await event_bus.request(
+                ProgressTopics.PROGRESS_CREATE,
+                user_id=user_id,
+                chat_instance=chat_instance,
+                element_id=result_element_table.object_id,
+            )
+
+            return ElementResponse(
+                object_id=result_element_table.object_id,
+                name=result_element_table.name,
+                emoji=result_element_table.emoji,
+            )
         else:
             logger.debug(
                 f"No recipe found for {element_a_id} + {element_b_id}. Querying Gemini."
             )
             # Query Gemini, create Element and Recipe
-            elements_fetch_event = Event.from_dict(
-                ElementTopics.ELEMENT_FETCH,
-                {"element_id": [element_a_id, element_b_id]},
-            )
             fetched_elements: list[ElementTable] = await event_bus.request(
-                elements_fetch_event
+                ElementTopics.ELEMENT_FETCH,
+                element_id=[element_a_id, element_b_id],
             )
             input_a = Element.model_validate(fetched_elements[0].model_dump())
             input_b = Element.model_validate(fetched_elements[1].model_dump())
@@ -226,49 +203,40 @@ async def orchestrate_element_combination(
 
             try:
                 # Call the Gemini function
-                new_element_event = Event.from_dict(
-                    ElementTopics.ELEMENT_COMBINATION,
-                    agent_input.model_dump(),
-                )
                 new_element_generated: Element = await event_bus.request(
-                    new_element_event
+                    ElementTopics.ELEMENT_COMBINATION,
+                    **agent_input.model_dump(),
                 )
 
-                # Add element to database
-                add_element_event = Event.from_dict(
-                    ElementTopics.ELEMENT_CREATE, new_element_generated.model_dump()
+                # Add element to database if it doesn't exist
+                # Returns the element if it exists
+                add_element_response: list[ElementTable] = await event_bus.request(
+                    ElementTopics.ELEMENT_CREATE,
+                    **new_element_generated.model_dump(),
                 )
-                new_created_element: list[ElementTable] = await event_bus.request(
-                    add_element_event
-                )
-                result_element_table: ElementTable = new_created_element[0]
+                result_element_table: ElementTable = add_element_response[0]
 
-                logger.info(
-                    f"Gemini process resulted in element: {result_element_table.name} "
-                    f"({result_element_table.object_id})"
-                )
-                add_recipe_event = Event.from_dict(
+                # Add recipe to database
+                await event_bus.request(
                     RecipeTopics.RECIPE_CREATE,
-                    {
-                        "element_a_id": element_a_id,
-                        "element_b_id": element_b_id,
-                        "result_id": result_element_table.object_id,
-                    },
+                    element_a_id=element_a_id,
+                    element_b_id=element_b_id,
+                    result_id=result_element_table.object_id,
                 )
-                await event_bus.request(add_recipe_event)
 
                 # Create progress
-                create_progress_event = Event.from_dict(
+                await event_bus.request(
                     ProgressTopics.PROGRESS_CREATE,
-                    {
-                        "user_id": user_id,
-                        "chat_instance": chat_instance,
-                        "element_id": result_element_table.object_id,
-                    },
+                    user_id=user_id,
+                    chat_instance=chat_instance,
+                    element_id=result_element_table.object_id,
                 )
-                await event_bus.request(create_progress_event)
 
-                return result_element_table
+                return ElementResponse(
+                    object_id=result_element_table.object_id,
+                    name=result_element_table.name,
+                    emoji=result_element_table.emoji,
+                )
 
             except Exception as e:
                 logger.error(

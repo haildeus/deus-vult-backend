@@ -63,7 +63,7 @@ class EventBusInterface(ABC):
         pass
 
     @abstractmethod
-    async def request(self, event: Event, timeout: float = 5.0) -> Any:
+    async def request(self, topic: Enum, timeout: float = 5.0, **kwargs: Any) -> Any:
         """Send a request event, return the result"""
         pass
 
@@ -131,8 +131,10 @@ class EventBus(EventBusInterface):
         if coros:
             await gather(*coros)
 
-    async def request(self, event: Event, timeout: float = 5.0) -> Any:
+    async def request(self, topic: Enum, timeout: float = 5.0, **kwargs: Any) -> Any:
         """Send a request event, return the result"""
+        event_dict = {key: value for key, value in kwargs.items() if value is not None}
+        event = Event.from_dict(topic, event_dict)
 
         event_type = type(event)
         handlers = self._subscribers.get(event_type, [])

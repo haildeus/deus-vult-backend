@@ -10,10 +10,9 @@ from src.api.craft.progress.progress_schemas import (
     FetchProgress,
     InitProgress,
     Progress,
-    ProgressBase,
     ProgressTable,
 )
-from src.shared.base import BaseService
+from src.shared.base import BaseService, EntityAlreadyExistsError
 from src.shared.event_bus import EventBus
 from src.shared.event_registry import ProgressTopics
 from src.shared.events import Event
@@ -24,21 +23,23 @@ class ProgressService(BaseService):
     def __init__(self):
         super().__init__()
         self.model = progress_model
-    
+
     @EventBus.subscribe(ProgressTopics.PROGRESS_INIT)
     async def on_init_progress(self, event: Event) -> None:
         payload = cast(InitProgress, event.extract_payload(event, InitProgress))
         user_id = payload.user_id
         chat_instance = payload.chat_instance
         starting_elements_ids = payload.starting_elements_ids
-        
+
         active_uow = current_uow.get()
         if active_uow:
             db = await active_uow.get_session()
             for element_id in starting_elements_ids:
                 print(f"Adding progress for user {user_id} with element {element_id}")
                 progress = ProgressTable(
-                    object_id=user_id, chat_instance=chat_instance, element_id=element_id
+                    object_id=user_id,
+                    chat_instance=chat_instance,
+                    element_id=element_id,
                 )
                 print(f"Progress: {progress}")
                 await self.model.add(db, progress, pass_checks=False)
@@ -63,8 +64,30 @@ class ProgressService(BaseService):
             db = await active_uow.get_session()
 
             try:
-                response = await self.model.add(db, progress)
-                return response
+                not_exists = await self.model.not_exists(db, user_id, element_id)
+                # If the progress does not exist, create it
+                if not_exists:
+                    logger.debug(
+                        f"Element {element_id} does not exist for user {user_id}, "
+                        "creating progress"
+                    )
+                    response = await self.model.add(db, progress, pass_checks=False)
+                    return response
+
+                # If the progress exists, return the progress
+                else:
+                    logger.debug(
+                        f"Element {element_id} already exists for user {user_id}, "
+                        "returning progress"
+                    )
+                    return [progress]
+
+            except EntityAlreadyExistsError:
+                logger.warning(
+                    f"Element {element_id} already exists for user {user_id}, "
+                    "returning progress"
+                )
+                return [progress]
             except SQLAlchemyError as e:
                 logger.error(f"SQLAlchemy error creating progress: {e}")
                 raise e
@@ -75,15 +98,37 @@ class ProgressService(BaseService):
             raise RuntimeError("No active UoW found during progress creation")
 
     @EventBus.subscribe(ProgressTopics.PROGRESS_FETCH)
-    async def on_fetch_progress(self, event: Event) -> list[ProgressBase]:
-        user_id, chat_instance, element_id = await self.__process_fetch_payload(event)
+    async def on_fetch_progress(self, event: Event) -> list[ProgressTable]:
+        payload = cast(FetchProgress, event.extract_payload(event, FetchProgress))
+        user_id = payload.user_id
+        chat_instance = payload.chat_instance
+        element_id = payload.element_id
+
         try:
             assert user_id or chat_instance
         except AssertionError as e:
             raise HTTPException(status_code=400, detail="Invalid payload") from e
 
-        progress = await self.__fetch_progress(user_id, chat_instance, element_id)
-        return progress
+        active_uow = current_uow.get()
+        if active_uow:
+            db = await active_uow.get_session()
+
+            try:
+                progress = await self.model.get(
+                    db,
+                    user_id=user_id,
+                    chat_instance=chat_instance,
+                    element_id=element_id,
+                )
+                return progress
+            except SQLAlchemyError as e:
+                logger.error(f"SQLAlchemy error fetching progress: {e}")
+                raise e
+            except Exception as e:
+                logger.error(f"Error fetching progress: {e}")
+                raise e
+        else:
+            raise RuntimeError("No active UoW found during progress fetching")
 
     @EventBus.subscribe(ProgressTopics.PROGRESS_CHECK)
     async def on_check_progress(self, event: Event) -> None:
@@ -136,7 +181,7 @@ class ProgressService(BaseService):
         user_id: int | None,
         chat_instance: int | None,
         element_id: int | None,
-    ) -> list[ProgressBase]:
+    ) -> list[ProgressTable]:
         active_uow = current_uow.get()
 
         if active_uow:
@@ -160,7 +205,7 @@ class ProgressService(BaseService):
             raise RuntimeError("No active UoW found during progress fetching")
 
     async def __process_fetch_payload(
-self, event: Event
+        self, event: Event
     ) -> tuple[int | None, int | None, int | None]:
         if not isinstance(event.payload, FetchProgress):
             payload = FetchProgress(**event.payload)  # type: ignore
