@@ -25,7 +25,7 @@ def get_disk_cache() -> Cache:
     """Get or create the disk cache instance."""
     global _cache_instance
     if _cache_instance is None:
-        cache_dir = Path(__file__).parent.parent.parent / "temp" / ".cache"
+        cache_dir = Path(__file__).parent.parent.parent / "tmp" / ".cache"
         # Ensure cache directory exists
         cache_dir.mkdir(parents=True, exist_ok=True)
         _cache_instance = Cache(str(cache_dir))
