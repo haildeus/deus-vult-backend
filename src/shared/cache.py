@@ -9,7 +9,7 @@ from typing import Any, TypeVar, cast
 import orjson
 from diskcache import Cache  # type: ignore
 
-from src.shared.config import Logger
+from src.shared.config import Logger, shared_config
 
 logger = Logger("cache").logger
 
@@ -25,11 +25,27 @@ def get_disk_cache() -> Cache:
     """Get or create the disk cache instance."""
     global _cache_instance
     if _cache_instance is None:
-        cache_dir = Path(__file__).parent.parent.parent / "tmp" / ".cache"
+        # Explicitly use the /tmp directory which is usually writable
+        if shared_config.app_env == "cloud":
+            cache_dir = Path("/tmp") / ".cache"
+        else:
+            cache_dir = Path(__file__).parent.parent.parent / "tmp" / ".cache"
+        logger.info(f"Using cache directory: {cache_dir}")
+
         # Ensure cache directory exists
-        cache_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            logger.info(f"Successfully created or found cache directory: {cache_dir}")
+        except OSError as e:
+            # Log a more specific error if even /tmp/.cache fails
+            logger.error(
+                f"Failed to create cache directory {cache_dir}: {e}", exc_info=True
+            )
+            raise  # Re-raise the exception as caching won't work
+
         _cache_instance = Cache(str(cache_dir))
         assert _cache_instance is not None, "Failed to create disk cache instance"
+        logger.info("Disk cache instance created successfully.")
     return _cache_instance
 
 

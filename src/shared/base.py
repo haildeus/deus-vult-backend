@@ -93,12 +93,16 @@ class BaseModel(Generic[T]):
         ]
 
     @overload
-    async def add(self, session: AsyncSession, entity: T, pass_checks: bool = True) -> list[T]: ...
+    async def add(
+        self, session: AsyncSession, entity: T, pass_checks: bool = True
+    ) -> list[T]: ...
 
     @overload
     async def add(self, session: AsyncSession, entity: list[T]) -> list[T]: ...
 
-    async def add(self, session: AsyncSession, entity: T | list[T], pass_checks: bool = True) -> list[T] | None:
+    async def add(
+        self, session: AsyncSession, entity: T | list[T], pass_checks: bool = True
+    ) -> list[T] | None:
         """
         Adds an entity to the session. Needs to be flushed.
         Great for adding dependent entities.
@@ -133,7 +137,9 @@ class BaseModel(Generic[T]):
                 logger.error(f"Error adding entity: {e}")
                 raise e
 
-    async def add_one(self, session: AsyncSession, entity: T, pass_checks: bool = True) -> list[T]:
+    async def add_one(
+        self, session: AsyncSession, entity: T, pass_checks: bool = True
+    ) -> list[T]:
         """Adds an entity to the session. Needs to be flushed."""
         try:
             if pass_checks:
@@ -162,6 +168,7 @@ class BaseModel(Generic[T]):
         logger.debug(f"Added entities to session: {checked_entities}")
         return checked_entities
 
+    # TODO: fix this into a more pythonic way: https://t.me/c/2692177928/1041
     async def get_by_other_params(
         self, session: AsyncSession, **kwargs: Any
     ) -> list[Any]:
@@ -178,18 +185,18 @@ class BaseModel(Generic[T]):
         )
         result = await session.execute(query)
         return list(result.scalars().all())
-    
+
     async def get_by_param_in_list(
         self, session: AsyncSession, param: str, values: list[Any]
     ) -> list[Any]:
-        """Gets an entity by a field that is a list.""" 
+        """Gets an entity by a field that is a list."""
         valid_keys = self.__dict_keys()
         try:
             assert param in valid_keys
         except AssertionError as e:
             logger.error(f"Error getting entity by param in list: {e}")
             raise e
-        
+
         try:
             param_attr = getattr(self.model_class, param)
             query = select(self.model_class).where(param_attr.in_(values))
@@ -198,7 +205,6 @@ class BaseModel(Generic[T]):
         except Exception as e:
             logger.error(f"Error getting entity by param in list: {e}")
             raise e
-        
 
     async def get_by_id(self, session: AsyncSession, entity_id: int) -> list[Any]:
         """Gets an entity by its ID."""
