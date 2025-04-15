@@ -14,7 +14,7 @@ from src.api.craft.elements.elements_prompts import (
     ELEMENTS_COMBINATION_QUERY,
     ELEMENTS_COMBINATION_SYSTEM_PROMPT,
 )
-from src.api.craft.elements.elements_schemas import Element, ElementInput
+from src.api.craft.elements.elements_schemas import Element, ElementInput, ElementOutput
 from src.shared.base import BaseService
 from src.shared.base_llm import VertexLLM
 from src.shared.event_bus import EventBus
@@ -32,10 +32,10 @@ class ElementsAgent(BaseService):
             name="Elements Combination Agent",
             model=self.provider.model,
             system_prompt=ELEMENTS_COMBINATION_SYSTEM_PROMPT,
-            result_type=Element,
+            result_type=ElementOutput,
             model_settings=ModelSettings(
-                temperature=0.8,
-                max_tokens=100,
+                temperature=1,
+                max_tokens=300,
             ),
             retries=3,
         )
@@ -60,14 +60,17 @@ class ElementsAgent(BaseService):
             query_string = f"""
             {ELEMENTS_COMBINATION_QUERY}
 
-            {input_string}
-
             {ELEMENTS_COMBINATION_EXAMPLES}
+
+            {input_string}
             """
             response = await self.agent_object.run(query_string)
             return_value = response.data
+            
+            logger.debug(f"Elements combination agent response: {return_value}")
         except Exception as e:
             logger.error(f"Error running elements combination agent: {e}")
             raise e
 
-        return Element.model_validate(return_value)
+        response_object = ElementOutput.model_validate(return_value)
+        return response_object.result

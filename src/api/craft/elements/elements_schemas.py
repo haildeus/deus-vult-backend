@@ -43,7 +43,6 @@ class Element(EventPayload):
 
         return v
 
-
 """
 API MODELS
 """
@@ -168,4 +167,5 @@ class ElementInput(EventPayload):
 
 
 class ElementOutput(EventPayload):
-    result: Element
+    reason: str = Field(max_length=150, description="The reason for the combination")
+    result: Element = Field(description="The result of the combination")

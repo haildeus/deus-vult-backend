@@ -1,6 +1,6 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
-from sqlmodel import or_, select
+from sqlmodel import and_, select
 
 from src.api.craft.recipes.recipes_schemas import RecipeTable
 from src.shared.base import BaseModel
@@ -60,16 +60,12 @@ class RecipeModel(BaseModel[RecipeTable]):
         """Internal helper to find a recipe and its result within a session."""
         stmt = (
             select(RecipeTable)
-            .options(selectinload(RecipeTable.result))  # type: ignore # Eager load - Linter struggles here
             .where(
-                or_(
-                    (RecipeTable.element_a_id == element_a_id)
-                    & (RecipeTable.element_b_id == element_b_id),
-                    (RecipeTable.element_a_id == element_b_id)
-                    & (RecipeTable.element_b_id == element_a_id),
+                and_(
+                    element_a_id == RecipeTable.element_a_id,
+                    element_b_id == RecipeTable.element_b_id,
                 )
             )
-            .limit(1)
         )
         result = await session.execute(stmt)
         return [RecipeTable.model_validate(row) for row in result.scalars().all()]
