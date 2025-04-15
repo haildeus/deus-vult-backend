@@ -9,12 +9,12 @@ from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
 
 from src.api import logger
-from src.api.craft.elements.elements_prompts import ELEMENTS_COMBINATION_SYSTEM_PROMPT
-from src.api.craft.elements.elements_schemas import (
-    Element,
-    ElementBaseInput,
-    ElementInput,
+from src.api.craft.elements.elements_prompts import (
+    ELEMENTS_COMBINATION_EXAMPLES,
+    ELEMENTS_COMBINATION_QUERY,
+    ELEMENTS_COMBINATION_SYSTEM_PROMPT,
 )
+from src.api.craft.elements.elements_schemas import Element, ElementInput
 from src.shared.base import BaseService
 from src.shared.base_llm import VertexLLM
 from src.shared.event_bus import EventBus
@@ -55,9 +55,16 @@ class ElementsAgent(BaseService):
 
     async def combine_elements(self, input: ElementInput) -> Element:
         try:
-            response = await self.agent_object.run(
-                f"**Input:**\n{input.model_dump_json()}"
-            )
+            input_string = f"Input:\n{input.model_dump_json()}"
+
+            query_string = f"""
+            {ELEMENTS_COMBINATION_QUERY}
+
+            {input_string}
+
+            {ELEMENTS_COMBINATION_EXAMPLES}
+            """
+            response = await self.agent_object.run(query_string)
             return_value = response.data
         except Exception as e:
             logger.error(f"Error running elements combination agent: {e}")

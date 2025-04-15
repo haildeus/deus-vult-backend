@@ -1,6 +1,8 @@
-from typing import TYPE_CHECKING, Any
+import re
+from typing import TYPE_CHECKING, Annotated, Any
 
-from pydantic import BaseModel, model_validator
+import emoji
+from pydantic import BaseModel, field_validator, model_validator
 from sqlmodel import Field, Relationship
 
 from src.shared.base import BaseSchema
@@ -21,8 +23,25 @@ class Element(EventPayload):
         - emoji: The emoji representing the element.
     """
 
-    name: str = Field(max_length=100, description="The name of the element")
-    emoji: str = Field(max_length=10, description="The emoji representing the element")
+    name: Annotated[str, Field(max_length=100, description="The name of the element")]
+    emoji: Annotated[
+        str, Field(max_length=10, description="The emoji representing the element")
+    ]
+
+    @field_validator("emoji")
+    @classmethod
+    def validate_is_proper_emoji(cls, v: str) -> str:
+        """Validate that the input string is a single, valid emoji."""
+        if not v:
+            raise ValueError("Emoji field cannot be empty")
+
+        if not emoji.is_emoji(v):
+            raise ValueError(f"'{v}' is not recognized as a valid emoji.")
+
+        if re.search(r"\s", v):
+            raise ValueError("Emoji must not contain spaces")
+
+        return v
 
 
 """
@@ -93,6 +112,7 @@ class ElementTable(ElementBase, table=True):
         sa_relationship_kwargs={
             "lazy": "selectin",
             "foreign_keys": "[RecipeTable.element_a_id]",
+            "cascade": "all, delete-orphan",
         },
     )
     recipes_as_b: list["RecipeTable"] = Relationship(
@@ -100,6 +120,7 @@ class ElementTable(ElementBase, table=True):
         sa_relationship_kwargs={
             "lazy": "selectin",
             "foreign_keys": "[RecipeTable.element_b_id]",
+            "cascade": "all, delete-orphan",
         },
     )
     recipes_as_result: list["RecipeTable"] = Relationship(
@@ -107,6 +128,7 @@ class ElementTable(ElementBase, table=True):
         sa_relationship_kwargs={
             "lazy": "selectin",
             "foreign_keys": "[RecipeTable.result_id]",
+            "cascade": "all, delete-orphan",
         },
     )
     progress: list["ProgressTable"] = Relationship(
@@ -114,6 +136,7 @@ class ElementTable(ElementBase, table=True):
         sa_relationship_kwargs={
             "lazy": "selectin",
             "foreign_keys": "[ProgressTable.element_id]",
+            "cascade": "all, delete-orphan",
         },
     )
     # --- End Back-Populating Relationship Type Hints ---

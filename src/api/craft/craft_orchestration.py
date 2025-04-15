@@ -160,14 +160,7 @@ async def orchestrate_element_combination(
             logger.error(f"Error fetching recipe: {e}")
             raise e
 
-        try:
-            assert recipe
-            assert recipe[0].result
-        except AssertionError as e:
-            logger.error(f"Error fetching recipe: {e}")
-            raise e
-
-        if recipe:
+        if recipe and recipe[0].result:
             result_element_table = recipe[0].result
             logger.debug(
                 f"Found existing recipe: {result_element_table.object_id} -> "

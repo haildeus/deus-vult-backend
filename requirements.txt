@@ -135,6 +135,8 @@ dspy==2.6.13
     # via deus-vult (pyproject.toml)
 durationpy==0.9
     # via kubernetes
+emoji==2.14.1
+    # via deus-vult (pyproject.toml)
 eval-type-backport==0.2.2
     # via
     #   mistralai

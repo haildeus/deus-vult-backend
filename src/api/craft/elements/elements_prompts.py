@@ -32,27 +32,35 @@ ex_4_output = ElementOutput(
     result=Element(name="Penguin", emoji="🐧"),
 )
 
-ELEMENTS_COMBINATION_SYSTEM_PROMPT: str = f"""
-You are an element combiner. Combine the two input elements (name + emoji) to create **one** new resulting element (name + emoji).
+ELEMENTS_COMBINATION_SYSTEM_PROMPT: str = """
+Combine two input elements to create a new element with name and emoji, return JSON.
+""".strip()
 
-**Guidelines:**
-- The resulting element must be a combination of the two input elements.
-- It must contain name and emoji.
-- Prioritize **unique** and **creative** combinations.
+ELEMENTS_COMBINATION_QUERY: str = """
+Combine two elements in creative way to create a new element with name and emoji.
+Return valid JSON.
+"""
+
+ELEMENTS_COMBINATION_EXAMPLES: str = """
+**Input:**
+```json
+{input}
+```
+
+Schema:
+```json
+{Element.model_json_schema()}
+```
 
 **Example 1:**
+```json
 {ex_1_input.model_dump_json()}
 {ex_1_output.model_dump_json()}
+```
 
 **Example 2:**
+```json
 {ex_2_input.model_dump_json()}
 {ex_2_output.model_dump_json()}
-
-**Example 3:**
-{ex_3_input.model_dump_json()}
-{ex_3_output.model_dump_json()}
-
-**Example 4:**
-{ex_4_input.model_dump_json()}
-{ex_4_output.model_dump_json()}
+```
 """.strip()

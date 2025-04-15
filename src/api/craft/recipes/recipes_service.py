@@ -23,11 +23,20 @@ class RecipesService(BaseService):
         logger.debug(f"Recipe payload: {payload}")
         element_a_id = payload.element_a_id
         element_b_id = payload.element_b_id
+
+        # To satisfy table constraints
+        smaller_element_id = min(element_a_id, element_b_id)
+        bigger_element_id = max(element_a_id, element_b_id)
+
         result_id = payload.result_id
         recipe = RecipeTable(
-            element_a_id=element_a_id, element_b_id=element_b_id, result_id=result_id
+            element_a_id=smaller_element_id,
+            element_b_id=bigger_element_id,
+            result_id=result_id,
         )
-        logger.debug(f"Creating recipe: {element_a_id} + {element_b_id} = {result_id}")
+        logger.debug(
+            f"Creating recipe: {smaller_element_id} + {bigger_element_id} = {result_id}"
+        )
 
         active_uow = current_uow.get()
 
@@ -38,12 +47,14 @@ class RecipesService(BaseService):
                 await self.model.add(db, recipe, pass_checks=False)
             except SQLAlchemyError as e:
                 logger.error(
-                    f"SQLAlchemy: {element_a_id} + {element_b_id} = {result_id}: {e}"
+                    f"SQLAlchemy: {smaller_element_id} + {bigger_element_id} "
+                    + f"= {result_id}: {e}"
                 )
                 raise e
             except Exception as e:
                 logger.error(
-                    f"Error: {element_a_id} + {element_b_id} = {result_id}: {e}"
+                    f"Error: {smaller_element_id} + {bigger_element_id} "
+                    + f"= {result_id}: {e}"
                 )
                 raise e
         else:
