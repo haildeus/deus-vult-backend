@@ -72,3 +72,15 @@ gcloud app browse
 ```
 gcloud app logs tail -s {stage}
 ```
+
+### 2.3 Custom domains
+- Use `dispatch.yaml` to update custom domain mapping
+```
+dispatch:
+  - url: "{domain}"
+    service: {service} 
+```
+- Deploy it after the service is deployed
+```
+gcloud app deploy dispatch.yaml
+```
