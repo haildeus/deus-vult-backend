@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 from sqlmodel import and_, select
 
+from src.api import logger
 from src.api.craft.recipes.recipes_schemas import RecipeTable
-from src.shared.base import BaseModel
+from src.shared.base import BaseModel, EntityAlreadyExistsError
 
 
 class RecipeModel(BaseModel[RecipeTable]):
@@ -54,17 +54,37 @@ class RecipeModel(BaseModel[RecipeTable]):
         else:
             return await self.get_all(session)
 
+    async def not_exists(
+        self, session: AsyncSession, element_a_id: int, element_b_id: int
+    ) -> bool:
+        query = select(self.model_class).where(
+            and_(
+                element_a_id == RecipeTable.element_a_id,
+                element_b_id == RecipeTable.element_b_id,
+            )
+        )
+        result = await session.execute(query)
+        result = list(result.scalars().all())
+        try:
+            assert len(result) == 0
+        except AssertionError as e:
+            raise EntityAlreadyExistsError(
+                entity=element_a_id, entity_type=self.model_class.__name__
+            ) from e
+        except Exception as e:
+            logger.error(f"Error checking if Recipe exists: {e}")
+            raise e
+
+        return len(result) == 0
+
     async def find_recipe_internal(
         self, session: AsyncSession, element_a_id: int, element_b_id: int
     ) -> list[RecipeTable]:
         """Internal helper to find a recipe and its result within a session."""
-        stmt = (
-            select(RecipeTable)
-            .where(
-                and_(
-                    element_a_id == RecipeTable.element_a_id,
-                    element_b_id == RecipeTable.element_b_id,
-                )
+        stmt = select(RecipeTable).where(
+            and_(
+                element_a_id == RecipeTable.element_a_id,
+                element_b_id == RecipeTable.element_b_id,
             )
         )
         result = await session.execute(stmt)

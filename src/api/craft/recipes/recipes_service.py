@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from src.api import logger
 from src.api.craft.recipes.recipes_model import recipe_model
 from src.api.craft.recipes.recipes_schemas import CreateRecipe, FetchRecipe, RecipeTable
-from src.shared.base import BaseService
+from src.shared.base import BaseService, EntityAlreadyExistsError
 from src.shared.event_bus import EventBus
 from src.shared.event_registry import RecipeTopics
 from src.shared.events import Event
@@ -44,7 +44,23 @@ class RecipesService(BaseService):
             db = await active_uow.get_session()
 
             try:
-                await self.model.add(db, recipe, pass_checks=False)
+                if await self.model.not_exists(
+                    db, smaller_element_id, bigger_element_id
+                ):
+                    await self.model.add(db, recipe, pass_checks=False)
+                else:
+                    logger.warning(
+                        f"Recipe {smaller_element_id} + {bigger_element_id} "
+                        + f"= {result_id} already exists, skipping"
+                    )
+                    raise EntityAlreadyExistsError(
+                        entity=smaller_element_id, entity_type=RecipeTable.__name__
+                    )
+            except EntityAlreadyExistsError:
+                logger.warning(
+                    f"Recipe {smaller_element_id} + {bigger_element_id} "
+                    + f"= {result_id} already exists, skipping"
+                )
             except SQLAlchemyError as e:
                 logger.error(
                     f"SQLAlchemy: {smaller_element_id} + {bigger_element_id} "

@@ -1,6 +1,9 @@
+import random
+
 from fastapi import HTTPException
 
 from src.api import logger
+from src.api.craft.craft_constants import CHANCE_FOR_REPEAT_ELEMENT
 from src.api.craft.elements.elements_schemas import (
     Element,
     ElementInput,
@@ -12,10 +15,6 @@ from src.api.craft.recipes.recipes_schemas import RecipeTable
 from src.shared.event_bus import EventBus
 from src.shared.event_registry import ElementTopics, ProgressTopics, RecipeTopics
 from src.shared.uow import UnitOfWork
-
-"""
-PROGRESS
-"""
 
 
 async def fetch_progress(
@@ -92,6 +91,28 @@ async def fetch_init_elements(
         except Exception as e:
             logger.error(f"Error fetching initial elements: {e}")
             raise e
+
+
+async def __repeat_element_proc(
+    element_a: ElementTable,
+    element_b: ElementTable,
+    chance_for_repeat_element: float = CHANCE_FOR_REPEAT_ELEMENT,
+) -> ElementTable | None:
+    """
+    Roll for a repeat element
+
+    If the roll is successful, return the repeat element.
+    If the roll is not successful, return None.
+    """
+    uniform_distribution = random.uniform(0, 1)
+    # if elements are the same, double the chance
+    if element_a.object_id == element_b.object_id:
+        chance_for_repeat_element *= 2
+
+    if uniform_distribution < chance_for_repeat_element:
+        return random.choice([element_a, element_b])
+    else:
+        return None
 
 
 async def init_progress(
@@ -190,26 +211,49 @@ async def orchestrate_element_combination(
                 ElementTopics.ELEMENT_FETCH,
                 element_id=[element_a_id, element_b_id],
             )
-            input_a = Element.model_validate(fetched_elements[0].model_dump())
-            input_b = Element.model_validate(fetched_elements[1].model_dump())
-            agent_input = ElementInput(element_a=input_a, element_b=input_b)
+            element_a = fetched_elements[0]
+            element_b = fetched_elements[1]
 
+            # Return repeat element based on chance
+            repeat_element_proc = await __repeat_element_proc(element_a, element_b)
+            if repeat_element_proc:
+                result_element_table = repeat_element_proc
+            # If no repeat element, call Gemini generation
+            else:
+                try:
+                    input_a = Element.model_validate(fetched_elements[0].model_dump())
+                    input_b = Element.model_validate(fetched_elements[1].model_dump())
+                    agent_input = ElementInput(element_a=input_a, element_b=input_b)
+
+                    # Call the Gemini function
+                    new_element_generated: Element = await event_bus.request(
+                        ElementTopics.ELEMENT_COMBINATION,
+                        **agent_input.model_dump(),
+                    )
+
+                    add_element_response: list[ElementTable] = await event_bus.request(
+                        ElementTopics.ELEMENT_CREATE,
+                        **new_element_generated.model_dump(),
+                    )
+                    result_element_table: ElementTable = add_element_response[0]
+
+                except Exception as e:
+                    logger.error(
+                        "Error during Gemini interaction "
+                        + "or atomic recipe creation: {e}",
+                        exc_info=True,
+                    )
+                    if isinstance(e, HTTPException):
+                        raise e
+                    raise HTTPException(
+                        status_code=500, detail=f"Failed to get combination result: {e}"
+                    ) from e
+
+            session = await uow.get_session()
+            await session.commit()
+
+            # Do it in the second transactio to comply with foreign key constraints
             try:
-                # Call the Gemini function
-                new_element_generated: Element = await event_bus.request(
-                    ElementTopics.ELEMENT_COMBINATION,
-                    **agent_input.model_dump(),
-                )
-
-                # Add element to database if it doesn't exist
-                # Returns the element if it exists
-                add_element_response: list[ElementTable] = await event_bus.request(
-                    ElementTopics.ELEMENT_CREATE,
-                    **new_element_generated.model_dump(),
-                )
-                result_element_table: ElementTable = add_element_response[0]
-
-                # Add recipe to database
                 await event_bus.request(
                     RecipeTopics.RECIPE_CREATE,
                     element_a_id=element_a_id,
@@ -217,28 +261,20 @@ async def orchestrate_element_combination(
                     result_id=result_element_table.object_id,
                 )
 
-                # Create progress
                 await event_bus.request(
                     ProgressTopics.PROGRESS_CREATE,
                     user_id=user_id,
                     chat_instance=chat_instance,
                     element_id=result_element_table.object_id,
                 )
-
-                return ElementResponse(
-                    object_id=result_element_table.object_id,
-                    name=result_element_table.name,
-                    emoji=result_element_table.emoji,
-                )
-
             except Exception as e:
-                logger.error(
-                    f"Error during Gemini interaction or atomic recipe creation: {e}",
-                    exc_info=True,
-                )
-                # Check if it's an HTTPException and re-raise, otherwise wrap
-                if isinstance(e, HTTPException):
-                    raise e
+                logger.error(f"Error creating progress: {e}")
                 raise HTTPException(
-                    status_code=500, detail=f"Failed to get combination result: {e}"
+                    status_code=500, detail=f"Failed to create progress: {e}"
                 ) from e
+
+        return ElementResponse(
+            object_id=result_element_table.object_id,
+            name=result_element_table.name,
+            emoji=result_element_table.emoji,
+        )
