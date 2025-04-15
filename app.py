@@ -98,7 +98,13 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     logger.info("Application stopped")
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    lifespan=lifespan,
+    title="Telemetree API",
+    description="Telemetree API endpoints.",
+    version="1.0.0",
+    root_path=shared_config.root_path,
+)
 
 # That's for the cors plugin
 app.add_middleware(

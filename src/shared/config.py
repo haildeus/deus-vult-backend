@@ -100,6 +100,20 @@ class SharedConfig(BaseConfig):
     class Config(BaseConfig.Config):
         env_prefix = "GLOBAL_"
 
+    @property
+    def root_path(self) -> str:
+        # Local dev
+        if self.app_env == "local":
+            return ""
+
+        # Cloud dev
+        if self.stage == "prod":
+            return "https://api.haildeus.com"
+        elif self.stage == "dev":
+            return "https://dev.haildeus.com"
+        else:
+            raise ValueError(f"Invalid app environment: {self.app_env}")
+
 
 shared_config = SharedConfig()
 
