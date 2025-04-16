@@ -8,7 +8,7 @@ import typing as tp
 
 import opentelemetry
 import pydantic
-from opentelemetry.trace import Tracer, TracerProvider
+from opentelemetry.sdk.trace import Tracer, TracerProvider
 from opentelemetry.sdk.trace.export import (Context, ReadableSpan,
                                             SimpleSpanProcessor, SpanExporter,
                                             SpanExportResult, SpanProcessor)
