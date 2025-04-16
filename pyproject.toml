@@ -28,6 +28,7 @@ dependencies = [
     "greenlet>=3.1.1",
     "gunicorn>=23.0.0",
     "kurigram>=2.1.39",
+    "mypy>=1.11",
     "numpy>=2.2.4",
     "psutil>=7.0.0",
     "pydantic>=2.10.6",

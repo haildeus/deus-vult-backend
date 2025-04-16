@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 class BaseStructure(BaseModel):
     @classmethod
     def from_row(cls, row: dict[str, tp.Any]) -> tp.Self:
-        dct = {}
+        dct = {}  # type: ignore
         for key, value in row.copy().items():
             if key.startswith("@"):
                 row[key.removeprefix("@")] = row.pop(key)

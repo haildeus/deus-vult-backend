@@ -8,7 +8,7 @@ import typing as tp
 
 import opentelemetry
 import pydantic
-from opentelemetry.sdk.trace import Tracer, TracerProvider
+from opentelemetry.trace import Tracer, TracerProvider
 from opentelemetry.sdk.trace.export import (Context, ReadableSpan,
                                             SimpleSpanProcessor, SpanExporter,
                                             SpanExportResult, SpanProcessor)
@@ -106,6 +106,8 @@ class ConsoleSpanProcessor(SpanProcessor):
         if not span.context.trace_flags.sampled:
             return
 
+        assert span.end_time is not None
+        assert span.start_time is not None
         self.out.write(f"[{span.context.trace_id}] close `{span.name}` duration={span.end_time - span.start_time}\n")  # noqa: E501
 
     def shutdown(self) -> None:
@@ -117,7 +119,8 @@ class ConsoleSpanProcessor(SpanProcessor):
 
 
 class InserterExporter(SpanExporter):
-    inserter: "observability.ch_utils.Inserter" = None  # round imports
+    # round imports
+    inserter: "observability.ch_utils.Inserter" = None  # type: ignore
     fqdn = socket.getfqdn()
 
     @staticmethod
@@ -126,7 +129,6 @@ class InserterExporter(SpanExporter):
 
     def export(self, spans: tp.Sequence[ReadableSpan]) -> SpanExportResult:
         for span in spans:
-
             trace = schemas.Trace(
                 timestamp=span.start_time,
                 trace_id=hex(span.context.trace_id),

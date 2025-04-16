@@ -23,10 +23,16 @@ class Timer:
 
     @property
     def current(self) -> float:
+        if self.start is None:
+            raise RuntimeError("Timer has not started yet")
+
         return (now() - self.start).total_seconds()
 
     @property
     def total(self) -> float:
+        if self.start is None:
+            raise RuntimeError("Timer has not started yet")
+
         if self.end is None:
             raise ValueError("Timer is not finished")
 
