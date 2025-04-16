@@ -31,7 +31,11 @@ http_pool: urllib3.PoolManager | None = None
 http_client: AsyncClient | None = None
 get_http_client: tp.Callable[[], tp.Awaitable[AsyncClient]] | None = None
 
-GLOBAL_SETTINGS: dict[str, tp.Any] = {"s3_max_get_rps": 0, "s3_max_get_burst": 0, "s3_max_put_rps": 0}
+GLOBAL_SETTINGS: dict[str, tp.Any] = {
+    "s3_max_get_rps": 0,
+    "s3_max_get_burst": 0,
+    "s3_max_put_rps": 0,
+}
 
 
 class Inserter(BaseWorker, metaclass=Singleton["Inserter"]):  # type: ignore
