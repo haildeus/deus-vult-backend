@@ -22,7 +22,7 @@ LOG_COLORS = {
 class ClickHouseHandler(logging.Handler):
     inserter = Inserter("operation.logs", no_logging=True)
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.fqdn = socket.getfqdn()
 

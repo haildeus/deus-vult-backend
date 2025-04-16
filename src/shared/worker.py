@@ -1,10 +1,12 @@
 import asyncio
 import logging
 import random
+import typing as tp
 
-from src.shared import observability
-from src.shared.exceptions import format_exception
 from src.shared.time import Timer
+
+if tp.TYPE_CHECKING:
+    from src.shared.observability.metrics import MetricsStorage
 
 
 class BaseWorker:
@@ -14,19 +16,19 @@ class BaseWorker:
     RANDOM_DELAY = 0.0
 
     logger = logging.getLogger("deus-vult.base_worker")
-    metrics: "observability.metrics.MetricsStorage" = None
+    metrics: tp.Optional["MetricsStorage"] = None
 
-    def __init__(self):
-        self._shutting_down = False
-        self._task = None
+    def __init__(self) -> None:
+        self._shutting_down: bool = False
+        self._task: asyncio.Task[tp.Any] | None = None
 
-    async def run_once(self):
+    async def run_once(self) -> None:
         """
         Should be implemented by subclasses.
         """
         raise NotImplementedError()
 
-    async def loop(self):
+    async def loop(self) -> None:
         while not self._shutting_down:
             try:
                 with Timer() as t:
@@ -44,22 +46,22 @@ class BaseWorker:
                     self.metrics.increment("worker.later")
 
             except Exception as e:
-                self.logger.error(
+                self.logger.exception(
                     "%s failed run step in worker: %s",
                     self,
-                    format_exception(e, with_traceback=True)
+                    e
                 )
 
     def start(self) -> None:
         self._task = asyncio.create_task(
-            self.loop(),
-            name=f"worker-loop-{self.__class__.__name__}"
+            self.loop(), name=f"worker-loop-{self.__class__.__name__}"
         )
 
-    def stop(self):
+    def stop(self) -> None:
         self._shutting_down = True
-        self._task.cancel()
+        if self._task is not None:
+            self._task.cancel()
 
     @property
-    def running(self):
+    def running(self) -> bool:
         return not self._shutting_down and self._task is not None

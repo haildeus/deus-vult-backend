@@ -7,8 +7,8 @@ T = tp.TypeVar("T")
 class Singleton(type, tp.Generic[T]):
     _instances: dict[str, T] = {}
 
-    def __call__(cls, *args, **kwargs):
-        instance = super().__call__(*args, **kwargs)
+    def __call__(cls, *args: tp.Any, **kwargs: tp.Any) -> T:
+        instance: T = super().__call__(*args, **kwargs)
         instance_key = f"{instance.__class__.__name__}_{getattr(instance, "instance_key", "main")}"  # noqa: E501
         if instance_key in cls._instances:
             return cls._instances[instance_key]

@@ -1,4 +1,4 @@
-import psutil
+import psutil  # type: ignore
 import os
 
 from src.shared.observability.metrics import MetricsStorage
@@ -10,11 +10,11 @@ class SystemUsageMonitoring(BaseWorker):
 
     metrics = MetricsStorage("system.usage")
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.process = psutil.Process(os.getpid())
 
-    async def run_once(self):
+    async def run_once(self) -> None:
         cpu_percent = self.process.cpu_percent()
         memory_used = self.process.memory_info().rss
 

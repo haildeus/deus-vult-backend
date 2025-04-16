@@ -43,7 +43,7 @@ class Metric(BaseStructure):
     date: datetime.datetime
     key: str
     value: float
-    label: str = ''
+    label: str = ""
 
 
 class Log(BaseStructure):
@@ -75,8 +75,7 @@ class Trace(BaseStructure):
     span_kind: str = Field(..., serialization_alias="SpanKind")
     service_name: str = Field(..., serialization_alias="ServiceName")
     resource_attributes: dict[str, str] = Field(
-        ...,
-        serialization_alias="ResourceAttributes"
+        ..., serialization_alias="ResourceAttributes"
     )
     span_attributes: dict[str, str] = Field(..., serialization_alias="SpanAttributes")
     duration: int = Field(..., serialization_alias="Duration")
@@ -86,16 +85,14 @@ class Trace(BaseStructure):
     events_timestamps: list[int] = Field(..., serialization_alias="Events.Timestamp")
     events_names: list[str] = Field(..., serialization_alias="Events.Name")
     events_attributes: list[dict[str, str]] = Field(
-        ...,
-        serialization_alias="Events.Attributes"
+        ..., serialization_alias="Events.Attributes"
     )
 
     links_trace_ids: list[str] = Field(..., serialization_alias="Links.TraceId")
     links_span_ids: list[str] = Field(..., serialization_alias="Links.SpanId")
     links_trace_states: list[str] = Field(..., serialization_alias="Links.TraceState")
     links_attributes: list[dict[str, str]] = Field(
-        ...,
-        serialization_alias="Links.Attributes"
+        ..., serialization_alias="Links.Attributes"
     )
 
     app_env: str

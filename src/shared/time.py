@@ -1,3 +1,4 @@
+from types import TracebackType
 from datetime import datetime, timezone
 
 ZERO_UTC = datetime(1970, 1, 1, tzinfo=timezone.utc)
@@ -17,7 +18,7 @@ def to_utc(d: datetime) -> datetime:
 
 
 class Timer:
-    def __init__(self):
+    def __init__(self) -> None:
         self.start: datetime | None = None
         self.end: datetime | None = None
 
@@ -38,9 +39,14 @@ class Timer:
 
         return (self.end - self.start).total_seconds()
 
-    def __enter__(self):
+    def __enter__(self) -> "Timer":
         self.start = now()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
         self.end = now()
