@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import inspect
+import logging
 from collections.abc import Callable
 from functools import wraps
 from pathlib import Path
@@ -9,9 +10,9 @@ from typing import Any, TypeVar, cast
 import orjson
 from diskcache import Cache  # type: ignore
 
-from src.shared.config import Logger, shared_config
+from src.shared.config import shared_config
 
-logger = Logger("cache").logger
+logger = logging.getLogger("deus-vult.cache")
 
 # Type variables for better type safety
 T = TypeVar("T")

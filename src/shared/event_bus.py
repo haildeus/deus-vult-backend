@@ -5,6 +5,7 @@ It is a singleton that is used to publish and subscribe to events.
 """
 
 import asyncio
+import logging
 import uuid
 from abc import ABC, abstractmethod
 from asyncio import Task, create_task, gather
@@ -13,10 +14,10 @@ from enum import Enum
 from inspect import getmembers, isawaitable, ismethod
 from typing import Any, TypeVar
 
-from src.shared.config import Logger, SharedConfig
+from src.shared.config import SharedConfig
 from src.shared.events import Event
 
-logger = Logger("base-event-bus").logger
+logger = logging.getLogger("deus-vult.base-event-bus")
 
 E = TypeVar("E", bound=Event)
 R = TypeVar("R", covariant=True)  # Return type

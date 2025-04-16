@@ -1,10 +1,8 @@
 import logging
 import os
-import sys
 from abc import ABC
 from typing import Literal, TypeVar
 
-import colorlog
 from google.auth import default as google_default_credentials  # type: ignore
 from google.auth.exceptions import DefaultCredentialsError  # type: ignore
 from google.cloud import secretmanager  # type: ignore
@@ -19,17 +17,10 @@ TYPE VARIABLES
 R = TypeVar("R")
 
 """
-LOGGING CONSTANTS
+LOGGING
 """
 
-LOG_COLORS = {
-    "DEBUG": "cyan",
-    "INFO": "green",
-    "WARNING": "yellow",
-    "ERROR": "red",
-    "CRITICAL": "bold_red",
-}
-
+logger = logging.getLogger("deus-vult.settings")
 
 """
 ABSTRACT BASE CONFIG CLASSES
@@ -118,100 +109,33 @@ class SharedConfig(BaseConfig):
 shared_config = SharedConfig()
 
 
-class Logger:
-    def __init__(
-        self,
-        name: str = "shared-components",
-        level: int = shared_config.log_level,
-        log_format: str | None = None,
-        date_format: str | None = None,
-    ):
-        """
-        Initializes and configures a logger instance.
-
-        Args:
-            name: The name of the logger.
-            level: The logging level (e.g., logging.DEBUG, logging.INFO).
-            log_format: Optional custom log format string.
-        """
-        self.logger = logging.getLogger(name)
-        self.logger.setLevel(level)
-
-        # Prevent duplicate handlers if this name was somehow configured before
-        if self.logger.hasHandlers():
-            self.logger.handlers.clear()
-
-        # Console handler
-        console_handler = colorlog.StreamHandler(sys.stdout)
-
-        # Setup formatter
-        if log_format is None:
-            # Default detailed format good for debugging
-            log_format = "%(log_color)s%(levelname)-8s%(reset)s | %(asctime)s | %(name)s:%(funcName)s:%(lineno)d | %(message)s"  # noqa: E501
-        if date_format is None:
-            date_format = "%Y-%m-%d %H:%M:%S"
-        formatter = colorlog.ColoredFormatter(
-            fmt=log_format,
-            datefmt=date_format,
-            reset=True,
-            log_colors=LOG_COLORS,
-            secondary_log_colors={},  # You can color specific parts of the message too
-            style="%",  # Use %-style formatting
-        )
-        console_handler.setFormatter(formatter)
-
-        self.logger.addHandler(console_handler)
-        self.logger.debug(
-            f"Logger '{name}' initialized with level {logging.getLevelName(level)}."
-        )
-
-
-logger = Logger("settings").logger
-
-
 """
 DATABASE CONFIG
 """
 
 
-class PostgresConfig(BaseConfig):
-    """PostgreSQL configuration, handles App Engine Unix sockets."""
+class _PasswordFetchTrait:
+    password_secret_id = None
+    google_project_id = None
 
-    # Basic config
-    user: str = Field("postgres", validation_alias="POSTGRES_USER")
-    host: str = Field("localhost", validation_alias="POSTGRES_HOST")
-    port: int = Field(5432, validation_alias="POSTGRES_PORT")
-    db_name: str = Field("deus-vult", validation_alias="POSTGRES_DB_NAME")
-
-    # For Google App Engine
-    instance_connection_name: str | None = Field(
-        None, validation_alias="INSTANCE_CONNECTION_NAME"
-    )
-    app_engine: Literal["google", "local"] = Field(
-        "local", validation_alias="POSTGRES_APP_ENGINE"
-    )
-    password_secret_id: str | None = Field(
-        None, validation_alias="DB_PASSWORD_SECRET_ID"
-    )
-    google_project_id: str | None = Field(None, validation_alias="GOOGLE_CLOUD_PROJECT")
-
-    class Config(BaseConfig.Config):
-        env_prefix = "POSTGRES_"
-
-    @computed_field(return_type=str)
-    @property
-    def password(self) -> str:
+    def _fetch_password(
+        self,
+        password_env: str = "PASSWORD",
+        password_secret_id_env: str = "PASSWORD_SECRET_ID"
+    ) -> str:
         """Fetches the password from Secret Manager or raises an error."""
         if not self.password_secret_id:
             # Local dev as fallback
-            local_pw = os.environ.get("POSTGRES_PASSWORD")
+            local_pw = os.environ.get(password_env)
             if local_pw:
                 logger.warning(
-                    "Using POSTGRES_PASSWORD env var for local dev. "
-                    "Set DB_PASSWORD_SECRET_ID for deployed environments."
+                    "Using %s env var for local dev. "
+                    "Set %s for deployed environments.",
+                    password_env,
+                    password_secret_id_env,
                 )
                 return local_pw
-            raise ValueError("DB_PASSWORD_SECRET_ID environment variable not set.")
+            raise ValueError(f"{password_secret_id_env} environment variable not set.")
 
         if not self.google_project_id:
             # Auto-detect project ID
@@ -240,6 +164,40 @@ class PostgresConfig(BaseConfig):
             )
 
         return fetched_password
+
+
+class PostgresConfig(BaseConfig, _PasswordFetchTrait):
+    """PostgreSQL configuration, handles App Engine Unix sockets."""
+
+    # Basic config
+    user: str = Field("postgres", validation_alias="POSTGRES_USER")
+    host: str = Field("localhost", validation_alias="POSTGRES_HOST")
+    port: int = Field(5432, validation_alias="POSTGRES_PORT")
+    db_name: str = Field("deus-vult", validation_alias="POSTGRES_DB_NAME")
+
+    # For Google App Engine
+    instance_connection_name: str | None = Field(
+        None, validation_alias="INSTANCE_CONNECTION_NAME"
+    )
+    app_engine: Literal["google", "local"] = Field(
+        "local", validation_alias="POSTGRES_APP_ENGINE"
+    )
+    password_secret_id: str | None = Field(
+        None, validation_alias="DB_PASSWORD_SECRET_ID"
+    )
+    google_project_id: str | None = Field(None, validation_alias="GOOGLE_CLOUD_PROJECT")
+
+    class Config(BaseConfig.Config):
+        env_prefix = "POSTGRES_"
+
+    @computed_field(return_type=str)
+    @property
+    def password(self) -> str:
+        """Fetches the password from Secret Manager or raises an error."""
+        return self._fetch_password(
+            password_env="POSTGRES_PASSWORD",
+            password_secret_id_env="DB_PASSWORD_SECRET_ID"
+        )
 
     def _build_sqlalchemy_url(self, use_placeholder_password: bool = False) -> URL:
         """Internal helper to construct the SQLAlchemy URL object."""
@@ -288,3 +246,38 @@ class PostgresConfig(BaseConfig):
         """Generates a database URL safe for logging (password hidden)."""
         url_obj = self._build_sqlalchemy_url(use_placeholder_password=True)
         return url_obj.render_as_string(hide_password=False)
+
+
+class ClickHouseConfig(BaseConfig, _PasswordFetchTrait):
+    """ClickHouse configuration, required for observability."""
+
+    # Basic config
+    user: str = Field("default", validation_alias="CLICKHOUSE_USER")
+    host: str = Field("ch.haildeus.com", validation_alias="CLICKHOUSE_HOST")
+    port: int = Field(443, validation_alias="CLICKHOUSE_PORT")
+    secure: bool = Field(True, validation_alias="CLICKHOUSE_SECURE")
+
+    http_thread_executor_size: int = Field(12, validation_alias="CLICKHOUSE_HTTP_THREAD_EXECUTOR_SIZE")
+    http_max_pool_size: int = Field(12, validation_alias="CLICKHOUSE_HTTP_MAX_POOL_SIZE")
+    http_num_pools: int = Field(4, validation_alias="CLICKHOUSE_HTTP_NUM_POOLS")
+
+    password_secret_id: str | None = Field(
+        None, validation_alias="CLICKHOUSE_PASSWORD_SECRET_ID"
+    )
+    google_project_id: str | None = Field(None, validation_alias="GOOGLE_CLOUD_PROJECT")
+
+    class Config(BaseConfig.Config):
+        env_prefix = "CLICKHOUSE_"
+
+    @computed_field(return_type=str)
+    @property
+    def password(self) -> str:
+        """Fetches the password from Secret Manager or raises an error."""
+        return self._fetch_password(
+            password_env="CLICKHOUSE_PASSWORD",
+            password_secret_id_env="CLICKHOUSE_PASSWORD_SECRET_ID"
+        )
+
+
+# noinspection PyArgumentList
+clickhouse_config = ClickHouseConfig()

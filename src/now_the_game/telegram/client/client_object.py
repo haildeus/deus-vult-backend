@@ -1,15 +1,19 @@
+import logging
+
 from pyrogram.client import Client
 from pyrogram.enums import ParseMode
 from pyrogram.handlers.handler import Handler
 from pyrogram.methods.utilities.idle import idle
 
-from src.now_the_game import logger
 from src.now_the_game.telegram.client.client_config import (
     TelegramBotData,
     TelegramBotStatus,
     TelegramConfig,
 )
 from src.shared.config import shared_config
+
+
+logger = logging.getLogger("deus-vult.telegram.client")
 
 
 class TelegramBot:

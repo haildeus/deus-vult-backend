@@ -1,15 +1,19 @@
+import logging
 from enum import Enum
 from typing import Any, cast
 
-import requests
+import httpx
 from pydantic import BaseModel, Field, model_validator
 from pydantic_settings import BaseSettings
 
-from src.now_the_game import logger
 from src.shared.base import BaseService
 from src.shared.event_bus import EventBus
 from src.shared.event_registry import GlifTopics
 from src.shared.events import Event, EventPayload
+from src.shared.observability.traces import async_traced_function
+
+
+logger = logging.getLogger("deus-vult.glif-service")
 
 """
 ENUMS
@@ -87,15 +91,19 @@ class GlifService(BaseService):
         super().__init__()
 
     @EventBus.subscribe(GlifTopics.QUERY)
+    @async_traced_function
     async def on_glif_query(self, event: Event) -> GlifResponse:
         payload = cast(GlifQueryPayload, Event.extract_payload(event, GlifQueryPayload))
-        logger.debug(f"Glif query: {payload}")
-        response = self.glif_request(payload.service_id, payload.inputs)
-        logger.debug(f"Glif response: {response}")
+        logger.debug("Glif query: %s", payload)
+        response = await self.glif_request(payload.service_id, payload.inputs)
+        logger.debug("Glif response %s", response)
         return response
 
-    def glif_request(
-        self, service_id: GlifGeneratorID | str, inputs: list[str] | dict[str, str]
+    @staticmethod
+    @async_traced_function
+    async def glif_request(
+        service_id: GlifGeneratorID | str,
+        inputs: list[str] | dict[str, str],
     ) -> GlifResponse:
         """
         Takes an ID and inputs and uses Glif to generate an image:
@@ -105,7 +113,7 @@ class GlifService(BaseService):
         - Returns a GlifResponse object
 
         Args:
-            id: The ID of the Glif service or a GlifGeneratorID enum
+            service_id: The ID of the Glif service or a GlifGeneratorID enum
             inputs: The inputs for the Glif service
 
         Returns:
@@ -125,35 +133,37 @@ class GlifService(BaseService):
         if isinstance(service_id, GlifGeneratorID):
             service_id = service_id.value
 
-        response = requests.post(
-            GlifConfig().url,
-            json=GlifBody(
-                id=service_id,
-                inputs=inputs,
-            ).model_dump(),
-            headers=GlifConfig().auth_header,
-            timeout=30,
-        )
-        return GlifResponse(**response.json())
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                GlifConfig().url,
+                json=GlifBody(
+                    id=service_id,
+                    inputs=inputs,
+                ).model_dump(),
+                headers=GlifConfig().auth_header,
+                timeout=30,
+            )
 
-    def glif_mediaval_request(self, input: str) -> GlifResponse:
+            return GlifResponse(**response.json())
+
+    async def glif_mediaeval_request(self, input_: str) -> GlifResponse:
         """
-        Takes an input string and uses Glif to generate a mediaval-styled image
+        Takes an input string and uses Glif to generate a mediaeval-styled image
 
         Args:
-            input: The input string to generate an image for, less than 300 characters
+            input_: The input string to generate an image for, less than 300 characters
 
         Returns:
             A GlifResponse object containing the output of the Glif service
         """
-        return self.glif_request(GlifGeneratorID.MEDIEVAL_IMAGE_GEN, [input])
+        return await self.glif_request(GlifGeneratorID.MEDIEVAL_IMAGE_GEN, [input_])
 
-    def test_glif_echo(self):
-        response = self.glif_request(GlifGeneratorID.TEST_ECHO_GEN, ["Hello, world!"])
-        logger.info(response)
+    async def test_glif_echo(self):
+        response = await self.glif_request(GlifGeneratorID.TEST_ECHO_GEN, ["Hello, world!"])
+        logger.info("Echo response: %s", response)
 
-    def test_glif_pic(self):
-        response = self.glif_request(
+    async def test_glif_pic(self):
+        response = await self.glif_request(
             GlifGeneratorID.TEST_PIC_GEN, ["cute friendly oval shaped bot friend"]
         )
-        logger.info(response)
+        logger.info("Echo response: %s", response)

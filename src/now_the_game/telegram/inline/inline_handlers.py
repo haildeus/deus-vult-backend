@@ -1,10 +1,12 @@
+import logging
+
 from pyrogram import filters
 from pyrogram.client import Client
 from pyrogram.handlers.handler import Handler
 from pyrogram.handlers.inline_query_handler import InlineQueryHandler
 from pyrogram.types import InlineQuery
 
-from src.now_the_game import logger
+logger = logging.getLogger("deus-vult.telegram.inline")
 
 
 class InlineHandlers:

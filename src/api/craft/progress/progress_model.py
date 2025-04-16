@@ -1,11 +1,11 @@
+import logging
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import or_, select
 
 from src.api.craft.progress.progress_schemas import ProgressTable
 from src.shared.base import BaseModel, EntityAlreadyExistsError
-from src.shared.config import Logger
 
-logger = Logger("progress_model").logger
+logger = logging.getLogger("deus-vult.progress_model")
 
 
 class ProgressModel(BaseModel[ProgressTable]):

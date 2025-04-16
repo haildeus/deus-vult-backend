@@ -3,6 +3,7 @@ Chat-specific schema definitions.
 This module re-exports the Chat-related schemas from the central schema module.
 """
 
+import logging
 from enum import Enum
 from typing import Any
 
@@ -11,12 +12,14 @@ from pyrogram.enums import ChatType as PyrogramChatType
 from pyrogram.types import ChatMemberUpdated, Message
 from sqlmodel import Field
 
-from src.now_the_game import logger
 from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
 from src.now_the_game.telegram.telegram_interfaces import IChatEvent
 from src.shared.base import BaseSchema
 from src.shared.event_registry import ChatTopics
 from src.shared.events import EventPayload
+
+
+logger = logging.getLogger("deus-vult.telegram.chats")
 
 
 class ChatType(Enum):

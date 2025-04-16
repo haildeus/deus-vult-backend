@@ -1,15 +1,16 @@
 import hashlib
 import hmac
+import logging
 
 from dependency_injector.wiring import Provide, inject
 from fastapi import HTTPException
 
 from src import Container
-from src.api import logger
 from src.now_the_game.telegram.client.client_config import TelegramConfig
 from src.shared.config import shared_config
 
 DEBUG_MODE = shared_config.debug_mode
+logger = logging.getLogger("deus-vult.dependencies")
 
 
 @inject

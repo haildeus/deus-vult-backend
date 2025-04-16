@@ -1,3 +1,4 @@
+import logging
 import os
 from dataclasses import dataclass
 from enum import Enum
@@ -8,8 +9,10 @@ from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings
 from pyrogram.client import Client
 
-from src.now_the_game import logger
 from src.shared.config import get_secret
+
+
+logger = logging.getLogger("deus-vult.telegram.client")
 
 
 class TelegramBotStatus(Enum):

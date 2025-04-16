@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, Self
@@ -19,9 +20,8 @@ from vertexai.language_models import (  # type: ignore
 )
 from vertexai.language_models._language_models import TextEmbedding  # type: ignore
 
-from src.shared.config import Logger
 
-logger = Logger("base_llm").logger
+logger = logging.getLogger("deus-vult.base_llm")
 
 try:
     import google.auth

@@ -1,11 +1,16 @@
+import logging
+
 from pyrogram.client import Client
 from pyrogram.enums import ParseMode
 from pyrogram.types import Message
 
-from src.now_the_game import logger
+from src.shared.observability.traces import async_traced_function
+
+logger = logging.getLogger("deus-vult.telegram.client")
 
 
 class Telegram:
+    @async_traced_function
     async def send_poll(
         self,
         client: Client,

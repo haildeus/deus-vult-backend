@@ -1,3 +1,4 @@
+import logging
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
@@ -5,9 +6,9 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from sqlalchemy.sql import text
 from sqlmodel import SQLModel
 
-from src.shared.config import Logger, PostgresConfig
+from src.shared.config import PostgresConfig
 
-logger = Logger("database").logger
+logger = logging.getLogger("deus-vult.database")
 
 
 class Database:

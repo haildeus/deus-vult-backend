@@ -44,6 +44,11 @@ env_variables:
   POSTGRES_DB_NAME: 'deus-vult'
   POSTGRES_PORT: '5432'
   POSTGRES_APP_ENGINE: 'google'
+  # ClickHouse variables
+  CLICKHOUSE_HOST: '34.73.192.247'
+  CLICKHOUSE_PORT: '8123'
+  CLICKHOUSE_SECURE: '0'  # all traffic is inside the cloud network
+  CLICKHOUSE_PASSWORD_SECRET_ID: 'deus-vult-clickhouse-pass'
   # App Engine 
   GOOGLE_CLOUD_PROJECT: 'gen-lang-client-0674779185'
   # App Engine: Cloud SQL

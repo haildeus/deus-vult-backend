@@ -1,15 +1,18 @@
 import os
+import logging
 from enum import Enum
 
 from google.auth import default as google_default_credentials  # type: ignore
 from pydantic import BaseModel, Field, computed_field
 from pydantic_settings import BaseSettings
 
-from src.agents import logger
 from src.agents.agents_interfaces import IAgentEvent
 from src.shared.config import get_secret
 from src.shared.event_registry import GlifTopics
 from src.shared.events import EventPayload
+
+
+logger = logging.getLogger("deus-vult.glif-service")
 
 
 class GlifGeneratorID(Enum):
@@ -67,8 +70,10 @@ class GlifConfig(BaseSettings):
                     f"Failed to get Google Cloud Project ID for secret fetching: {e}"
                 ) from e
         logger.debug(
-            f"Attempting to fetch secret '{self.api_key_secret_id}' "
-            f"from project '{self.google_project_id}'"  # type: ignore
+            "Attempting to fetch secret '%s' "
+            "from project '%s'",
+            self.api_key_secret_id,
+            self.google_project_id,
         )
         fetched_api_key = get_secret(self.google_project_id, self.api_key_secret_id)  # type: ignore
         if fetched_api_key is None:

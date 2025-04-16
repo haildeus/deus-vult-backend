@@ -1,4 +1,5 @@
-from src.now_the_game import logger
+import logging
+
 from src.now_the_game.telegram.memberships.memberships_model import (
     chat_membership_model,
 )
@@ -11,7 +12,10 @@ from src.now_the_game.telegram.memberships.memberships_schemas import (
 from src.shared.base import BaseService
 from src.shared.event_bus import EventBus
 from src.shared.events import Event
+from src.shared.observability.traces import async_traced_function
 from src.shared.uow import current_uow
+
+logger = logging.getLogger("deus-vult.telegram.memberships")
 
 
 class MembershipsService(BaseService):
@@ -20,6 +24,7 @@ class MembershipsService(BaseService):
         self.model = chat_membership_model
 
     @EventBus.subscribe(MembershipTopics.MEMBERSHIP_UPDATE.value)
+    @async_traced_function
     async def on_change_chat_membership(self, event: Event) -> None:
         if not isinstance(event.payload, ChangeChatMembershipPayload):
             payload = ChangeChatMembershipPayload(**event.payload)  # type: ignore
@@ -50,6 +55,7 @@ class MembershipsService(BaseService):
             logger.debug("No active uow, skipping")
 
     @EventBus.subscribe(MembershipTopics.MEMBERSHIP_CREATE.value)
+    @async_traced_function
     async def on_add_chat_membership(self, event: Event) -> None:
         if not isinstance(event.payload, AddChatMembershipPayload):
             payload = AddChatMembershipPayload(**event.payload)  # type: ignore

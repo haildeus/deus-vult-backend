@@ -1,3 +1,4 @@
+import logging
 import pkgutil
 from collections.abc import Callable
 from pathlib import Path
@@ -21,13 +22,13 @@ from src.now_the_game.telegram.users.users_service import UsersService
 from src.shared.base import BaseService
 from src.shared.base_llm import VertexConfig, VertexLLM
 from src.shared.cache import get_disk_cache
-from src.shared.config import Logger, PostgresConfig
+from src.shared.config import PostgresConfig
 from src.shared.database import Database
 from src.shared.event_bus import EventBus
 from src.shared.types import SessionFactory
 from src.shared.uow import UnitOfWork
 
-logger = Logger("containers").logger
+logger = logging.getLogger("deus-vult.containers")
 
 
 class Container(containers.DeclarativeContainer):
@@ -113,17 +114,22 @@ def find_modules_in_packages(packages_paths: list[str]) -> list[str]:
 
         except ModuleNotFoundError:
             logger.warning(
-                f"Warning: Package path {package_path} not found or not a package."
+                "Warning: Package path %s not found or not a package.",
+                package_path
             )
         except Exception as e:
-            logger.warning(f"Warning: Error scanning package {package_path}: {e}")
+            logger.warning(
+                "Warning: Error scanning package %s: %s",
+                package_path,
+                e,
+            )
 
     discovered_modules = list(discovered_modules)
     discovered_modules_len = len(discovered_modules)
     if discovered_modules_len == 0:
-        logger.critical(f"No modules found for wiring in {project_root}")
+        logger.critical("No modules found for wiring in %s", project_root)
     else:
-        logger.debug(f"Discovered modules for wiring: {discovered_modules_len}")
+        logger.debug("Discovered modules for wiring: %s", discovered_modules_len)
     return discovered_modules
 
 
@@ -157,14 +163,14 @@ async def init_service(container: Container, name: str) -> Any:
         "event_bus": container.event_bus,
     }
     try:
-        logger.debug(f"Initializing service {name}")
+        logger.debug("Initializing service %s", name)
         service = service_dict[name]()
-        logger.debug(f"Initialized service {name}")
+        logger.debug("Initialized service %s", name)
         return service
     except KeyError as e:
-        raise ValueError(f"Service {name} not found in container") from e
+        raise ValueError("Service %s not found in container", name) from e
     except Exception as e:
-        logger.error(f"Error initializing service {name}: {e}")
+        logger.exception("Error initializing service %s", name)
         raise e
 
 
@@ -180,4 +186,4 @@ async def init_service_and_register(
     """
     service = service_factory()
     event_bus.register_subscribers_from(service)
-    logger.debug(f"Initialized and registered {service.__class__.__name__}")
+    logger.debug("Initialized and registered %s", service.__class__.__name__)

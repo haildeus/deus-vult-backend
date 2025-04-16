@@ -1,7 +1,8 @@
+import logging
+
 from pyrogram.client import Client
 from pyrogram.types import Chat
 
-from src.now_the_game import logger
 from src.now_the_game.telegram.users.users_model import user_model
 from src.now_the_game.telegram.users.users_schemas import (
     AddUserPayload,
@@ -11,7 +12,11 @@ from src.now_the_game.telegram.users.users_schemas import (
 from src.shared.base import BaseService
 from src.shared.event_bus import EventBus
 from src.shared.events import Event
+from src.shared.observability.traces import async_traced_function
 from src.shared.uow import current_uow
+
+
+logger = logging.getLogger("deus-vult.telegram.users")
 
 
 class UsersService(BaseService):
@@ -20,6 +25,7 @@ class UsersService(BaseService):
         self.model = user_model
 
     @EventBus.subscribe(UserTopics.USER_CREATE.value)
+    @async_traced_function
     async def on_add_user(self, event: Event) -> None:
         if not isinstance(event.payload, AddUserPayload):
             payload = AddUserPayload(**event.payload)  # type: ignore
@@ -32,11 +38,12 @@ class UsersService(BaseService):
         active_uow = current_uow.get()
         if active_uow:
             db = await active_uow.get_session()
-            logger.debug(f"Adding user: {user_core_info}")
+            logger.debug("Adding user: %s", user_core_info)
             await self.model.add(db, user_core_info)
         else:
             logger.debug("No active uow, skipping")
 
+    @async_traced_function
     async def get(
         self,
         client: Client,
@@ -47,6 +54,7 @@ class UsersService(BaseService):
         )
         return chat_request
 
+    @async_traced_function
     async def get_photos_count(
         self,
         client: Client,

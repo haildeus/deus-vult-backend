@@ -1,20 +1,25 @@
+import logging
 from typing import overload
 
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
-from src.now_the_game import logger
 from src.now_the_game.telegram.memberships.memberships_schemas import (
     ChatMembershipBase,
     ChatMembershipTable,
 )
 from src.shared.base import BaseModel, EntityAlreadyExistsError, EntityNotFoundError
+from src.shared.observability.traces import async_traced_function
+
+
+logger = logging.getLogger("deus-vult.telegram.memberships")
 
 
 class ChatMembershipModel(BaseModel[ChatMembershipTable]):
     def __init__(self):
         super().__init__(ChatMembershipTable)
 
+    @async_traced_function
     async def has_membership(
         self, session: AsyncSession, user_id: int, chat_id: int
     ) -> bool:
@@ -44,6 +49,7 @@ class ChatMembershipModel(BaseModel[ChatMembershipTable]):
         self, session: AsyncSession, *, user_id: int, chat_id: int
     ) -> list[ChatMembershipBase]: ...
 
+    @async_traced_function
     async def get(
         self,
         session: AsyncSession,
@@ -63,6 +69,7 @@ class ChatMembershipModel(BaseModel[ChatMembershipTable]):
 
         return await self.get_all(session)
 
+    @async_traced_function
     async def remove_secure(
         self,
         session: AsyncSession,
@@ -87,6 +94,7 @@ class ChatMembershipModel(BaseModel[ChatMembershipTable]):
         await session.delete(result[0])
         return True
 
+    @async_traced_function
     async def not_exists(
         self, session: AsyncSession, user_id: int, chat_id: int
     ) -> bool:
