@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime
 from random import randint
 from typing import Any, Generic, TypeVar, overload
@@ -7,9 +8,8 @@ from sqlalchemy import delete, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import Field, SQLModel, col, exists, select
 
-from src.shared.config import Logger
 
-logger = Logger("base-components").logger
+logger = logging.getLogger("deus-vult.base-components")
 
 T = TypeVar("T", bound="BaseSchema")
 

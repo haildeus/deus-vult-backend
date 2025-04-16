@@ -1,10 +1,13 @@
+import logging
 from typing import overload
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.now_the_game import logger
 from src.now_the_game.telegram.chats.chats_schemas import ChatBase, ChatTable, ChatType
 from src.shared.base import BaseModel, OverloadParametersError
+from src.shared.observability.traces import async_traced_function
+
+logger = logging.getLogger("deus-vult.telegram.chats")
 
 
 class ChatModel(BaseModel[ChatTable]):
@@ -28,6 +31,7 @@ class ChatModel(BaseModel[ChatTable]):
     @overload
     async def get(self, session: AsyncSession) -> list[ChatBase]: ...
 
+    @async_traced_function
     async def get(
         self,
         session: AsyncSession,
@@ -45,7 +49,7 @@ class ChatModel(BaseModel[ChatTable]):
                 <= 1
             )
         except AssertionError as e:
-            logger.error(f"Error getting chat: {e}")
+            logger.error("Error getting chat: %s", e)
             raise OverloadParametersError("Function has too many parameters") from e
 
         if username:

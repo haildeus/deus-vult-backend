@@ -1,18 +1,20 @@
 """
 ChatMembership-specific schema definitions.
 """
-
+import logging
 from datetime import datetime
 
 from pyrogram.types import ChatMember, ChatMemberUpdated, Message
 from sqlmodel import Field
 
-from src.now_the_game import logger
 from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
 from src.now_the_game.telegram.telegram_interfaces import IMembershipChanged
 from src.shared.base import BaseSchema
 from src.shared.event_registry import MembershipTopics
 from src.shared.events import EventPayload
+
+
+logger = logging.getLogger("deus-vult.telegram.memberships")
 
 """
 MODELS

@@ -1,9 +1,9 @@
+import logging
 from typing import overload
 
 from pyrogram.types import Message
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.now_the_game import logger
 from src.now_the_game.telegram.polls.polls_schemas import (
     PollBase,
     PollOptionsBase,
@@ -11,6 +11,9 @@ from src.now_the_game.telegram.polls.polls_schemas import (
     PollTable,
 )
 from src.shared.base import BaseModel, OverloadParametersError
+from src.shared.observability.traces import async_traced_function
+
+logger = logging.getLogger("deus-vult.telegram.polls")
 
 
 class PollModel(BaseModel[PollTable]):
@@ -35,6 +38,7 @@ class PollModel(BaseModel[PollTable]):
     @overload
     async def get(self, session: AsyncSession, *, poll_id: int) -> list[PollBase]: ...
 
+    @async_traced_function
     async def get(
         self,
         session: AsyncSession,
@@ -96,6 +100,7 @@ class PollOptionModel(BaseModel[PollOptionTable]):
         self, session: AsyncSession, *, poll_id: int, option_id: int
     ) -> list[PollOptionsBase]: ...
 
+    @async_traced_function
     async def get(
         self,
         session: AsyncSession,

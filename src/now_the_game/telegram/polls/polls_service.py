@@ -1,9 +1,9 @@
+import logging
 from datetime import datetime
 
 from pyrogram.client import Client
 from pyrogram.types import Message, Poll
 
-from src.now_the_game import logger
 from src.now_the_game.telegram.polls.polls_model import poll_model, poll_option_model
 from src.now_the_game.telegram.polls.polls_schemas import (
     PollOptionTable,
@@ -14,7 +14,10 @@ from src.now_the_game.telegram.polls.polls_schemas import (
 from src.shared.base import BaseService
 from src.shared.event_bus import EventBus
 from src.shared.events import Event
+from src.shared.observability.traces import async_traced_function
 from src.shared.uow import current_uow
+
+logger = logging.getLogger("deus-vult.telegram.polls")
 
 
 class PollsService(BaseService):
@@ -24,19 +27,19 @@ class PollsService(BaseService):
         self.poll_option_model = poll_option_model
 
     @EventBus.subscribe(PollTopics.POLL_SEND.value)
+    @async_traced_function
     async def on_send_poll(
         self,
         event: Event,
         client: Client,
     ) -> None:
-        logger.debug(f"Received send poll event: {event}")
         if not isinstance(event.payload, SendPollEventPayload):
             payload = SendPollEventPayload(**event.payload)  # type: ignore
         else:
             payload = event.payload
 
         save_to_db = payload.save
-        logger.debug(f"Sending poll to {payload.chat_id}")
+        logger.debug("Sending poll to %s", payload.chat_id)
         poll_message = await client.send_poll(
             chat_id=payload.chat_id,
             question=payload.question,
@@ -44,7 +47,7 @@ class PollsService(BaseService):
             is_anonymous=payload.is_anonymous,
             explanation=payload.explanation,
         )
-        logger.debug(f"Poll sent to {payload.chat_id}")
+        logger.debug("Poll sent to %s", payload.chat_id)
 
         active_uow = current_uow.get()
 
@@ -73,6 +76,7 @@ class PollsService(BaseService):
             raise ValueError("Message is not a poll")
         return message.poll
 
+    @async_traced_function
     async def send_poll(
         self,
         client: Client,
@@ -89,6 +93,7 @@ class PollsService(BaseService):
         )
         return poll_message
 
+    @async_traced_function
     async def stop_poll(
         self,
         client: Client,

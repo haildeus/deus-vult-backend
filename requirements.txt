@@ -68,6 +68,7 @@ cachetools==5.5.2
     #   google-auth
 certifi==2025.1.31
     # via
+    #   clickhouse-connect
     #   httpcore
     #   httpx
     #   kubernetes
@@ -88,6 +89,8 @@ click==8.1.8
     #   litellm
     #   typer
     #   uvicorn
+clickhouse-connect==0.8.17
+    # via deus-vult (pyproject.toml)
 cloudpickle==3.1.1
     # via dspy
 cohere==5.14.0
@@ -322,6 +325,8 @@ litellm==1.63.12
     # via dspy
 logfire-api==3.9.0
     # via pydantic-graph
+lz4==4.4.4
+    # via clickhouse-connect
 magicattr==0.1.6
     # via dspy
 mako==1.3.9
@@ -473,6 +478,8 @@ protobuf==5.29.4
     #   onnxruntime
     #   opentelemetry-proto
     #   proto-plus
+psutil==7.0.0
+    # via deus-vult (pyproject.toml)
 pyaes==1.6.1
     # via kurigram
 pyarrow==19.0.1
@@ -544,7 +551,9 @@ python-dotenv==1.0.1
     #   pydantic-settings
     #   uvicorn
 pytz==2025.1
-    # via pandas
+    # via
+    #   clickhouse-connect
+    #   pandas
 pyyaml==6.0.2
     # via
     #   chromadb
@@ -695,6 +704,7 @@ uritemplate==4.1.1
 urllib3==2.3.0
     # via
     #   botocore
+    #   clickhouse-connect
     #   kubernetes
     #   requests
     #   types-requests
@@ -725,3 +735,5 @@ yarl==1.18.3
     # via aiohttp
 zipp==3.21.0
     # via importlib-metadata
+zstandard==0.23.0
+    # via clickhouse-connect

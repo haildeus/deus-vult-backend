@@ -1,7 +1,12 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 import asyncio
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+import uvicorn
 import uvloop
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -12,25 +17,28 @@ from src.api.craft.craft_registry import get_craft_registry
 from src.containers import create_container, init_service, init_service_and_register
 from src.now_the_game.game.game_registry import get_game_registry
 from src.now_the_game.telegram.telegram_registry import get_telegram_registry
-from src.shared.config import Logger, shared_config
+from src.shared.config import shared_config
+from src.shared.observability.utils import with_observability, configure_logging
 
-logger = Logger("main-app-component").logger
+logger = logging.getLogger("deus-vult.main-app-component")
+
+# --- Event Loop Initialization ---
+uvloop.install()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+    configure_logging()
     logger.info("Starting up the application")
-    logger.info(f"App environment: {shared_config.app_env}")
-    logger.info(f"Debug mode: {shared_config.debug_mode}")
-    logger.info(f"Event bus type: {shared_config.event_bus}")
-
-    # --- Event Loop Initialization ---
-    uvloop.install()
+    logger.info("App environment: %s", shared_config.app_env)
+    logger.info("Debug mode: %s", shared_config.debug_mode)
+    logger.info("Event bus type: %s", shared_config.event_bus)
 
     # --- Container Initialization ---
     logger.info("Initializing container")
     container: Container = create_container()
-    app.state.container = container
+    # noinspection PyUnresolvedReferences
+    _app.state.container = container
 
     key_service_init_tasks = [
         init_service(container, "db"),
@@ -80,11 +88,12 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
 
         logger.debug("Services initialized")
     except Exception as e:
-        logger.error(f"Error initializing services: {e}")
+        logger.exception("Error initializing services")
         raise e
 
-    logger.info("Application initialized")
-    yield
+    async with with_observability():
+        logger.info("Application initialized")
+        yield
 
     # Shutdown events
     logger.info("Shutting down the application")
@@ -92,7 +101,7 @@ async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     try:
         await db_instance.close()
     except Exception as e:
-        logger.error(f"Error closing database: {e}")
+        logger.exception("Error closing database")
         raise e
 
     logger.info("Application stopped")
@@ -107,6 +116,7 @@ app = FastAPI(
 )
 
 # That's for the cors plugin
+# noinspection PyTypeChecker
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=".*",
@@ -123,3 +133,8 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+
+
+if __name__ == "__main__":
+    # debug startup
+    uvicorn.run(app, port=8002)

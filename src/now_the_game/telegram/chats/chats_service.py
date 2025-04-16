@@ -1,8 +1,9 @@
+import logging
+
 from pyrogram.client import Client
 from pyrogram.types import Chat, ChatMember
 from sqlalchemy.exc import SQLAlchemyError
 
-from src.now_the_game import logger
 from src.now_the_game.telegram.chats.chats_model import chat_model
 from src.now_the_game.telegram.chats.chats_schemas import (
     AddChatEventPayload,
@@ -12,7 +13,11 @@ from src.now_the_game.telegram.chats.chats_schemas import (
 from src.shared.base import BaseService
 from src.shared.event_bus import EventBus
 from src.shared.events import Event
+from src.shared.observability.traces import async_traced_function
 from src.shared.uow import current_uow
+
+
+logger = logging.getLogger("deus-vult.telegram.chats")
 
 
 class ChatsService(BaseService):
@@ -21,6 +26,7 @@ class ChatsService(BaseService):
         self.model = chat_model
 
     @EventBus.subscribe(ChatTopics.CHAT_CREATE.value)
+    @async_traced_function
     async def on_add_chat(self, event: Event) -> None:
         if not isinstance(event.payload, AddChatEventPayload):
             payload = AddChatEventPayload(**event.payload)  # type: ignore
@@ -28,7 +34,7 @@ class ChatsService(BaseService):
             payload = event.payload
 
         chat_core_info = await ChatTable.from_pyrogram(payload.message)
-        logger.debug(f"Adding chat: {chat_core_info}")
+        logger.debug("Adding chat: %s", chat_core_info)
 
         active_uow = current_uow.get()
         if active_uow:
@@ -36,20 +42,26 @@ class ChatsService(BaseService):
             try:
                 await self.model.add(db, chat_core_info)
             except SQLAlchemyError as e:
-                logger.error(f"SQLAlchemy error adding {chat_core_info.object_id}: {e}")
+                logger.error(
+                    "SQLAlchemy error adding %s: %s",
+                    chat_core_info.object_id,
+                    e,
+                )
                 raise e
             except Exception as e:
-                logger.error(f"Error adding chat {chat_core_info.object_id}: {e}")
+                logger.error("Error adding chat %s: %s", chat_core_info.object_id, e)
                 raise e
         else:
             logger.debug("No active uow, skipping")
 
+    @async_traced_function
     async def get(self, chat_id: int | str, client: Client) -> Chat:
         chat_request = await client.get_chat(
             chat_id=chat_id,
         )
         return chat_request
 
+    @async_traced_function
     async def download_chat_photo(
         self,
         chat_id: int | str,
@@ -67,6 +79,7 @@ class ChatsService(BaseService):
 
         return bytes_object  # type: ignore
 
+    @async_traced_function
     async def get_member(
         self,
         chat_id: int | str,
@@ -79,6 +92,7 @@ class ChatsService(BaseService):
         )
         return chat_member_request
 
+    @async_traced_function
     async def get_members_count(
         self,
         chat_id: int | str,
@@ -89,6 +103,7 @@ class ChatsService(BaseService):
         )
         return chat_members_count_request
 
+    @async_traced_function
     async def get_photos_count(
         self,
         chat_id: int | str,

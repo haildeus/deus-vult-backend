@@ -1,8 +1,8 @@
+import logging
 import random
 
 from fastapi import HTTPException
 
-from src.api import logger
 from src.api.craft.craft_constants import CHANCE_FOR_REPEAT_ELEMENT
 from src.api.craft.elements.elements_schemas import (
     Element,
@@ -14,16 +14,20 @@ from src.api.craft.progress.progress_schemas import ProgressResponse, ProgressTa
 from src.api.craft.recipes.recipes_schemas import RecipeTable
 from src.shared.event_bus import EventBus
 from src.shared.event_registry import ElementTopics, ProgressTopics, RecipeTopics
+from src.shared.observability.traces import async_traced_function
 from src.shared.uow import UnitOfWork
 
+logger = logging.getLogger("deus-vult.api.craft")
 
+
+@async_traced_function
 async def fetch_progress(
     user_id: int,
     uow: UnitOfWork,
     event_bus: EventBus,
 ) -> list[ProgressResponse]:
     """Fetch progress"""
-    logger.debug(f"Fetching progress for user {user_id} using event bus pattern.")
+    logger.debug("Fetching progress for user %s using event bus pattern.", user_id)
     async with uow.start():
         try:
             progress_response: list[ProgressTable] = await event_bus.request(
@@ -31,7 +35,7 @@ async def fetch_progress(
                 user_id=user_id,
             )
         except Exception as e:
-            logger.error(f"Error fetching progress: {e}")
+            logger.error(f"Error fetching progress: %s", e)
             raise e
 
         try:
@@ -46,10 +50,11 @@ async def fetch_progress(
                 for progress in progress_response
             ]
         except Exception as e:
-            logger.error(f"Error fetching progress: {e}")
+            logger.exception("Error fetching progress: %s", e)
             raise e
 
 
+@async_traced_function
 async def init_elements(
     uow: UnitOfWork,
     event_bus: EventBus,
@@ -61,10 +66,11 @@ async def init_elements(
             await event_bus.request(ElementTopics.ELEMENTS_INIT)
             logger.debug("Initialized starting elements.")
         except Exception as e:
-            logger.error(f"Error initializing starting elements: {e}")
+            logger.error("Error initializing starting elements: %s", e)
             raise e
 
 
+@async_traced_function
 async def fetch_init_elements(
     uow: UnitOfWork,
     event_bus: EventBus,
@@ -76,7 +82,7 @@ async def fetch_init_elements(
                 ElementTopics.ELEMENTS_FETCH_INIT
             )
         except Exception as e:
-            logger.error(f"Error fetching initial elements: {e}")
+            logger.error("Error fetching initial elements: %s", e)
             raise e
 
         try:
@@ -89,10 +95,11 @@ async def fetch_init_elements(
                 for element in elements_fetch_response
             ]
         except Exception as e:
-            logger.error(f"Error fetching initial elements: {e}")
+            logger.error("Error fetching initial elements: %s", e)
             raise e
 
 
+@async_traced_function
 async def __repeat_element_proc(
     element_a: ElementTable,
     element_b: ElementTable,
@@ -115,6 +122,7 @@ async def __repeat_element_proc(
         return None
 
 
+@async_traced_function
 async def init_progress(
     user_id: int,
     uow: UnitOfWork,
@@ -122,16 +130,19 @@ async def init_progress(
     chat_instance: int = 0,
 ) -> None:
     """Initialize progress for the user"""
-    logger.debug(f"Initializing progress for user {user_id}.")
+    logger.debug("Initializing progress for user %s.", user_id)
     async with uow.start():
         try:
             elements_fetch_response: list[ElementTable] = await event_bus.request(
                 ElementTopics.ELEMENTS_FETCH_INIT
             )
             element_ids = [element.object_id for element in elements_fetch_response]
-            logger.debug(f"Fetched {len(element_ids)} elements for user {user_id}.")
+            logger.debug(
+                "Fetched %s elements for user %s.",
+                len(element_ids), user_id
+            )
         except Exception as e:
-            logger.error(f"Error initializing elements: {e}")
+            logger.error("Error initializing elements: %s", e)
             raise e
         try:
             await event_bus.request(
@@ -140,12 +151,13 @@ async def init_progress(
                 chat_instance=chat_instance,
                 starting_elements_ids=element_ids,
             )
-            logger.debug(f"Initialized progress for user {user_id}.")
+            logger.debug("Initialized progress for user %s.", user_id)
         except Exception as e:
-            logger.error(f"Error initializing progress: {e}")
+            logger.error("Error initializing progress: %s", e)
             raise e
 
 
+@async_traced_function
 async def orchestrate_element_combination(
     user_id: int,
     element_a_id: int,
@@ -167,7 +179,7 @@ async def orchestrate_element_combination(
                 element_b_id=element_b_id,
             )
         except Exception as e:
-            logger.error(f"Error checking progress: {e}")
+            logger.error("Error checking progress: %s", e)
             raise e
 
         # Check for existing recipe
@@ -178,15 +190,19 @@ async def orchestrate_element_combination(
                 element_b_id=element_b_id,
             )
         except Exception as e:
-            logger.error(f"Error fetching recipe: {e}")
+            logger.error("Error fetching recipe: %s", e)
             raise e
 
         if recipe and recipe[0].result:
             result_element_table = recipe[0].result
             logger.debug(
-                f"Found existing recipe: {result_element_table.object_id} -> "
-                + f"Result: {result_element_table.name} "
-                + f"({result_element_table.object_id})",
+                "Found existing recipe: %s ->",
+                result_element_table.object_id
+            )
+            logger.debug(
+                "Result: %s (%s)",
+                result_element_table.name,
+                result_element_table.object_id,
             )
 
             # Adds progress if it doesn't exist, checks in progress model
@@ -204,7 +220,9 @@ async def orchestrate_element_combination(
             )
         else:
             logger.debug(
-                f"No recipe found for {element_a_id} + {element_b_id}. Querying Gemini."
+                f"No recipe found for %s + %s. Querying Gemini.",
+                element_a_id,
+                element_b_id,
             )
             # Query Gemini, create Element and Recipe
             fetched_elements: list[ElementTable] = await event_bus.request(
@@ -252,7 +270,7 @@ async def orchestrate_element_combination(
             session = await uow.get_session()
             await session.commit()
 
-            # Do it in the second transactio to comply with foreign key constraints
+            # Do it in the second transaction to comply with foreign key constraints
             try:
                 await event_bus.request(
                     RecipeTopics.RECIPE_CREATE,
@@ -268,7 +286,7 @@ async def orchestrate_element_combination(
                     element_id=result_element_table.object_id,
                 )
             except Exception as e:
-                logger.error(f"Error creating progress: {e}")
+                logger.error("Error creating progress: %s", e)
                 raise HTTPException(
                     status_code=500, detail=f"Failed to create progress: {e}"
                 ) from e

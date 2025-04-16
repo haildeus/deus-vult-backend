@@ -1,17 +1,17 @@
 import contextvars
+import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.shared.config import Logger
 from src.shared.types import SessionFactory
 
 current_uow: contextvars.ContextVar["UnitOfWork | None"] = contextvars.ContextVar(
     "current_uow", default=None
 )
 
-logger = Logger("unit-of-work").logger
+logger = logging.getLogger("deus-vult.uow")
 
 
 class UnitOfWork:

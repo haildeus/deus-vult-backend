@@ -1,10 +1,10 @@
+import logging
 from typing import Annotated
 
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends, HTTPException
 
 from src import Container
-from src.api import logger
 from src.api.core.dependencies import validate_init_data
 from src.api.craft.craft_orchestration import (
     fetch_init_elements,
@@ -15,7 +15,10 @@ from src.api.craft.elements.elements_schemas import ElementApiInput, ElementResp
 from src.api.craft.progress.progress_schemas import ProgressResponse
 from src.shared.cache import disk_cache
 from src.shared.event_bus import EventBus
+from src.shared.observability.traces import async_traced_function
 from src.shared.uow import UnitOfWork
+
+logger = logging.getLogger("deus-vult.api.craft")
 
 craft_router = APIRouter(prefix="/craft")
 
@@ -31,6 +34,7 @@ craft_router = APIRouter(prefix="/craft")
     key_params=["user_id"],
     ttl=60 * 60 * 24,
 )
+@async_traced_function
 @inject
 async def get_init_elements(
     user_id: Annotated[int, Depends(validate_init_data)],
@@ -38,6 +42,9 @@ async def get_init_elements(
     uow: Annotated[UnitOfWork, Depends(Provide[Container.uow_factory])],
 ) -> list[ElementResponse]:
     """Get initial elements"""
+
+    _ = user_id
+
     try:
         return await fetch_init_elements(uow, event_bus)
     except Exception as e:
@@ -59,6 +66,7 @@ async def get_init_elements(
     ],
     ttl=60 * 60 * 24,
 )
+@async_traced_function
 @inject
 async def combine_elements(
     user_id: Annotated[int, Depends(validate_init_data)],
@@ -71,15 +79,19 @@ async def combine_elements(
     Updates user progress atomically.
     """
     logger.debug(
-        f"Combining elements: {element_ids.object_id_a} + {element_ids.object_id_b}"
+        "Combining elements: %s + %s",
+        element_ids.object_id_a,
+        element_ids.object_id_b,
     )
     try:
         assert element_ids.object_id_a
         assert element_ids.object_id_b
     except AssertionError as e:
         logger.error(
-            f"Invalid elements provided for combination: "
-            f"A={element_ids.object_id_a}, B={element_ids.object_id_b}"
+            "Invalid elements provided for combination: "
+            "A=%s, B=%s",
+            element_ids.object_id_a,
+            element_ids.object_id_b,
         )
         raise HTTPException(
             status_code=400, detail="Invalid elements provided for combination."
@@ -95,16 +107,19 @@ async def combine_elements(
             event_bus=event_bus,
         )
         logger.info(
-            f"Combination successful for user {user_id}. Result: {result_element.name} "
-            f"({result_element.object_id})"
+            "Combination successful for user %s. Result: %s "
+            "(%s)",
+            user_id,
+            result_element.name,
+            result_element.object_id,
         )
         return result_element
     except HTTPException as e:
         raise e
     except Exception as e:
-        logger.error(
-            f"Unexpected error during element combination orchestration: {e}",
-            exc_info=True,
+        logger.exception(
+            "Unexpected error during element combination orchestration: %s",
+            e,
         )
         raise HTTPException(
             status_code=500, detail="Internal server error during combination."
@@ -118,6 +133,7 @@ async def combine_elements(
     status_code=200,
     tags=["Progress"],
 )
+@async_traced_function
 @inject
 async def get_user_progress(
     user_id: Annotated[int, Depends(validate_init_data)],
@@ -130,7 +146,7 @@ async def get_user_progress(
         progress = await fetch_progress(user_id, uow, event_bus)
         return progress
     except Exception as e:
-        logger.error(f"Error fetching progress for user {user_id}: {e}", exc_info=True)
+        logger.exception("Error fetching progress for user %s: %s", user_id, e)
         raise HTTPException(
             status_code=500, detail="Failed to fetch user progress."
         ) from e

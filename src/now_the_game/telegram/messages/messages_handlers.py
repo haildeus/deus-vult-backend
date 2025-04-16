@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from collections.abc import Callable, Coroutine
 from typing import Any
 
@@ -10,7 +11,6 @@ from pyrogram.handlers.message_handler import MessageHandler
 from pyrogram.types import Message
 
 from src import Container
-from src.now_the_game import logger
 from src.shared.event_bus import EventBus
 from src.shared.event_registry import (
     ChatTopics,
@@ -19,7 +19,11 @@ from src.shared.event_registry import (
     UserTopics,
 )
 from src.shared.events import Event
+from src.shared.observability.traces import async_traced_function
 from src.shared.uow import UnitOfWork
+
+
+logger = logging.getLogger("deus-vult.telegram.messages")
 
 
 class MessageHandlers:
@@ -35,6 +39,7 @@ class MessageHandlers:
         response = await message.reply_text("Help message")  # type: ignore
         return response
 
+    @async_traced_function
     @inject
     async def save(
         self,

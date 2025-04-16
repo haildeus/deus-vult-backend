@@ -1,4 +1,5 @@
 import asyncio
+import logging
 from collections.abc import Callable, Coroutine
 from typing import Any
 
@@ -10,11 +11,13 @@ from pyrogram.handlers.handler import Handler
 from pyrogram.types import ChatMemberUpdated
 
 from src import Container
-from src.now_the_game import logger
 from src.shared.event_bus import EventBus
 from src.shared.event_registry import ChatTopics, MembershipTopics, UserTopics
 from src.shared.events import Event
+from src.shared.observability.traces import async_traced_function
 from src.shared.uow import UnitOfWork
+
+logger = logging.getLogger("deus-vult.telegram.memberships")
 
 
 class ChatMembershipHandlers:
@@ -22,6 +25,7 @@ class ChatMembershipHandlers:
     Chat membership handlers class
     """
 
+    @async_traced_function
     @inject
     async def new_chat_membership(
         self,

@@ -3,18 +3,20 @@ Message-specific schema definitions.
 This module re-exports the Message-related schemas from the central schema module.
 """
 
+import logging
 from enum import Enum
 
 from pyrogram.client import Client
 from pyrogram.types import Message
 from sqlmodel import Field
 
-from src.now_the_game import logger
 from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
 from src.now_the_game.telegram.telegram_interfaces import IMessageEvent
 from src.shared.base import BaseSchema
 from src.shared.event_registry import MessageTopics
 from src.shared.events import EventPayload
+
+logger = logging.getLogger("deus-vult.telegram.messages")
 
 
 class MessageType(Enum):
