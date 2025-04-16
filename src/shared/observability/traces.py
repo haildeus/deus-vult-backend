@@ -8,16 +8,16 @@ import typing as tp
 
 import opentelemetry
 import pydantic
-from opentelemetry.trace import Tracer
 from opentelemetry.sdk.trace import TracerProvider
 from opentelemetry.sdk.trace.export import (  # type: ignore
     Context,
     ReadableSpan,
     SimpleSpanProcessor,
-    SpanExportResult,
     SpanExporter,
+    SpanExportResult,
     SpanProcessor,
 )
+from opentelemetry.trace import Tracer
 from opentelemetry.trace.status import StatusCode
 from opentelemetry.util.types import AttributeValue
 
@@ -42,13 +42,14 @@ _STATUS_CODE = {
 }
 
 tracer: Tracer = opentelemetry.trace.get_tracer("deus-vult")
+T = tp.TypeVar("T", bound=tp.Callable[..., tp.Any])
 
 
 def _serialize_argument(value: tp.Any) -> AttributeValue:
     if isinstance(value, str | bool | int | float):
         return value
 
-    if isinstance(value, (list, dict, tuple)):
+    if isinstance(value, list | dict | tuple):
         with contextlib.suppress(Exception):
             return json.dumps(value)
 
@@ -58,11 +59,11 @@ def _serialize_argument(value: tp.Any) -> AttributeValue:
     return repr(value)
 
 
-def traced_function(func: tp.Callable[..., tp.Any]) -> tp.Callable[..., tp.Any]:
+def traced_function(func: T) -> T:
     signature = inspect.signature(func)
 
     @functools.wraps(func)
-    def _wrapper(*args: tp.Any, **kwargs: tp.Any) -> tp.Any:
+    def _wrapper(*args, **kwargs):  # type: ignore
         bound = signature.bind(*args, **kwargs)
         bound.apply_defaults()
 
@@ -75,14 +76,14 @@ def traced_function(func: tp.Callable[..., tp.Any]) -> tp.Callable[..., tp.Any]:
         ):
             return func(*args, **kwargs)
 
-    return _wrapper
+    return tp.cast(T, _wrapper)
 
 
-def async_traced_function(func: tp.Callable[..., tp.Any]) -> tp.Callable[..., tp.Any]:
+def async_traced_function(func: T) -> T:
     signature = inspect.signature(func)
 
     @functools.wraps(func)
-    async def _wrapper(*args: tp.Any, **kwargs: tp.Any) -> tp.Any:
+    async def _wrapper(*args, **kwargs):  # type: ignore
         bound = signature.bind(*args, **kwargs)
         bound.apply_defaults()
 
@@ -95,7 +96,7 @@ def async_traced_function(func: tp.Callable[..., tp.Any]) -> tp.Callable[..., tp
         ):
             return await func(*args, **kwargs)
 
-    return _wrapper
+    return tp.cast(T, _wrapper)
 
 
 class ConsoleSpanProcessor(SpanProcessor):
@@ -114,8 +115,8 @@ class ConsoleSpanProcessor(SpanProcessor):
         assert span.end_time is not None
         assert span.start_time is not None
         self.out.write(
-            f"[{span.context.trace_id}] close `{span.name}` duration={span.end_time - span.start_time}\n"
-        )  # noqa: E501
+            f"[{span.context.trace_id}] close `{span.name}` duration={span.end_time - span.start_time}\n"  # noqa: E501
+        )
 
     def shutdown(self) -> None:
         self.force_flush()
@@ -179,14 +180,14 @@ class InserterExporter(SpanExporter):
         return SpanExportResult.SUCCESS
 
     def shutdown(self) -> None:
-        # All shutdown and force_flush operations will be handled on the Inserter side on exit.
+        # All shutdown and force_flush operations will be handled on the Inserter side on exit.  # noqa: E501
         return
 
     def force_flush(self, timeout_millis: int = 30000) -> bool:
         return True
 
 
-def configure_tracing(inserter_class: tp.Type["Inserter"]) -> None:
+def configure_tracing(inserter_class: type["Inserter"]) -> None:
     InserterExporter.inserter = inserter_class("operation.traces")
     provider = TracerProvider()
 
