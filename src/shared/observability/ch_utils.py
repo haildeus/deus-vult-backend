@@ -31,9 +31,7 @@ http_pool: urllib3.PoolManager | None = None
 http_client: AsyncClient | None = None
 get_http_client: tp.Callable[[], tp.Awaitable[AsyncClient]] | None = None
 
-GLOBAL_SETTINGS: dict[str, tp.Any] = dict(
-    s3_max_get_rps=0, s3_max_get_burst=0, s3_max_put_rps=0
-)
+GLOBAL_SETTINGS: dict[str, tp.Any] = {"s3_max_get_rps": 0, "s3_max_get_burst": 0, "s3_max_put_rps": 0}
 
 
 class Inserter(BaseWorker, metaclass=Singleton["Inserter"]):  # type: ignore
@@ -80,12 +78,12 @@ class Inserter(BaseWorker, metaclass=Singleton["Inserter"]):  # type: ignore
                 self.table_name,
                 [list(record.model_dump().values()) for record in records],
                 column_names=list(records[0].model_dump(by_alias=True).keys()),
-                settings=dict(
-                    async_insert=1,
-                    wait_for_async_insert=1,
-                    async_insert_busy_timeout_max_ms=200,
-                    async_insert_use_adaptive_busy_timeout=0,
-                ),
+                settings={
+                    "async_insert": 1,
+                    "wait_for_async_insert": 1,
+                    "async_insert_busy_timeout_max_ms": 200,
+                    "async_insert_use_adaptive_busy_timeout": 0,
+                },
             )
 
             self.metrics.increment(self.table_name, 1)
@@ -101,10 +99,7 @@ class Inserter(BaseWorker, metaclass=Singleton["Inserter"]):  # type: ignore
             self.table_name,
             [list(record.model_dump().values()) for record in records],
             column_names=list(records[0].model_dump(by_alias=True).keys()),
-            settings=dict(
-                async_insert=1,
-                wait_for_async_insert=0,
-            ),
+            settings={"async_insert": 1, "wait_for_async_insert": 0},
         )
 
     async def flush(self) -> None:
@@ -126,7 +121,7 @@ class Inserter(BaseWorker, metaclass=Singleton["Inserter"]):  # type: ignore
                 return
 
             with tracer.start_as_current_span(
-                "flush", attributes=dict(table_name=self.table_name)
+                "flush", attributes={"table_name": self.table_name}
             ):
                 try:
                     await self.insert_async(*batch)
@@ -183,7 +178,7 @@ class HTTPDictCursor:
         self, query: str, args: dict[str, tp.Any] | None = None, _: tp.Any = None
     ) -> None:
         result = await self.client.query(
-            query, args, query_tz=pytz.UTC, settings=dict(session_id=self.session_id)
+            query, args, query_tz=pytz.UTC, settings={"session_id": self.session_id}
         )
 
         if "total_rows_to_read" in result.column_names:
@@ -223,10 +218,10 @@ async def _traced_execute(
 
     with tracer.start_as_current_span(
         "cursor.execute",
-        attributes=dict(
-            query=query,
-            args=json.dumps({key: str(value) for key, value in trace_args.items()}),
-        ),
+        attributes={
+            "query": query,
+            "args": json.dumps({key: str(value) for key, value in trace_args.items()}),
+        },
     ):
         await execute(query, args, context)
 
