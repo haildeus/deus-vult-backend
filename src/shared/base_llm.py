@@ -20,7 +20,6 @@ from vertexai.language_models import (  # type: ignore
 )
 from vertexai.language_models._language_models import TextEmbedding  # type: ignore
 
-
 logger = logging.getLogger("deus-vult.base_llm")
 
 try:

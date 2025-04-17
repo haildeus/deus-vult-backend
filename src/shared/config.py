@@ -1,6 +1,5 @@
 import logging
 import os
-from abc import ABC
 from typing import Literal, TypeVar
 
 from google.auth import default as google_default_credentials  # type: ignore
@@ -27,8 +26,88 @@ ABSTRACT BASE CONFIG CLASSES
 """
 
 
-class BaseConfig(BaseSettings, ABC):
-    """Abstract base class for configuration settings across vertical slices"""
+class BaseAccess:
+    """Base class for accessing secrets."""
+
+    def _resolve_secret(
+        self, local_secret: str, cloud_secret_id: str | None = None
+    ) -> str:
+        """Resolves a secret from Secret Manager or local environment."""
+        return (
+            local_secret
+            if not cloud_secret_id
+            else self._get_cloud_secret(self._get_google_project_id(), cloud_secret_id)
+        )
+
+    # --- Private Helper Methods ---
+    def _get_google_project_id(self) -> str:
+        """Returns the Google Cloud Project ID."""
+        logger.debug("Getting Google Cloud Project ID")
+        try:
+            response = os.environ.get("BASE_GOOGLE_CLOUD_PROJECT")
+            if not response:
+                raise ValueError(
+                    "BASE_GOOGLE_CLOUD_PROJECT environment variable not set."
+                )
+            return response
+        except Exception as e:
+            logger.error(f"Error getting Google Cloud Project ID: {e}")
+            raise e
+
+    def _get_local_secret(self, env_var: str) -> str:
+        """Fetches a secret's value from local environment."""
+        logger.warning("Using %s env var for local dev.", env_var)
+        local_secret = os.environ.get(env_var)
+        if local_secret:
+            return local_secret
+        raise ValueError(f"{env_var} environment variable not set.")
+
+    def _get_cloud_secret(
+        self,
+        project_id: str,
+        secret_id: str,
+        version_id: str = "latest",
+    ) -> str:
+        """Fetches a secret's value from Google Secret Manager."""
+        logger.debug(
+            "Attempting to fetch secret '%s' from project '%s'",
+            secret_id,
+            project_id,
+        )
+        try:
+            _, detected_project_id = google_default_credentials()  # type: ignore
+            effective_project_id = project_id or detected_project_id  # type: ignore
+
+            if not effective_project_id:
+                logger.error(
+                    "Could not determine Google Cloud Project ID for Secret Manager."
+                )
+                raise ValueError(
+                    "Could not determine Google Cloud Project ID for Secret Manager."
+                )
+
+            client = secretmanager.SecretManagerServiceClient()
+            name = f"projects/{effective_project_id}/secrets/{secret_id}/versions/{version_id}"  # noqa: E501
+            response = client.access_secret_version(request={"name": name})  # type: ignore
+            payload = response.payload.data.decode("UTF-8")
+            logger.info(
+                f"Successfully accessed secret: {secret_id} (version: {version_id})"
+            )
+            return payload
+
+        except DefaultCredentialsError as e:
+            logger.error(
+                f"Could not find credentials to access secret {secret_id}. "
+                "Check 'Secret Manager Secret Accessor' role."
+            )
+            raise e from e
+        except Exception as e:
+            logger.error(f"Error accessing secret {secret_id}: {e}", exc_info=True)
+            raise e
+
+
+class BaseConfig(BaseSettings, BaseAccess):
+    """Base class for configuration settings across vertical slices"""
 
     class Config:
         extra = "ignore"
@@ -114,59 +193,7 @@ DATABASE CONFIG
 """
 
 
-class _PasswordFetchTrait:
-    password_secret_id = None
-    google_project_id = None
-
-    def _fetch_password(
-        self,
-        password_env: str = "PASSWORD",
-        password_secret_id_env: str = "PASSWORD_SECRET_ID"
-    ) -> str:
-        """Fetches the password from Secret Manager or raises an error."""
-        if not self.password_secret_id:
-            # Local dev as fallback
-            local_pw = os.environ.get(password_env)
-            if local_pw:
-                logger.warning(
-                    "Using %s env var for local dev. "
-                    "Set %s for deployed environments.",
-                    password_env,
-                    password_secret_id_env,
-                )
-                return local_pw
-            raise ValueError(f"{password_secret_id_env} environment variable not set.")
-
-        if not self.google_project_id:
-            # Auto-detect project ID
-            try:
-                _creds, detected_project_id = google_default_credentials()  # type: ignore
-                if detected_project_id:
-                    self.google_project_id = detected_project_id
-                else:
-                    raise ValueError("Could not auto-detect Google Cloud Project ID.")
-            except Exception as e:
-                raise ValueError(
-                    f"Failed to get Google Cloud Project ID for secret fetching: {e}"
-                ) from e
-
-        logger.debug(
-            f"Attempting to fetch secret '{self.password_secret_id}' "
-            f"from project '{self.google_project_id}'"  # type: ignore
-        )
-        fetched_password = get_secret(self.google_project_id, self.password_secret_id)  # type: ignore
-
-        if fetched_password is None:
-            # raise config error here
-            raise ValueError(
-                f"Failed to fetch database password from Secret Manager "
-                f"(Secret ID: {self.password_secret_id}). Check logs and permissions."
-            )
-
-        return fetched_password
-
-
-class PostgresConfig(BaseConfig, _PasswordFetchTrait):
+class PostgresConfig(BaseConfig):
     """PostgreSQL configuration, handles App Engine Unix sockets."""
 
     # Basic config
@@ -175,17 +202,20 @@ class PostgresConfig(BaseConfig, _PasswordFetchTrait):
     port: int = Field(5432, validation_alias="POSTGRES_PORT")
     db_name: str = Field("deus-vult", validation_alias="POSTGRES_DB_NAME")
 
+    # --- Access ---
+
+    # For local dev
+    password_local: str = Field(..., validation_alias="POSTGRES_PASSWORD_LOCAL")
     # For Google App Engine
+    password_secret_id: str | None = Field(
+        None, validation_alias="DB_PASSWORD_SECRET_ID"
+    )
     instance_connection_name: str | None = Field(
         None, validation_alias="INSTANCE_CONNECTION_NAME"
     )
     app_engine: Literal["google", "local"] = Field(
         "local", validation_alias="POSTGRES_APP_ENGINE"
     )
-    password_secret_id: str | None = Field(
-        None, validation_alias="DB_PASSWORD_SECRET_ID"
-    )
-    google_project_id: str | None = Field(None, validation_alias="GOOGLE_CLOUD_PROJECT")
 
     class Config(BaseConfig.Config):
         env_prefix = "POSTGRES_"
@@ -193,11 +223,8 @@ class PostgresConfig(BaseConfig, _PasswordFetchTrait):
     @computed_field(return_type=str)
     @property
     def password(self) -> str:
-        """Fetches the password from Secret Manager or raises an error."""
-        return self._fetch_password(
-            password_env="POSTGRES_PASSWORD",
-            password_secret_id_env="DB_PASSWORD_SECRET_ID"
-        )
+        """Fetches the password from Secret Manager or local environment."""
+        return self._resolve_secret(self.password_local, self.password_secret_id)
 
     def _build_sqlalchemy_url(self, use_placeholder_password: bool = False) -> URL:
         """Internal helper to construct the SQLAlchemy URL object."""
@@ -248,7 +275,7 @@ class PostgresConfig(BaseConfig, _PasswordFetchTrait):
         return url_obj.render_as_string(hide_password=False)
 
 
-class ClickHouseConfig(BaseConfig, _PasswordFetchTrait):
+class ClickHouseConfig(BaseConfig):
     """ClickHouse configuration, required for observability."""
 
     # Basic config
@@ -257,14 +284,23 @@ class ClickHouseConfig(BaseConfig, _PasswordFetchTrait):
     port: int = Field(443, validation_alias="CLICKHOUSE_PORT")
     secure: bool = Field(True, validation_alias="CLICKHOUSE_SECURE")
 
-    http_thread_executor_size: int = Field(12, validation_alias="CLICKHOUSE_HTTP_THREAD_EXECUTOR_SIZE")
-    http_max_pool_size: int = Field(12, validation_alias="CLICKHOUSE_HTTP_MAX_POOL_SIZE")
+    # constants
+    http_thread_executor_size: int = Field(
+        12, validation_alias="CLICKHOUSE_HTTP_THREAD_EXECUTOR_SIZE"
+    )
+    http_max_pool_size: int = Field(
+        12, validation_alias="CLICKHOUSE_HTTP_MAX_POOL_SIZE"
+    )
     http_num_pools: int = Field(4, validation_alias="CLICKHOUSE_HTTP_NUM_POOLS")
 
+    # --- Access ---
+
+    # For local dev
+    password_local: str = Field(..., validation_alias="CLICKHOUSE_PASSWORD_LOCAL")
+    # For Google App Engine
     password_secret_id: str | None = Field(
-        None, validation_alias="CLICKHOUSE_PASSWORD_SECRET_ID"
+        None, validation_alias="CLICKHOUSE_PASS_SECRET_ID"
     )
-    google_project_id: str | None = Field(None, validation_alias="GOOGLE_CLOUD_PROJECT")
 
     class Config(BaseConfig.Config):
         env_prefix = "CLICKHOUSE_"
@@ -272,12 +308,9 @@ class ClickHouseConfig(BaseConfig, _PasswordFetchTrait):
     @computed_field(return_type=str)
     @property
     def password(self) -> str:
-        """Fetches the password from Secret Manager or raises an error."""
-        return self._fetch_password(
-            password_env="CLICKHOUSE_PASSWORD",
-            password_secret_id_env="CLICKHOUSE_PASSWORD_SECRET_ID"
-        )
+        """Fetches the password from Secret Manager or local environment."""
+        return self._resolve_secret(self.password_local, self.password_secret_id)
 
 
 # noinspection PyArgumentList
-clickhouse_config = ClickHouseConfig()
+clickhouse_config = ClickHouseConfig()  # type: ignore

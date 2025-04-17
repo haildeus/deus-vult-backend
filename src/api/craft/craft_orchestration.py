@@ -35,7 +35,7 @@ async def fetch_progress(
                 user_id=user_id,
             )
         except Exception as e:
-            logger.error(f"Error fetching progress: %s", e)
+            logger.error("Error fetching progress: %s", e)
             raise e
 
         try:
@@ -137,10 +137,7 @@ async def init_progress(
                 ElementTopics.ELEMENTS_FETCH_INIT
             )
             element_ids = [element.object_id for element in elements_fetch_response]
-            logger.debug(
-                "Fetched %s elements for user %s.",
-                len(element_ids), user_id
-            )
+            logger.debug("Fetched %s elements for user %s.", len(element_ids), user_id)
         except Exception as e:
             logger.error("Error initializing elements: %s", e)
             raise e
@@ -195,10 +192,7 @@ async def orchestrate_element_combination(
 
         if recipe and recipe[0].result:
             result_element_table = recipe[0].result
-            logger.debug(
-                "Found existing recipe: %s ->",
-                result_element_table.object_id
-            )
+            logger.debug("Found existing recipe: %s ->", result_element_table.object_id)
             logger.debug(
                 "Result: %s (%s)",
                 result_element_table.name,
@@ -220,7 +214,7 @@ async def orchestrate_element_combination(
             )
         else:
             logger.debug(
-                f"No recipe found for %s + %s. Querying Gemini.",
+                "No recipe found for %s + %s. Querying Gemini.",
                 element_a_id,
                 element_b_id,
             )

@@ -11,7 +11,6 @@ from pyrogram.client import Client
 
 from src.shared.config import get_secret
 
-
 logger = logging.getLogger("deus-vult.telegram.client")
 
 

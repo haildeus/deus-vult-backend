@@ -3,6 +3,7 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
+import dotenv
 import uvicorn
 import uvloop
 from fastapi import FastAPI
@@ -15,17 +16,17 @@ from src.containers import create_container, init_service, init_service_and_regi
 from src.now_the_game.game.game_registry import get_game_registry
 from src.now_the_game.telegram.telegram_registry import get_telegram_registry
 from src.shared.config import shared_config
-from src.shared.observability.utils import with_observability, configure_logging
+from src.shared.observability.utils import with_observability
 
 logger = logging.getLogger("deus-vult.main-app-component")
 
 # --- Event Loop Initialization ---
 uvloop.install()
+dotenv.load_dotenv()
 
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    configure_logging()
     logger.info("Starting up the application")
     logger.info("App environment: %s", shared_config.app_env)
     logger.info("Debug mode: %s", shared_config.debug_mode)
@@ -36,6 +37,9 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     container: Container = create_container()
     # noinspection PyUnresolvedReferences
     _app.state.container = container
+
+    # --- Observability ---
+    container.observability()
 
     key_service_init_tasks = [
         init_service(container, "db"),
