@@ -36,18 +36,20 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     # noinspection PyUnresolvedReferences
     _app.state.container = container
 
-    # --- Observability ---
-    container.observability()
-
     key_service_init_tasks = [
+        init_service(container, "observability"),
         init_service(container, "db"),
         init_service(container, "telegram_object"),
         init_service(container, "event_bus"),
         init_service(container, "disk_cache_instance"),
     ]
-    db_instance, telegram_object, event_bus_instance, _ = await asyncio.gather(
-        *key_service_init_tasks
-    )
+    (
+        _,
+        db_instance,
+        telegram_object,
+        event_bus_instance,
+        _,
+    ) = await asyncio.gather(*key_service_init_tasks)
 
     # --- Service Initialization ---
     try:

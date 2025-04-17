@@ -160,6 +160,7 @@ async def init_service(container: Container, name: str) -> Any:
     Initializes a service.
     """
     service_dict = {
+        "observability": container.observability,
         "db": container.db,
         "telegram_object": container.telegram_object,
         "disk_cache_instance": container.disk_cache_instance,
