@@ -5,19 +5,24 @@ This module re-exports the Chat-related schemas from the central schema module.
 
 import logging
 from enum import Enum
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pydantic import model_validator
 from pyrogram.enums import ChatType as PyrogramChatType
 from pyrogram.types import ChatMemberUpdated, Message
-from sqlmodel import Field
+from sqlmodel import Field, Relationship
 
 from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
-from src.now_the_game.telegram.telegram_interfaces import IChatEvent
 from src.shared.base import BaseSchema
-from src.shared.event_registry import ChatTopics
 from src.shared.events import EventPayload
 
+if TYPE_CHECKING:
+    from src.now_the_game.telegram.memberships.memberships_schemas import (
+        ChatMembershipTable,
+    )
+    from src.now_the_game.telegram.messages.messages_schemas import MessageTable
+    from src.now_the_game.telegram.polls.polls_schemas import PollTable
+    from src.now_the_game.telegram.users.users_schemas import UserTable
 
 logger = logging.getLogger("deus-vult.telegram.chats")
 
@@ -35,16 +40,6 @@ MODELS
 
 class AddChatEventPayload(EventPayload):
     message: Message | ChatMemberUpdated
-
-
-"""
-EVENTS
-"""
-
-
-class AddChatEvent(IChatEvent):
-    topic: str = ChatTopics.CHAT_CREATE.value
-    payload: AddChatEventPayload  # type: ignore
 
 
 """
@@ -70,6 +65,22 @@ class ChatBase(BaseSchema):
 class ChatTable(ChatBase, table=True):
     __tablename__ = "chats"  # type: ignore
 
+    # --- Relationships ---
+    chat_members: list["ChatMembershipTable"] = Relationship(
+        back_populates="chat", sa_relationship_kwargs={"lazy": "selectin"}
+    )
+    messages: list["MessageTable"] = Relationship(
+        back_populates="chat", sa_relationship_kwargs={"lazy": "selectin"}
+    )
+    polls: list["PollTable"] = Relationship(
+        back_populates="chat", sa_relationship_kwargs={"lazy": "selectin"}
+    )
+    users: list["UserTable"] = Relationship(
+        back_populates="chats",
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
+
+    # --- End Relationships ---
     @classmethod
     async def from_pyrogram(cls, message: Message | ChatMemberUpdated) -> "ChatTable":
         """Create a chat from a pyrogram message"""
@@ -91,7 +102,7 @@ class ChatTable(ChatBase, table=True):
                 chat_type=chat_type,
             )
         except Exception as e:
-            logger.error(f"Error creating chat from pyrogram message: {e}")
+            logger.error("Error creating chat from pyrogram message: %s", e)
             raise PyrogramConversionError(
-                f"Error creating chat from pyrogram message: {e}"
+                f"Error creating chat from pyrogram message: {e}",
             ) from e

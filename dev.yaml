@@ -49,8 +49,8 @@ env_variables:
   CLICKHOUSE_PORT: '8123'
   CLICKHOUSE_SECURE: '0'  # all traffic is inside the cloud network
   CLICKHOUSE_PASSWORD_SECRET_ID: 'deus-vult-clickhouse-pass'
-  # App Engine 
-  GOOGLE_CLOUD_PROJECT: 'gen-lang-client-0674779185'
+  # App Engine: Base
+  BASE_GOOGLE_CLOUD_PROJECT: 'gen-lang-client-0674779185'
   # App Engine: Cloud SQL
   INSTANCE_CONNECTION_NAME: 'gen-lang-client-0674779185:us-east1:deus-vult-dev'
   DB_PASSWORD_SECRET_ID: 'deus-vult-database-pass-dev'

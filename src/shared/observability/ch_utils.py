@@ -9,7 +9,7 @@ import uuid
 from functools import partial
 
 import clickhouse_connect
-import pytz  # type: ignore
+import pytz
 import urllib3
 from clickhouse_connect.driver import httputil
 from clickhouse_connect.driver.asyncclient import AsyncClient
@@ -182,7 +182,10 @@ class HTTPDictCursor:
         self, query: str, args: dict[str, tp.Any] | None = None, _: tp.Any = None
     ) -> None:
         result = await self.client.query(
-            query, args, query_tz=pytz.UTC, settings={"session_id": self.session_id}
+            query,
+            args,
+            query_tz=pytz.UTC,
+            settings={"session_id": self.session_id},
         )
 
         if "total_rows_to_read" in result.column_names:
@@ -293,7 +296,7 @@ async def _execute_multiquery(
 
 @async_traced_function
 async def db_fetchone(
-    model: tp.Type[T],
+    model: type[T],
     query: str,
     query_args: dict[str, tp.Any] | None = None,
     name: str | None = None,
@@ -323,7 +326,7 @@ async def db_fetchone(
 
 @async_traced_function
 async def db_fetchall(
-    model: tp.Type[T],
+    model: type[T],
     query: str,
     query_args: dict[str, tp.Any] | None = None,
     name: str | None = None,

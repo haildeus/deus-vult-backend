@@ -1,21 +1,18 @@
 import logging
+from typing import cast
 
 from pyrogram.client import Client
 from pyrogram.types import Chat, ChatMember
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.now_the_game.telegram.chats.chats_model import chat_model
-from src.now_the_game.telegram.chats.chats_schemas import (
-    AddChatEventPayload,
-    ChatTable,
-    ChatTopics,
-)
+from src.now_the_game.telegram.chats.chats_schemas import AddChatEventPayload, ChatTable
 from src.shared.base import BaseService
 from src.shared.event_bus import EventBus
+from src.shared.event_registry import ChatTopics
 from src.shared.events import Event
 from src.shared.observability.traces import async_traced_function
 from src.shared.uow import current_uow
-
 
 logger = logging.getLogger("deus-vult.telegram.chats")
 
@@ -25,13 +22,13 @@ class ChatsService(BaseService):
         super().__init__()
         self.model = chat_model
 
-    @EventBus.subscribe(ChatTopics.CHAT_CREATE.value)
+    @EventBus.subscribe(ChatTopics.CHAT_CREATE)
     @async_traced_function
     async def on_add_chat(self, event: Event) -> None:
-        if not isinstance(event.payload, AddChatEventPayload):
-            payload = AddChatEventPayload(**event.payload)  # type: ignore
-        else:
-            payload = event.payload
+        payload = cast(
+            AddChatEventPayload,
+            event.extract_payload(event, AddChatEventPayload),
+        )
 
         chat_core_info = await ChatTable.from_pyrogram(payload.message)
         logger.debug("Adding chat: %s", chat_core_info)

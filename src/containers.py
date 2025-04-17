@@ -25,6 +25,7 @@ from src.shared.cache import get_disk_cache
 from src.shared.config import PostgresConfig
 from src.shared.database import Database
 from src.shared.event_bus import EventBus
+from src.shared.observability.utils import configure_logging
 from src.shared.types import SessionFactory
 from src.shared.uow import UnitOfWork
 
@@ -87,6 +88,9 @@ class Container(containers.DeclarativeContainer):
     glif_config = providers.Factory(GlifConfig)
     glif_service = providers.Singleton(GlifService)
 
+    # -- Observability --
+    observability = providers.Factory(configure_logging)
+
 
 def find_modules_in_packages(packages_paths: list[str]) -> list[str]:
     """
@@ -114,8 +118,7 @@ def find_modules_in_packages(packages_paths: list[str]) -> list[str]:
 
         except ModuleNotFoundError:
             logger.warning(
-                "Warning: Package path %s not found or not a package.",
-                package_path
+                "Warning: Package path %s not found or not a package.", package_path
             )
         except Exception as e:
             logger.warning(
@@ -157,6 +160,7 @@ async def init_service(container: Container, name: str) -> Any:
     Initializes a service.
     """
     service_dict = {
+        "observability": container.observability,
         "db": container.db,
         "telegram_object": container.telegram_object,
         "disk_cache_instance": container.disk_cache_instance,

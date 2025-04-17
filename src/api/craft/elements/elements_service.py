@@ -14,7 +14,6 @@ from src.shared.events import Event
 from src.shared.observability.traces import async_traced_function
 from src.shared.uow import current_uow
 
-
 logger = logging.getLogger("deus-vult.api.craft")
 
 

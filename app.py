@@ -15,7 +15,7 @@ from src.containers import create_container, init_service, init_service_and_regi
 from src.now_the_game.game.game_registry import get_game_registry
 from src.now_the_game.telegram.telegram_registry import get_telegram_registry
 from src.shared.config import shared_config
-from src.shared.observability.utils import with_observability, configure_logging
+from src.shared.observability.utils import with_observability
 
 logger = logging.getLogger("deus-vult.main-app-component")
 
@@ -25,7 +25,6 @@ uvloop.install()
 
 @asynccontextmanager
 async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
-    configure_logging()
     logger.info("Starting up the application")
     logger.info("App environment: %s", shared_config.app_env)
     logger.info("Debug mode: %s", shared_config.debug_mode)
@@ -38,14 +37,19 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     _app.state.container = container
 
     key_service_init_tasks = [
+        init_service(container, "observability"),
         init_service(container, "db"),
         init_service(container, "telegram_object"),
         init_service(container, "event_bus"),
         init_service(container, "disk_cache_instance"),
     ]
-    db_instance, telegram_object, event_bus_instance, _ = await asyncio.gather(
-        *key_service_init_tasks
-    )
+    (
+        _,
+        db_instance,
+        telegram_object,
+        event_bus_instance,
+        _,
+    ) = await asyncio.gather(*key_service_init_tasks)
 
     # --- Service Initialization ---
     try:
@@ -113,7 +117,6 @@ app = FastAPI(
 )
 
 # That's for the cors plugin
-# noinspection PyTypeChecker
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=".*",

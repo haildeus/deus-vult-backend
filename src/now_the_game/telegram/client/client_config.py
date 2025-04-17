@@ -11,7 +11,6 @@ from pyrogram.client import Client
 
 from src.shared.config import get_secret
 
-
 logger = logging.getLogger("deus-vult.telegram.client")
 
 
@@ -159,4 +158,4 @@ class TelegramBotData:
         self.peer_id = bot_info.id
         self.name = bot_info.first_name
         self.username = bot_info.username
-        logger.debug(f"Bot info: {self}")
+        logger.debug("Bot info: %s", self)

@@ -22,7 +22,6 @@ from src.shared.event_registry import ElementTopics
 from src.shared.events import Event
 from src.shared.observability.traces import async_traced_function
 
-
 logger = logging.getLogger("deus-vult.api.craft")
 
 
@@ -72,10 +71,10 @@ class ElementsAgent(BaseService):
             """
             response = await self.agent_object.run(query_string)
             return_value = response.data
-            
-            logger.debug(f"Elements combination agent response: {return_value}")
+
+            logger.debug("Elements combination agent response: %s", return_value)
         except Exception as e:
-            logger.error(f"Error running elements combination agent: {e}")
+            logger.error("Error running elements combination agent: %s", e)
             raise e
 
         response_object = ElementOutput.model_validate(return_value)

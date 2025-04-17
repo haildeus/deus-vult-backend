@@ -6,18 +6,15 @@ import socket
 import sys
 import typing as tp
 
-import opentelemetry
 import pydantic
-from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.context.context import Context
+from opentelemetry.sdk.trace import ReadableSpan, SpanProcessor, TracerProvider
 from opentelemetry.sdk.trace.export import (  # type: ignore
-    Context,
-    ReadableSpan,
     SimpleSpanProcessor,
     SpanExporter,
     SpanExportResult,
-    SpanProcessor,
 )
-from opentelemetry.trace import Tracer
+from opentelemetry.trace import Tracer, get_tracer, set_tracer_provider
 from opentelemetry.trace.status import StatusCode
 from opentelemetry.util.types import AttributeValue
 
@@ -41,7 +38,7 @@ _STATUS_CODE = {
     StatusCode.ERROR: "ERROR",
 }
 
-tracer: Tracer = opentelemetry.trace.get_tracer("deus-vult")
+tracer: Tracer = get_tracer("deus-vult")
 T = tp.TypeVar("T", bound=tp.Callable[..., tp.Any])
 
 
@@ -106,9 +103,15 @@ class ConsoleSpanProcessor(SpanProcessor):
     def on_start(
         self, span: ReadableSpan, parent_context: Context | None = None
     ) -> None:
+        if not span.context:
+            raise RuntimeError("Span context is not initialized")
+
         self.out.write(f"[{span.context.trace_id}] open `{span.name}`\n")
 
     def on_end(self, span: ReadableSpan) -> None:
+        if not span.context:
+            raise RuntimeError("Span context is not initialized")
+
         if not span.context.trace_flags.sampled:
             return
 
@@ -139,6 +142,9 @@ class InserterExporter(SpanExporter):
             raise RuntimeError("Inserter is not initialized")
 
         for span in spans:
+            if not span.context:
+                raise RuntimeError("Span context is not initialized")
+
             assert span.start_time is not None
             assert span.end_time is not None
 
@@ -180,7 +186,8 @@ class InserterExporter(SpanExporter):
         return SpanExportResult.SUCCESS
 
     def shutdown(self) -> None:
-        # All shutdown and force_flush operations will be handled on the Inserter side on exit.  # noqa: E501
+        # All shutdown and force_flush operations will be handled
+        # on the Inserter side on exit.
         return
 
     def force_flush(self, timeout_millis: int = 30000) -> bool:
@@ -192,4 +199,4 @@ def configure_tracing(inserter_class: type["Inserter"]) -> None:
     provider = TracerProvider()
 
     provider.add_span_processor(SimpleSpanProcessor(InserterExporter()))
-    opentelemetry.trace.set_tracer_provider(provider)
+    set_tracer_provider(provider)

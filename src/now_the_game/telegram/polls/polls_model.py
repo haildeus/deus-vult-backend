@@ -112,7 +112,7 @@ class PollOptionModel(BaseModel[PollOptionTable]):
         try:
             assert sum(arg is not None for arg in (poll_id, option_id)) <= 1
         except AssertionError as e:
-            logger.error(f"Error getting poll option: {e}")
+            logger.error("Error getting poll option: %s", e)
             raise OverloadParametersError("Function has too many parameters") from e
 
         if poll_id and option_id:

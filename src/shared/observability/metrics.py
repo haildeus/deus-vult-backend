@@ -73,7 +73,7 @@ class MetricsStorage:
 
     @classmethod
     async def flush(cls) -> None:
-        data = []
+        data: list[schemas.Metric] = []
 
         _now = now()
         with cls._lock:

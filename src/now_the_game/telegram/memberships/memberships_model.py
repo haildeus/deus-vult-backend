@@ -11,7 +11,6 @@ from src.now_the_game.telegram.memberships.memberships_schemas import (
 from src.shared.base import BaseModel, EntityAlreadyExistsError, EntityNotFoundError
 from src.shared.observability.traces import async_traced_function
 
-
 logger = logging.getLogger("deus-vult.telegram.memberships")
 
 
@@ -88,7 +87,7 @@ class ChatMembershipModel(BaseModel[ChatMembershipTable]):
         except AssertionError as e:
             raise EntityNotFoundError(entity_id=f"{user_id} in {chat_id}") from e
         except Exception as e:
-            logger.error(f"Error removing ChatMembershipSchema: {e}")
+            logger.error("Error removing ChatMembershipSchema: %s", e)
             raise e
 
         await session.delete(result[0])
@@ -113,7 +112,7 @@ class ChatMembershipModel(BaseModel[ChatMembershipTable]):
                 entity=transformed_entity, entity_type=self.model_class.__name__
             ) from e
         except Exception as e:
-            logger.error(f"Error checking if ChatMembershipSchema exists: {e}")
+            logger.error("Error checking if ChatMembershipSchema exists: %s", e)
             raise e
 
         return len(result) == 0

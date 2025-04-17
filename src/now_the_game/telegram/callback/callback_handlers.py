@@ -16,7 +16,7 @@ class CallbackHandlers:
     async def callback_query(
         self, client: Client, callback_query: CallbackQuery
     ) -> None:
-        logger.info(f"Callback query: {callback_query}")
+        logger.info("Callback query: %s", callback_query)
         raise NotImplementedError()
 
     @property

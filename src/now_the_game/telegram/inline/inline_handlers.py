@@ -14,7 +14,7 @@ class InlineHandlers:
         pass
 
     async def inline_query(self, client: Client, inline_query: InlineQuery) -> None:
-        logger.info(f"Inline query: {inline_query}")
+        logger.info("Inline query: %s", inline_query)
         raise NotImplementedError()
 
     @property

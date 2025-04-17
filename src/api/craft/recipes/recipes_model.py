@@ -78,7 +78,7 @@ class RecipeModel(BaseModel[RecipeTable]):
                 entity=element_a_id, entity_type=self.model_class.__name__
             ) from e
         except Exception as e:
-            logger.error(f"Error checking if Recipe exists: {e}")
+            logger.error("Error checking if Recipe exists: %s", e)
             raise e
 
         return len(result) == 0

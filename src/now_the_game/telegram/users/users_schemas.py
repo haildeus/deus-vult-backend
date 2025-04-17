@@ -3,15 +3,20 @@ User-specific schema definitions.
 This module re-exports the User-related schemas from the central schema module.
 """
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from pyrogram.types import Message, User
-from sqlmodel import Field
+from sqlmodel import Field, Relationship
 
-from src.now_the_game.telegram.telegram_interfaces import IUserEvent
 from src.shared.base import BaseSchema
-from src.shared.event_registry import UserTopics
 from src.shared.events import EventPayload
+
+if TYPE_CHECKING:
+    from src.now_the_game.telegram.chats.chats_schemas import ChatTable
+    from src.now_the_game.telegram.memberships.memberships_schemas import (
+        ChatMembershipTable,
+    )
+    from src.now_the_game.telegram.messages.messages_schemas import MessageTable
 
 """
 MODELS
@@ -20,16 +25,6 @@ MODELS
 
 class AddUserPayload(EventPayload):
     user: User
-
-
-"""
-EVENTS
-"""
-
-
-class AddUserEvent(IUserEvent):
-    topic: str = UserTopics.USER_CREATE.value
-    payload: AddUserPayload  # type: ignore
 
 
 """
@@ -48,6 +43,20 @@ class UserBase(BaseSchema):
 
 class UserTable(UserBase, table=True):
     __tablename__ = "users"  # type: ignore
+
+    # --- Relationships ---
+    chat_members: list["ChatMembershipTable"] = Relationship(
+        back_populates="user",
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
+    messages: list["MessageTable"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"lazy": "selectin"}
+    )
+    chats: list["ChatTable"] = Relationship(
+        back_populates="users",
+        sa_relationship_kwargs={"lazy": "selectin"},
+    )
+    # --- End Relationships ---
 
     @classmethod
     async def from_fields(cls, **kwargs: Any) -> "UserTable":

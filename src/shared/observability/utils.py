@@ -2,9 +2,11 @@ import contextlib
 import typing as tp
 
 from src.shared.observability.ch_utils import Inserter, clickhouse_default
+from src.shared.observability.logging_utils import (
+    configure_logging as _configure_logging,
+)
 from src.shared.observability.metrics import MetricsStorage
 from src.shared.observability.system_usage import SystemUsageMonitoring
-from src.shared.observability.logging_utils import configure_logging as _configure_logging
 from src.shared.observability.traces import configure_tracing
 
 

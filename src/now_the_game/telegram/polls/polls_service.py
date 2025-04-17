@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import cast
 
 from pyrogram.client import Client
 from pyrogram.types import Message, Poll
@@ -8,11 +9,11 @@ from src.now_the_game.telegram.polls.polls_model import poll_model, poll_option_
 from src.now_the_game.telegram.polls.polls_schemas import (
     PollOptionTable,
     PollTable,
-    PollTopics,
     SendPollEventPayload,
 )
 from src.shared.base import BaseService
 from src.shared.event_bus import EventBus
+from src.shared.event_registry import PollTopics
 from src.shared.events import Event
 from src.shared.observability.traces import async_traced_function
 from src.shared.uow import current_uow
@@ -26,19 +27,19 @@ class PollsService(BaseService):
         self.poll_model = poll_model
         self.poll_option_model = poll_option_model
 
-    @EventBus.subscribe(PollTopics.POLL_SEND.value)
+    @EventBus.subscribe(PollTopics.POLL_SEND)
     @async_traced_function
     async def on_send_poll(
         self,
         event: Event,
         client: Client,
     ) -> None:
-        if not isinstance(event.payload, SendPollEventPayload):
-            payload = SendPollEventPayload(**event.payload)  # type: ignore
-        else:
-            payload = event.payload
-
+        payload = cast(
+            SendPollEventPayload,
+            event.extract_payload(event, SendPollEventPayload),
+        )
         save_to_db = payload.save
+
         logger.debug("Sending poll to %s", payload.chat_id)
         poll_message = await client.send_poll(
             chat_id=payload.chat_id,

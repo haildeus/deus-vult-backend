@@ -1,14 +1,13 @@
 import logging
 import socket
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import colorlog
-from opentelemetry.trace import get_current_span, INVALID_SPAN
+from opentelemetry.trace import INVALID_SPAN, get_current_span
 
-from src.shared.observability import schemas
 from src.shared.config import shared_config
+from src.shared.observability import schemas
 from src.shared.observability.ch_utils import Inserter
-
 
 LOG_COLORS = {
     "DEBUG": "cyan",
@@ -37,7 +36,7 @@ class ClickHouseHandler(logging.Handler):
             trace_id = hex(context.trace_id)
 
         return schemas.Log(
-            timestamp=datetime.fromtimestamp(record.created, timezone.utc),
+            timestamp=datetime.fromtimestamp(record.created, UTC),
             severity_text=record.levelname,
             severity_number=record.levelno,
             body=self.format(record),

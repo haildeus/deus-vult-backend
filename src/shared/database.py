@@ -21,7 +21,7 @@ class Database:
         self.url = db_config.db_url
         self.safe_url = db_config.safe_db_url  # safe version for logging
 
-        logger.debug(f"Attempting to connect using effective URL: {self.safe_url}")
+        logger.debug("Attempting to connect using effective URL: %s", self.safe_url)
 
         try:
             self.engine = create_async_engine(
@@ -34,10 +34,12 @@ class Database:
             self.async_session = async_sessionmaker(
                 bind=self.engine, class_=AsyncSession, expire_on_commit=False
             )
-            logger.info(f"Async Database engine initialized for {self.safe_url}")
+            logger.info("Async Database engine initialized for %s", self.safe_url)
         except Exception as e:
             logger.error(
-                f"Failed to initialize database engine for {self.safe_url}: {e}",
+                "Failed to initialize database engine for %s: %s",
+                self.safe_url,
+                e,
                 exc_info=True,
             )
             # Consider raising the exception or handling it based on application needs
@@ -47,7 +49,7 @@ class Database:
         """
         Initializes the database connection and optionally creates tables.
         """
-        logger.debug(f"Initializing database connection to {self.safe_url}")
+        logger.debug("Initializing database connection to %s", self.safe_url)
 
         async with self.engine.begin() as conn:
             # TODO: Add Alembic migrations
@@ -65,8 +67,8 @@ class Database:
         WARNING: This is destructive and irreversible. Use with extreme caution.
         """
         logger.warning(
-            f"Dropping all tables in database {self.safe_url} "
-            f"defined in metadata (using CASCADE)!"
+            "Dropping all tables in database %s defined in metadata (using CASCADE)!",
+            self.safe_url,
         )
         async with self.engine.begin() as conn:
             for table in reversed(SQLModel.metadata.sorted_tables):
@@ -84,11 +86,11 @@ class Database:
                 yield session
                 await session.commit()
             except Exception as e:
-                logger.error(f"Session rollback due to error: {e}", exc_info=True)
+                logger.error("Session rollback due to error: %s", e, exc_info=True)
                 await session.rollback()
                 raise
 
     async def close(self):
         """Closes the database connection pool."""
-        logger.info(f"Closing database connection pool for {self.safe_url}")
+        logger.info("Closing database connection pool for %s", self.safe_url)
         await self.engine.dispose()

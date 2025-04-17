@@ -1,4 +1,5 @@
 import logging
+from typing import cast
 
 from pyrogram.client import Client
 from pyrogram.types import Chat
@@ -7,14 +8,13 @@ from src.now_the_game.telegram.users.users_model import user_model
 from src.now_the_game.telegram.users.users_schemas import (
     AddUserPayload,
     UserTable,
-    UserTopics,
 )
 from src.shared.base import BaseService
 from src.shared.event_bus import EventBus
+from src.shared.event_registry import UserTopics
 from src.shared.events import Event
 from src.shared.observability.traces import async_traced_function
 from src.shared.uow import current_uow
-
 
 logger = logging.getLogger("deus-vult.telegram.users")
 
@@ -24,13 +24,13 @@ class UsersService(BaseService):
         super().__init__()
         self.model = user_model
 
-    @EventBus.subscribe(UserTopics.USER_CREATE.value)
+    @EventBus.subscribe(UserTopics.USER_CREATE)
     @async_traced_function
     async def on_add_user(self, event: Event) -> None:
-        if not isinstance(event.payload, AddUserPayload):
-            payload = AddUserPayload(**event.payload)  # type: ignore
-        else:
-            payload = event.payload
+        payload = cast(
+            AddUserPayload,
+            event.extract_payload(event, AddUserPayload),
+        )
 
         user = payload.user
         user_core_info = await UserTable.from_user(user)
