@@ -1,5 +1,6 @@
 import logging
 from datetime import datetime
+from typing import cast
 
 from pyrogram.client import Client
 from pyrogram.types import Message
@@ -8,10 +9,10 @@ from src.now_the_game.telegram.messages.messages_model import message_model
 from src.now_the_game.telegram.messages.messages_schemas import (
     AddMessagePayload,
     MessageTable,
-    MessageTopics,
 )
 from src.shared.base import BaseService
 from src.shared.event_bus import EventBus
+from src.shared.event_registry import MessageTopics
 from src.shared.events import Event
 from src.shared.observability.traces import async_traced_function
 from src.shared.uow import current_uow
@@ -24,13 +25,13 @@ class MessagesService(BaseService):
         super().__init__()
         self.message_model = message_model
 
-    @EventBus.subscribe(MessageTopics.MESSAGE_CREATE.value)
+    @EventBus.subscribe(MessageTopics.MESSAGE_CREATE)
     @async_traced_function
     async def on_add_message(self, event: Event) -> None:
-        if not isinstance(event.payload, AddMessagePayload):
-            payload = AddMessagePayload(**event.payload)  # type: ignore
-        else:
-            payload = event.payload
+        payload = cast(
+            AddMessagePayload,
+            event.extract_payload(event, AddMessagePayload),
+        )
 
         logger.debug("Processing new message: %s", payload.message.text)
         message_core_info = await MessageTable.from_pyrogram(payload.message)

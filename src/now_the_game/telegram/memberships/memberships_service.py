@@ -1,4 +1,5 @@
 import logging
+from typing import cast
 
 from src.now_the_game.telegram.memberships.memberships_model import (
     chat_membership_model,
@@ -7,10 +8,10 @@ from src.now_the_game.telegram.memberships.memberships_schemas import (
     AddChatMembershipPayload,
     ChangeChatMembershipPayload,
     ChatMembershipTable,
-    MembershipTopics,
 )
 from src.shared.base import BaseService
 from src.shared.event_bus import EventBus
+from src.shared.event_registry import MembershipTopics
 from src.shared.events import Event
 from src.shared.observability.traces import async_traced_function
 from src.shared.uow import current_uow
@@ -23,16 +24,15 @@ class MembershipsService(BaseService):
         super().__init__()
         self.model = chat_membership_model
 
-    @EventBus.subscribe(MembershipTopics.MEMBERSHIP_UPDATE.value)
+    @EventBus.subscribe(MembershipTopics.MEMBERSHIP_UPDATE)
     @async_traced_function
     async def on_change_chat_membership(self, event: Event) -> None:
-        if not isinstance(event.payload, ChangeChatMembershipPayload):
-            payload = ChangeChatMembershipPayload(**event.payload)  # type: ignore
-        else:
-            payload = event.payload
+        payload = cast(
+            ChangeChatMembershipPayload,
+            event.extract_payload(event, ChangeChatMembershipPayload),
+        )
 
         chat_member_updated = payload.chat_member_updated
-
         logger.debug("New chat member: %s", chat_member_updated.chat.id)
         updated_info = payload.updated_info
 
@@ -54,13 +54,14 @@ class MembershipsService(BaseService):
         else:
             logger.debug("No active uow, skipping")
 
-    @EventBus.subscribe(MembershipTopics.MEMBERSHIP_CREATE.value)
+    @EventBus.subscribe(MembershipTopics.MEMBERSHIP_CREATE)
     @async_traced_function
     async def on_add_chat_membership(self, event: Event) -> None:
-        if not isinstance(event.payload, AddChatMembershipPayload):
-            payload = AddChatMembershipPayload(**event.payload)  # type: ignore
-        else:
-            payload = event.payload
+        payload = cast(
+            AddChatMembershipPayload,
+            event.extract_payload(event, AddChatMembershipPayload),
+        )
+        logger.debug("Adding chat membership: %s", payload)
 
         chat_membership_core_info = await ChatMembershipTable.from_pyrogram(
             payload.message

@@ -11,7 +11,6 @@ from src.now_the_game.telegram.memberships.memberships_schemas import (
 from src.shared.base import BaseModel, EntityAlreadyExistsError, EntityNotFoundError
 from src.shared.observability.traces import async_traced_function
 
-
 logger = logging.getLogger("deus-vult.telegram.memberships")
 
 

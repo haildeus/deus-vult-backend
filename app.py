@@ -3,7 +3,6 @@ import logging
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-import dotenv
 import uvicorn
 import uvloop
 from fastapi import FastAPI
@@ -22,7 +21,6 @@ logger = logging.getLogger("deus-vult.main-app-component")
 
 # --- Event Loop Initialization ---
 uvloop.install()
-dotenv.load_dotenv()
 
 
 @asynccontextmanager
@@ -117,7 +115,6 @@ app = FastAPI(
 )
 
 # That's for the cors plugin
-# noinspection PyTypeChecker
 app.add_middleware(
     CORSMiddleware,
     allow_origin_regex=".*",

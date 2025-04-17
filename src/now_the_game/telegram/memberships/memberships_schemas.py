@@ -4,15 +4,18 @@ ChatMembership-specific schema definitions.
 
 import logging
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from pyrogram.types import ChatMember, ChatMemberUpdated, Message
-from sqlmodel import Field
+from sqlmodel import Field, Relationship
 
 from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
-from src.now_the_game.telegram.telegram_interfaces import IMembershipChanged
 from src.shared.base import BaseSchema
-from src.shared.event_registry import MembershipTopics
 from src.shared.events import EventPayload
+
+if TYPE_CHECKING:
+    from src.now_the_game.telegram.chats.chats_schemas import ChatTable
+    from src.now_the_game.telegram.users.users_schemas import UserTable
 
 logger = logging.getLogger("deus-vult.telegram.memberships")
 
@@ -32,21 +35,6 @@ class ChangeChatMembershipPayload(EventPayload):
 
 
 """
-EVENTS
-"""
-
-
-class ChangeChatMembershipEvent(IMembershipChanged):
-    topic: str = MembershipTopics.MEMBERSHIP_UPDATE.value
-    payload: ChangeChatMembershipPayload  # type: ignore
-
-
-class AddChatMembershipEvent(IMembershipChanged):
-    topic: str = MembershipTopics.MEMBERSHIP_CREATE.value
-    payload: AddChatMembershipPayload  # type: ignore
-
-
-"""
 TABLES
 """
 
@@ -59,6 +47,11 @@ class ChatMembershipBase(BaseSchema):
 
 class ChatMembershipTable(ChatMembershipBase, table=True):
     __tablename__ = "chat_members"  # type: ignore
+
+    # --- Relationships ---
+    chat: "ChatTable" = Relationship(back_populates="chat_members")
+    user: "UserTable" = Relationship(back_populates="chat_members")
+    # --- End Relationships ---
 
     @classmethod
     async def create(cls, user_id: int, chat_id: int) -> "ChatMembershipTable":
@@ -84,6 +77,5 @@ class ChatMembershipTable(ChatMembershipBase, table=True):
                 e,
             )
             raise PyrogramConversionError(
-                "Error creating chat membership from pyrogram message: %s",
-                e,
+                f"Error creating chat membership from pyrogram message: {e}",
             ) from e

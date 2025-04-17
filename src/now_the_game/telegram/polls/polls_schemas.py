@@ -1,14 +1,17 @@
 from datetime import datetime
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from pyrogram.types import Message, PollOption
-from sqlmodel import Field
+from sqlmodel import Field, Relationship
 
 from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
-from src.now_the_game.telegram.telegram_interfaces import IPollEvent
 from src.shared.base import BaseSchema
-from src.shared.event_registry import PollTopics
 from src.shared.events import EventPayload
+
+if TYPE_CHECKING:
+    from src.now_the_game.telegram.chats.chats_schemas import ChatTable
+    from src.now_the_game.telegram.messages.messages_schemas import MessageTable
 
 
 class PollType(Enum):
@@ -28,16 +31,6 @@ class SendPollEventPayload(EventPayload):
     is_anonymous: bool
     explanation: str | None
     save: bool
-
-
-"""
-EVENTS
-"""
-
-
-class SendPollEvent(IPollEvent):
-    topic: str = PollTopics.POLL_SEND.value
-    payload: SendPollEventPayload  # type: ignore
 
 
 """
@@ -64,6 +57,14 @@ class PollOptionsBase(BaseSchema):
 class PollTable(PollBase, table=True):
     __tablename__ = "polls"  # type: ignore
 
+    # --- Relationships ---
+    options: list["PollOptionTable"] = Relationship(
+        back_populates="poll", sa_relationship_kwargs={"lazy": "selectin"}
+    )
+    chat: "ChatTable" = Relationship(back_populates="polls")
+    message: "MessageTable" = Relationship(back_populates="polls")
+    # --- End Relationships ---
+
     @classmethod
     async def from_pyrogram(cls, message: Message) -> "PollTable":
         """Create a poll from a pyrogram message"""
@@ -84,6 +85,10 @@ class PollTable(PollBase, table=True):
 
 class PollOptionTable(PollOptionsBase, table=True):
     __tablename__ = "poll_options"  # type: ignore
+
+    # --- Relationships ---
+    poll: "PollTable" = Relationship(back_populates="options")
+    # --- End Relationships ---
 
     @classmethod
     async def from_pyrogram(

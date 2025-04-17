@@ -12,7 +12,6 @@ from src.now_the_game.telegram.client.client_config import (
 )
 from src.shared.config import shared_config
 
-
 logger = logging.getLogger("deus-vult.telegram.client")
 
 

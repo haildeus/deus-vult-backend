@@ -10,10 +10,10 @@ class SessionsService(BaseService):
         super().__init__()
         self.model = session_model
 
-    @EventBus.subscribe(SessionTopics.SESSION_CREATE.value)
+    @EventBus.subscribe(SessionTopics.SESSION_CREATE)
     async def on_create_session(self, event: Event) -> None:
         pass
 
-    @EventBus.subscribe(SessionTopics.SESSION_FETCH.value)
+    @EventBus.subscribe(SessionTopics.SESSION_FETCH)
     async def on_fetch_session(self, event: Event) -> None:
         pass

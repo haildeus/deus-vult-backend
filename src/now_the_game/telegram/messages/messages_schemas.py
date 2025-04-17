@@ -5,16 +5,20 @@ This module re-exports the Message-related schemas from the central schema modul
 
 import logging
 from enum import Enum
+from typing import TYPE_CHECKING
 
 from pyrogram.client import Client
 from pyrogram.types import Message
-from sqlmodel import Field
+from sqlmodel import Field, Relationship
 
 from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
-from src.now_the_game.telegram.telegram_interfaces import IMessageEvent
 from src.shared.base import BaseSchema
-from src.shared.event_registry import MessageTopics
 from src.shared.events import EventPayload
+
+if TYPE_CHECKING:
+    from src.now_the_game.telegram.chats.chats_schemas import ChatTable
+    from src.now_the_game.telegram.polls.polls_schemas import PollTable
+    from src.now_the_game.telegram.users.users_schemas import UserTable
 
 logger = logging.getLogger("deus-vult.telegram.messages")
 
@@ -36,16 +40,6 @@ class AddMessagePayload(EventPayload):
 
 
 """
-EVENTS
-"""
-
-
-class AddMessageEvent(IMessageEvent):
-    topic: str = MessageTopics.MESSAGE_CREATE.value
-    payload: AddMessagePayload  # type: ignore
-
-
-"""
 TABLES
 """
 
@@ -60,6 +54,14 @@ class MessageBase(BaseSchema):
 
 class MessageTable(MessageBase, table=True):
     __tablename__ = "messages"  # type: ignore
+
+    # --- Relationships ---
+    user: "UserTable" = Relationship(back_populates="messages")
+    chat: "ChatTable" = Relationship(back_populates="messages")
+    polls: list["PollTable"] = Relationship(
+        back_populates="message", sa_relationship_kwargs={"lazy": "selectin"}
+    )
+    # --- End Relationships ---
 
     @classmethod
     async def from_pyrogram(cls, message: Message) -> "MessageTable":
@@ -78,6 +80,5 @@ class MessageTable(MessageBase, table=True):
                 e,
             )
             raise PyrogramConversionError(
-                "Error creating message from pyrogram message: %s",
-                e,
+                message="Error creating message from pyrogram message: {e}",
             ) from e
