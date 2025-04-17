@@ -12,7 +12,6 @@ from src.shared.event_registry import GlifTopics
 from src.shared.events import Event, EventPayload
 from src.shared.observability.traces import async_traced_function
 
-
 logger = logging.getLogger("deus-vult.glif-service")
 
 """
@@ -44,6 +43,7 @@ class GlifConfig(BaseSettings):
         extra = "ignore"
         env_file = ".env"
 
+    @classmethod
     @model_validator(mode="before")
     def validate_api_key(cls, values: dict[str, Any]) -> dict[str, Any]:
         if not values.get("api_key"):
@@ -87,9 +87,6 @@ SERVICE
 
 
 class GlifService(BaseService):
-    def __init__(self):
-        super().__init__()
-
     @EventBus.subscribe(GlifTopics.QUERY)
     @async_traced_function
     async def on_glif_query(self, event: Event) -> GlifResponse:

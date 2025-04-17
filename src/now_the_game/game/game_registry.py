@@ -1,4 +1,4 @@
-from sqlmodel import Relationship, SQLModel
+from sqlmodel import MetaData, Relationship, SQLModel
 
 from src.now_the_game.game.characters.characters_schemas import (
     CharacterTable,
@@ -17,5 +17,5 @@ PrimaryStatsTable.character = Relationship(back_populates="primary_stats")
 SessionTable.chat = Relationship(back_populates="game_session")
 
 
-async def get_game_registry():
+async def get_game_registry() -> MetaData:
     return SQLModel.metadata

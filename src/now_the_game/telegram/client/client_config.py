@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
 
-from google.auth import default as google_default_credentials  # type: ignore
+from google.auth import default as google_default_credentials
 from pydantic import Field, computed_field
 from pydantic_settings import BaseSettings
 from pyrogram.client import Client
@@ -38,7 +38,7 @@ class TelegramConfig(BaseSettings):
         env_file = ".env"
         env_prefix = "TELEGRAM_"
 
-    @computed_field(return_type=int)
+    @computed_field(return_type=int)  # type: ignore
     @property
     def api_id(self) -> int:
         """Fetch TELEGRAM_API_ID from Secret Manager or local environment."""
@@ -64,7 +64,7 @@ class TelegramConfig(BaseSettings):
                 ) from e
         logger.debug(
             f"Attempting to fetch secret '{self.api_id_secret_id}' "
-            f"from project '{self.google_project_id}'"  # type: ignore
+            f"from project '{self.google_project_id}'"
         )
         fetched_api_id = get_secret(self.google_project_id, self.api_id_secret_id)  # type: ignore
         if fetched_api_id is None:
@@ -74,7 +74,7 @@ class TelegramConfig(BaseSettings):
             )
         return int(fetched_api_id)
 
-    @computed_field(return_type=str)
+    @computed_field(return_type=str)  # type: ignore
     @property
     def api_hash(self) -> str:
         """Fetch TELEGRAM_API_HASH from Secret Manager or local environment."""
@@ -100,7 +100,7 @@ class TelegramConfig(BaseSettings):
                 ) from e
         logger.debug(
             f"Attempting to fetch secret '{self.api_hash_secret_id}' "
-            f"from project '{self.google_project_id}'"  # type: ignore
+            f"from project '{self.google_project_id}'"
         )
         fetched_api_hash = get_secret(self.google_project_id, self.api_hash_secret_id)  # type: ignore
         if fetched_api_hash is None:
@@ -110,7 +110,7 @@ class TelegramConfig(BaseSettings):
             )
         return fetched_api_hash
 
-    @computed_field(return_type=str)
+    @computed_field(return_type=str)  # type: ignore
     @property
     def bot_token(self) -> str:
         """Fetch TELEGRAM_BOT_TOKEN from Secret Manager or local environment."""
@@ -136,7 +136,7 @@ class TelegramConfig(BaseSettings):
                 ) from e
         logger.debug(
             f"Attempting to fetch secret '{self.bot_token_secret_id}' "
-            f"from project '{self.google_project_id}'"  # type: ignore
+            f"from project '{self.google_project_id}'"
         )
         fetched_bot_token = get_secret(self.google_project_id, self.bot_token_secret_id)  # type: ignore
         if fetched_bot_token is None:
@@ -153,7 +153,7 @@ class TelegramBotData:
     name: str | None = None
     username: str | None = None
 
-    async def fill_from_client(self, client: Client):
+    async def fill_from_client(self, client: Client) -> None:
         bot_info = await client.get_me()
         self.peer_id = bot_info.id
         self.name = bot_info.first_name

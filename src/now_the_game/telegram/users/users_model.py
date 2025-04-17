@@ -7,7 +7,7 @@ from src.shared.base import BaseModel
 
 
 class UserModel(BaseModel[UserTable]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(UserTable)
 
     @overload

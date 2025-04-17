@@ -18,7 +18,7 @@ logger = logging.getLogger("deus-vult.telegram.chats")
 
 
 class ChatsService(BaseService):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.model = chat_model
 
@@ -66,7 +66,7 @@ class ChatsService(BaseService):
     ) -> bytes:
         chat = await self.get(chat_id, client)
         photo_small = chat.photo.small_file_id
-        bytes_io_object = await client.download_media(  # type: ignore
+        bytes_io_object = await client.download_media(
             message=photo_small,
             in_memory=True,
         )

@@ -73,7 +73,7 @@ class BaseService:
     A base class for services that automatically registers event bus subscribers.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initializes the service and registers its decorated event handlers.
         """
@@ -131,7 +131,7 @@ class BaseModel(Generic[T]):
                 logger.debug("Added %s to session: %s", object_name, object_id)
                 return response
             except EntityAlreadyExistsError:
-                return
+                return None
             except Exception as e:
                 logger.error("Error adding entity: %s", e)
                 raise e

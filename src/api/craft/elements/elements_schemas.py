@@ -28,6 +28,7 @@ class Element(EventPayload):
         str, Field(max_length=10, description="The emoji representing the element")
     ]
 
+    # noinspection PyNestedDecorators
     @field_validator("emoji")
     @classmethod
     def validate_is_proper_emoji(cls, v: str) -> str:

@@ -10,7 +10,7 @@ from src.shared.base import BaseModel
 
 
 class MessageModel(BaseModel[MessageTable]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(MessageTable)
 
     @overload

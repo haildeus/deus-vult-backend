@@ -58,9 +58,9 @@ class ElementsAgent(BaseService):
         return result
 
     @async_traced_function
-    async def combine_elements(self, input: ElementInput) -> Element:
+    async def combine_elements(self, inp: ElementInput) -> Element:
         try:
-            input_string = f"Input:\n{input.model_dump_json()}"
+            input_string = f"Input:\n{inp.model_dump_json()}"
 
             query_string = f"""
             {ELEMENTS_COMBINATION_QUERY}

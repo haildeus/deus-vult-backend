@@ -20,7 +20,7 @@ logger = logging.getLogger("deus-vult.telegram.memberships")
 
 
 class MembershipsService(BaseService):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.model = chat_membership_model
 

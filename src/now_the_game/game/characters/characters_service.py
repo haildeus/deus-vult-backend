@@ -6,7 +6,7 @@ from src.shared.events import Event
 
 
 class CharactersService(BaseService):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.model = character_model
 

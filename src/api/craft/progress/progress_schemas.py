@@ -32,6 +32,7 @@ class FetchProgress(EventPayload):
     chat_instance: int | None = None
     element_id: int | None = None
 
+    @classmethod
     @model_validator(mode="before")
     def validate_payload(cls, values: dict[str, Any]) -> dict[str, Any]:
         """Checking that at least one of the two parameters is provided"""

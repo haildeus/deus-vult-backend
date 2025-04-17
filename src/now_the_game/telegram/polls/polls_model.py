@@ -21,7 +21,7 @@ class PollModel(BaseModel[PollTable]):
     Model for polls
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(PollTable)
 
     @overload
@@ -79,7 +79,7 @@ class PollOptionModel(BaseModel[PollOptionTable]):
     Model for poll options
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(PollOptionTable)
 
     @overload

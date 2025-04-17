@@ -1,9 +1,5 @@
-from sqlmodel import SQLModel
-
-from src.api.craft.elements.elements_schemas import ElementTable  # type: ignore
-from src.api.craft.progress.progress_schemas import ProgressTable  # type: ignore
-from src.api.craft.recipes.recipes_schemas import RecipeTable  # type: ignore
+from sqlmodel import MetaData, SQLModel
 
 
-async def get_craft_registry():
+async def get_craft_registry() -> MetaData:
     return SQLModel.metadata

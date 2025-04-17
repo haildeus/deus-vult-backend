@@ -38,34 +38,34 @@ class TelegramBot:
         )
         logger.debug("Client object initialized")
 
-    async def _fill_session_data(self):
+    async def _fill_session_data(self) -> None:
         await self.data.fill_from_client(self.client)
         logger.debug("Filled session data")
 
-    async def _setup_client(self):
+    async def _setup_client(self) -> None:
         self.client.set_parse_mode(ParseMode.HTML)
 
-    def get_status(self):
+    def get_status(self) -> TelegramBotStatus:
         return self.status
 
-    def get_data(self):
+    def get_data(self) -> TelegramBotData:
         return self.data
 
     def get_client(self) -> Client:
         return self.client
 
-    def change_status(self, status: TelegramBotStatus):
+    def change_status(self, status: TelegramBotStatus) -> None:
         self.status = status
         logger.debug("Client status: %s", self.status.value)
 
-    async def register_handlers(self, handlers: list[Handler]):
+    async def register_handlers(self, handlers: list[Handler]) -> None:
         for handler in handlers:
             logger.debug("Adding handler: %s", handler)
             self.client.add_handler(handler)
 
     async def start(
         self, blocking: bool = False, handlers: list[Handler] | None = None
-    ):
+    ) -> None:
         await self.client.start()
         logger.debug("Client started")
         await self._fill_session_data()
@@ -77,9 +77,9 @@ class TelegramBot:
             await self.register_handlers(handlers)
 
         if blocking:
-            await idle()
+            await idle()  # type: ignore
             await self.client.stop()
 
-    async def stop(self):
+    async def stop(self) -> None:
         await self.client.stop()
         self.change_status(TelegramBotStatus.STOPPED)

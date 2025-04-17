@@ -11,7 +11,7 @@ logger = logging.getLogger("deus-vult.telegram.chats")
 
 
 class ChatModel(BaseModel[ChatTable]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(ChatTable)
 
     @overload

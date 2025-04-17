@@ -10,7 +10,7 @@ logger = logging.getLogger("deus-vult.progress_model")
 
 
 class ProgressModel(BaseModel[ProgressTable]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(ProgressTable)
 
     async def get(
@@ -21,7 +21,7 @@ class ProgressModel(BaseModel[ProgressTable]):
         chat_instance: int | None = None,
         element_id: int | None = None,
     ) -> list[ProgressTable]:
-        """Get a progress by user_id or chat_instance"""
+        """Get progress by user_id or chat_instance"""
         # All three parameters are provided
         if user_id and chat_instance and element_id:
             logger.debug(
@@ -86,13 +86,12 @@ class ProgressModel(BaseModel[ProgressTable]):
         user_id: int,
         result_id: int,
     ) -> bool:
-        """Checks if a progress exists for the given user_id and result_id"""
+        """Checks if progress exists for the given user_id and result_id"""
         query = select(ProgressTable).where(
             ProgressTable.object_id == user_id,
             ProgressTable.element_id == result_id,
         )
-        result = await session.execute(query)
-        result = list(result.scalars().all())
+        result = list((await session.execute(query)).scalars().all())
         logger.debug("Progress result: %s", result)
         try:
             assert len(result) == 0
@@ -106,8 +105,9 @@ class ProgressModel(BaseModel[ProgressTable]):
 
         return True
 
+    @staticmethod
     async def check_access_internal(
-        self, session: AsyncSession, user_id: int, element_a_id: int, element_b_id: int
+        session: AsyncSession, user_id: int, element_a_id: int, element_b_id: int
     ) -> bool:
         """Internal helper to check progress within a session."""
         stmt = (

@@ -10,10 +10,7 @@ logger = logging.getLogger("deus-vult.telegram.inline")
 
 
 class InlineHandlers:
-    def __init__(self):
-        pass
-
-    async def inline_query(self, client: Client, inline_query: InlineQuery) -> None:
+    async def inline_query(self, _: Client, inline_query: InlineQuery) -> None:
         logger.info("Inline query: %s", inline_query)
         raise NotImplementedError()
 

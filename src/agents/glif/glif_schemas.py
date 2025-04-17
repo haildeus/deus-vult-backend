@@ -1,8 +1,8 @@
-import os
 import logging
+import os
 from enum import Enum
 
-from google.auth import default as google_default_credentials  # type: ignore
+from google.auth import default as google_default_credentials
 from pydantic import BaseModel, Field, computed_field
 from pydantic_settings import BaseSettings
 
@@ -10,7 +10,6 @@ from src.agents.agents_interfaces import IAgentEvent
 from src.shared.config import get_secret
 from src.shared.event_registry import GlifTopics
 from src.shared.events import EventPayload
-
 
 logger = logging.getLogger("deus-vult.glif-service")
 
@@ -45,7 +44,7 @@ class GlifConfig(BaseSettings):
         extra = "ignore"
         env_file = ".env"
 
-    @computed_field(return_type=str)
+    @computed_field(return_type=str)  # type: ignore
     @property
     def api_key(self) -> str:
         """Fetch GLIF_API_KEY from Secret Manager or local environment."""
@@ -116,7 +115,7 @@ class GlifQueryPayload(EventPayload):
 
 class GlifQueryEvent(IAgentEvent):
     topic: str = GlifTopics.QUERY.value
-    payload: GlifQueryPayload  # type: ignore
+    payload: GlifQueryPayload
 
 
 class GlifResponseEvent(IAgentEvent):

@@ -12,7 +12,7 @@ from src.shared.base import BaseModel
 
 
 class CharacterModel(BaseModel[CharacterBase]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(CharacterBase)
 
     @overload
@@ -58,22 +58,24 @@ class CharacterModel(BaseModel[CharacterBase]):
         else:
             return await self.get_all(session)
 
+    @staticmethod
     async def get_for_character_id(
-        self, session: AsyncSession, character_id: int
+        session: AsyncSession, character_id: int
     ) -> list[CharacterBase]:
         query = select(CharacterBase).where(CharacterBase.object_id == character_id)
         result = await session.execute(query)
         return list(result.scalars().all())
 
+    @staticmethod
     async def get_for_chat_id(
-        self, session: AsyncSession, chat_id: int
+        session: AsyncSession, chat_id: int
     ) -> list[CharacterBase]:
         query = select(CharacterBase).where(CharacterBase.chat_id == chat_id)
         result = await session.execute(query)
         return list(result.scalars().all())
 
+    @staticmethod
     async def get_for_user_id(
-        self,
         session: AsyncSession,
         user_id: int,
     ) -> list[CharacterBase]:
@@ -81,8 +83,8 @@ class CharacterModel(BaseModel[CharacterBase]):
         result = await session.execute(query)
         return list(result.scalars().all())
 
+    @staticmethod
     async def get_for_chat_user_id(
-        self,
         session: AsyncSession,
         chat_id: int,
         user_id: int,
@@ -95,7 +97,7 @@ class CharacterModel(BaseModel[CharacterBase]):
 
 
 class LoreModel(BaseModel[LoreBase]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(LoreBase)
 
     @overload
@@ -123,8 +125,9 @@ class LoreModel(BaseModel[LoreBase]):
         else:
             return await self.get_all(session)
 
+    @staticmethod
     async def get_for_character_id(
-        self, session: AsyncSession, character_id: int
+        session: AsyncSession, character_id: int
     ) -> list[LoreBase]:
         query = select(LoreBase).where(LoreBase.character_id == character_id)
         result = await session.execute(query)
@@ -132,7 +135,7 @@ class LoreModel(BaseModel[LoreBase]):
 
 
 class PrimaryStatsModel(BaseModel[PrimaryStatsBase]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(PrimaryStatsBase)
 
     @overload
@@ -162,8 +165,9 @@ class PrimaryStatsModel(BaseModel[PrimaryStatsBase]):
         else:
             return await self.get_all(session)
 
+    @staticmethod
     async def get_for_character_id(
-        self, session: AsyncSession, character_id: int
+        session: AsyncSession, character_id: int
     ) -> list[PrimaryStatsBase]:
         query = select(PrimaryStatsBase).where(
             PrimaryStatsBase.character_id == character_id

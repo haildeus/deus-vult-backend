@@ -1,4 +1,4 @@
-from sqlmodel import SQLModel
+from sqlmodel import MetaData, SQLModel
 
 from src.now_the_game.telegram.chats.chats_schemas import ChatTable  # type: ignore
 from src.now_the_game.telegram.memberships.memberships_schemas import (
@@ -14,5 +14,5 @@ from src.now_the_game.telegram.polls.polls_schemas import (
 from src.now_the_game.telegram.users.users_schemas import UserTable  # type: ignore
 
 
-async def get_telegram_registry():
+async def get_telegram_registry() -> MetaData:
     return SQLModel.metadata
