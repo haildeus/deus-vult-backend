@@ -108,7 +108,7 @@ class EventBus(EventBusInterface):
 
     async def publish(self, event: Event) -> None:
         """Publish an event to type subscribers and topic subscribers"""
-        logger.debug(f"Publishing event: {event}")
+        logger.debug("Publishing event: %s", event)
 
         # Type-based subscribers
         event_type = type(event)
@@ -154,7 +154,7 @@ class EventBus(EventBusInterface):
 
     async def publish_and_wait(self, event: Event) -> None:
         """Publish an event and wait for all handlers to complete"""
-        logger.debug(f"Publishing event and waiting: {event}")
+        logger.debug("Publishing event and waiting: %s", event)
 
         # Type-based subscribers
         event_type = type(event)
@@ -175,7 +175,7 @@ class EventBus(EventBusInterface):
 
         # Create tasks for each handler
         for handler in all_handlers:
-            logger.debug(f"Creating task for handler: {handler}")
+            logger.debug("Creating task for handler: %s", handler)
             result = handler(event)
             if isawaitable(result):
                 task = create_task(result)
@@ -183,12 +183,12 @@ class EventBus(EventBusInterface):
 
         # Wait for all tasks to complete
         if self._event_tasks[event_id]:
-            logger.debug(f"Waiting for {len(self._event_tasks[event_id])} tasks")
+            logger.debug("Waiting for %s tasks", len(self._event_tasks[event_id]))
             await gather(*self._event_tasks[event_id])
 
         # Clean up
         del self._event_tasks[event_id]
-        logger.debug(f"All handlers completed for event: {event}")
+        logger.debug("All handlers completed for event: %s", event)
 
     def get_subscriber_count(self, topic: str) -> int:
         """Get the number of subscribers for an event type"""
@@ -201,7 +201,10 @@ class EventBus(EventBusInterface):
                 topic = getattr(method, "_subscribed_topic")
                 self.subscribe_to_topic(topic, method)  # type: ignore
                 logger.debug(
-                    f"Subscribed {method.__name__} from {obj.__class__.__name__} to topic {topic}"
+                    "Subscribed %s from %s to topic %s",
+                    method.__name__,
+                    obj.__class__.__name__,
+                    topic,
                 )
 
 

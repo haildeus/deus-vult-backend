@@ -1,6 +1,7 @@
 """
 ChatMembership-specific schema definitions.
 """
+
 import logging
 from datetime import datetime
 
@@ -12,7 +13,6 @@ from src.now_the_game.telegram.telegram_interfaces import IMembershipChanged
 from src.shared.base import BaseSchema
 from src.shared.event_registry import MembershipTopics
 from src.shared.events import EventPayload
-
 
 logger = logging.getLogger("deus-vult.telegram.memberships")
 
@@ -79,7 +79,11 @@ class ChatMembershipTable(ChatMembershipBase, table=True):
                 chat_id=message.chat.id,
             )
         except Exception as e:
-            logger.error(f"Error creating chat membership from pyrogram message: {e}")
+            logger.error(
+                "Error creating chat membership from pyrogram message: %s",
+                e,
+            )
             raise PyrogramConversionError(
-                f"Error creating chat membership from pyrogram message: {e}"
+                "Error creating chat membership from pyrogram message: %s",
+                e,
             ) from e

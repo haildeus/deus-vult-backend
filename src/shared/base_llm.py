@@ -103,7 +103,7 @@ class VertexConfig(BaseSettings):
         """
         if self.project_id:
             # Project ID was successfully loaded from VERTEX_PROJECT_ID env var
-            logger.info(f"Using explicitly set VERTEX_PROJECT_ID: {self.project_id}")
+            logger.info("Using explicitly set VERTEX_PROJECT_ID: %s", self.project_id)
             return self
 
         if not GOOGLE_AUTH_AVAILABLE:
@@ -122,7 +122,8 @@ class VertexConfig(BaseSettings):
 
             if detected_project_id:
                 logger.info(
-                    f"Auto-detected Google Cloud Project ID: {detected_project_id}"
+                    "Auto-detected Google Cloud Project ID: %s",
+                    detected_project_id,  # type: ignore
                 )
                 self.project_id = detected_project_id
             else:

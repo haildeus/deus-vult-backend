@@ -22,7 +22,6 @@ from src.shared.events import Event
 from src.shared.observability.traces import async_traced_function
 from src.shared.uow import UnitOfWork
 
-
 logger = logging.getLogger("deus-vult.telegram.messages")
 
 
@@ -51,7 +50,7 @@ class MessageHandlers:
         """
         Process a new message event and add it to the database.
         """
-        logger.debug(f"Processing new message: {message.text}")
+        logger.debug("Processing new message: %s", message.text)
         uow = uow_factory()
 
         async with uow.start():

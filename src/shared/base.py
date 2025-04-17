@@ -30,10 +30,10 @@ class EntityAlreadyExistsError(Exception):
         entity_type = entity_type or self.DEFAULT_ENTITY_TYPE
 
         if isinstance(entity, int):
-            logger.debug(f"{entity_type} object (ID: {entity}) already exists")
+            logger.debug("%s object (ID: %s) already exists", entity_type, entity)
             super().__init__(f"{entity_type} object (ID: {entity}) already exists")
         else:
-            logger.debug(f"{entity_type} {entity} already exists")
+            logger.debug("%s %s already exists", entity_type, entity)
             super().__init__(f"{entity_type} {entity} already exists")
         self.entity = entity
 
@@ -43,10 +43,10 @@ class EntityNotFoundError(Exception):
 
     def __init__(self, entity_id: str | int):
         if isinstance(entity_id, int):
-            logger.debug(f"Entity with ID {entity_id} not found")
+            logger.debug("Entity with ID %s not found", entity_id)
             super().__init__(f"Entity with ID {entity_id} not found")
         else:
-            logger.debug(f"Entity with ID {entity_id} not found")
+            logger.debug("Entity with ID %s not found", entity_id)
             super().__init__(f"Entity with ID {entity_id} not found")
         self.entity_id = entity_id
 
@@ -116,7 +116,7 @@ class BaseModel(Generic[T]):
         try:
             assert entity
         except AssertionError as e:
-            logger.error(f"Error adding entity: {e}")
+            logger.error("Error adding entity: %s", e)
             raise ValueError("Invalid entity") from e
 
         if isinstance(entity, list):
@@ -128,12 +128,12 @@ class BaseModel(Generic[T]):
 
                 object_id = response[0].object_id
                 object_name = self.model_class.__name__
-                logger.debug(f"Added {object_name} to session: {object_id}")
+                logger.debug("Added %s to session: %s", object_name, object_id)
                 return response
             except EntityAlreadyExistsError:
                 return
             except Exception as e:
-                logger.error(f"Error adding entity: {e}")
+                logger.error("Error adding entity: %s", e)
                 raise e
 
     async def add_one(
@@ -148,11 +148,11 @@ class BaseModel(Generic[T]):
         except EntityAlreadyExistsError as e:
             raise e
         except Exception as e:
-            logger.error(f"Error adding entity to session: {e}")
+            logger.error("Error adding entity to session: %s", e)
             raise e
 
         session.add(checked_entity)
-        logger.debug(f"Added entity to session: {checked_entity}")
+        logger.debug("Added entity to session: %s", checked_entity)
         return [checked_entity]
 
     async def add_many(self, session: AsyncSession, entities: list[T]) -> list[T]:
@@ -160,11 +160,11 @@ class BaseModel(Generic[T]):
         try:
             checked_entities = await self.pass_insert_checks(session, entities)
         except Exception as e:
-            logger.error(f"Error adding entities to session: {e}")
+            logger.error("Error adding entities to session: %s", e)
             raise e
 
         session.add_all(checked_entities)
-        logger.debug(f"Added entities to session: {checked_entities}")
+        logger.debug("Added entities to session: %s", checked_entities)
         return checked_entities
 
     # TODO: fix this into a more pythonic way: https://t.me/c/2692177928/1041
@@ -176,7 +176,7 @@ class BaseModel(Generic[T]):
             assert kwargs
             assert all(key in self.__dict_keys() for key in kwargs.keys())
         except AssertionError as e:
-            logger.error(f"Error getting entity by other parameters: {e}")
+            logger.error("Error getting entity by other parameters: %s", e)
             raise e
 
         query = select(self.model_class).where(
@@ -193,7 +193,7 @@ class BaseModel(Generic[T]):
         try:
             assert param in valid_keys
         except AssertionError as e:
-            logger.error(f"Error getting entity by param in list: {e}")
+            logger.error("Error getting entity by param in list: %s", e)
             raise e
 
         try:
@@ -202,7 +202,7 @@ class BaseModel(Generic[T]):
             result = await session.execute(query)
             return list(result.scalars().all())
         except Exception as e:
-            logger.error(f"Error getting entity by param in list: {e}")
+            logger.error("Error getting entity by param in list: %s", e)
             raise e
 
     async def get_by_id(self, session: AsyncSession, entity_id: int) -> list[Any]:
@@ -211,7 +211,7 @@ class BaseModel(Generic[T]):
             assert entity_id
             assert isinstance(entity_id, int)
         except AssertionError as e:
-            logger.error(f"Error getting entity by ID: {e}")
+            logger.error("Error getting entity by ID: %s", e)
             raise ValueError("Invalid entity ID") from e
 
         query = select(self.model_class).where(self.model_class.object_id == entity_id)
@@ -245,20 +245,20 @@ class BaseModel(Generic[T]):
         try:
             assert entity
         except AssertionError as e:
-            logger.error(f"Error creating entity: {e}")
+            logger.error("Error creating entity: %s", e)
             raise e
 
         if isinstance(entity, list):
             response = await self.add_many(session, entity)
             await session.flush()
             await session.refresh(response)
-            logger.debug(f"Created entities in session: {response}")
+            logger.debug("Created entities in session: %s", response)
             return response
         else:
             response = await self.add_one(session, entity)
             await session.flush()
             await session.refresh(response)
-            logger.debug(f"Created entity in session: {len(response)}")
+            logger.debug("Created entity in session: %s", len(response))
             return response
 
     @overload
@@ -275,7 +275,7 @@ class BaseModel(Generic[T]):
         try:
             assert entity
         except AssertionError as e:
-            logger.error(f"Error removing entity: {e}")
+            logger.error("Error removing entity: %s", e)
             raise ValueError("Invalid entity") from e
 
         if not entity:
@@ -290,7 +290,7 @@ class BaseModel(Generic[T]):
         try:
             assert isinstance(entity_id, int)
         except AssertionError as e:
-            logger.error(f"Error removing entity: {e}")
+            logger.error("Error removing entity: %s", e)
             raise ValueError("Invalid entity ID") from e
 
         statement = select(self.model_class).where(
@@ -302,7 +302,7 @@ class BaseModel(Generic[T]):
         try:
             assert entity
         except AssertionError as e:
-            logger.error(f"Error removing entity: {e}")
+            logger.error("Error removing entity: %s", e)
             raise EntityNotFoundError(entity_id) from e
 
         await session.delete(entity)
@@ -314,7 +314,7 @@ class BaseModel(Generic[T]):
             assert entities
             assert all(isinstance(entity.object_id, int) for entity in entities)
         except AssertionError as e:
-            logger.error(f"Error removing entities: {e}")
+            logger.error("Error removing entities: %s", e)
             raise ValueError("All entity IDs must be integers") from e
 
         entity_ids = [entity.object_id for entity in entities]
@@ -328,7 +328,7 @@ class BaseModel(Generic[T]):
             assert entities
             assert all(isinstance(entity.object_id, int) for entity in entities)
         except AssertionError as e:
-            logger.error(f"Error removing entities: {e}")
+            logger.error("Error removing entities: %s", e)
             raise ValueError("All entity IDs must be integers") from e
 
         for entity in entities:
@@ -343,7 +343,7 @@ class BaseModel(Generic[T]):
         try:
             assert await self.__table_is_empty(session)
         except AssertionError as e:
-            logger.error(f"Error removing all entities: {e}")
+            logger.error("Error removing all entities: %s", e)
             raise e
 
         return True
@@ -373,7 +373,7 @@ class BaseModel(Generic[T]):
         except AssertionError:
             return False
         except Exception as e:
-            logger.error(f"Error checking if entity is present: {e}")
+            logger.error("Error checking if entity is present: %s", e)
             raise e
 
     async def is_present_many(self, session: AsyncSession, **kwargs: Any) -> bool:
@@ -386,7 +386,7 @@ class BaseModel(Generic[T]):
         except AssertionError:
             return False
         except Exception as e:
-            logger.error(f"Error checking if entity is present: {e}")
+            logger.error("Error checking if entity is present: %s", e)
             raise e
 
     @overload
@@ -422,7 +422,7 @@ class BaseModel(Generic[T]):
             assert old_entities
             assert all(isinstance(entity.object_id, int) for entity in old_entities)
         except AssertionError as e:
-            logger.error(f"Error updating entities: {e}")
+            logger.error("Error updating entities: %s", e)
             raise ValueError("All entity IDs must be integers") from e
 
         for old_entity in old_entities:
@@ -447,7 +447,7 @@ class BaseModel(Generic[T]):
             assert entity_id
             assert isinstance(entity_id, int)
         except AssertionError as e:
-            logger.error(f"Error updating entity: {e}")
+            logger.error("Error updating entity: %s", e)
             raise ValueError("Invalid entity") from e
 
         statement = select(self.model_class).where(
@@ -488,7 +488,7 @@ class BaseModel(Generic[T]):
         except EntityAlreadyExistsError as e:
             raise e
         except Exception as e:
-            logger.error(f"Unknown error passing insert checks: {e}")
+            logger.error("Unknown error passing insert checks: %s", e)
             raise e
 
     async def __insert_check_for_many(
@@ -503,7 +503,7 @@ class BaseModel(Generic[T]):
             except EntityAlreadyExistsError:
                 continue
             except Exception as e:
-                logger.error(f"Unknown error passing insert checks: {e}")
+                logger.error("Unknown error passing insert checks: %s", e)
                 raise e
 
             checked_entities.append(entity)
@@ -511,7 +511,7 @@ class BaseModel(Generic[T]):
         try:
             assert len(checked_entities) > 0
         except AssertionError as e:
-            logger.error(f"Error validating entities: {e}")
+            logger.error("Error validating entities: %s", e)
             raise e
 
         return checked_entities
@@ -526,10 +526,10 @@ class BaseModel(Generic[T]):
                 entity.object_id, self.model_class.__name__
             ) from e
         except ValidationError as e:
-            logger.error(f"Failed to validate entity: {e}")
-            raise ValueError(f"Invalid entity: {e}") from e
+            logger.error("Failed to validate entity: %s", e)
+            raise ValueError("Invalid entity") from e
         except Exception as e:
-            logger.error(f"Unknown error adding entity: {e}")
+            logger.error("Unknown error adding entity: %s", e)
             raise e
 
         return entity
@@ -552,5 +552,5 @@ class BaseModel(Generic[T]):
 
             return response
         except AssertionError as e:
-            logger.error(f"Error getting rows: {e}")
+            logger.error("Error getting rows: %s", e)
             return 0

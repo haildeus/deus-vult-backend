@@ -34,7 +34,7 @@ class Telegram:
             assert isinstance(explanation, str | None)
             assert explanation is None or len(explanation) < 200
         except AssertionError as e:
-            logger.error(f"Error sending poll: {e}")
+            logger.error("Error sending poll: %s", e)
             raise e
 
         try:
@@ -46,10 +46,10 @@ class Telegram:
                 explanation=explanation,
                 question_parse_mode=ParseMode.MARKDOWN,
             )
-            logger.info(f"Poll sent to chat {chat_id}")
+            logger.info("Poll sent to chat %s", chat_id)
             return message
         except Exception as e:
-            logger.error(f"Error sending poll: {e}")
+            logger.error("Error sending poll: %s", e)
             raise e
 
 

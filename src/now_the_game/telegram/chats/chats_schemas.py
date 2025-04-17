@@ -18,7 +18,6 @@ from src.shared.base import BaseSchema
 from src.shared.event_registry import ChatTopics
 from src.shared.events import EventPayload
 
-
 logger = logging.getLogger("deus-vult.telegram.chats")
 
 
@@ -91,7 +90,8 @@ class ChatTable(ChatBase, table=True):
                 chat_type=chat_type,
             )
         except Exception as e:
-            logger.error(f"Error creating chat from pyrogram message: {e}")
+            logger.error("Error creating chat from pyrogram message: %s", e)
             raise PyrogramConversionError(
-                f"Error creating chat from pyrogram message: {e}"
+                "Error creating chat from pyrogram message: %s",
+                e,
             ) from e

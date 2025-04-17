@@ -33,7 +33,7 @@ class MembershipsService(BaseService):
 
         chat_member_updated = payload.chat_member_updated
 
-        logger.debug(f"New chat member: {chat_member_updated.chat.id}")
+        logger.debug("New chat member: %s", chat_member_updated.chat.id)
         updated_info = payload.updated_info
 
         chat_id = chat_member_updated.chat.id
@@ -78,7 +78,9 @@ class MembershipsService(BaseService):
                 await self.model.add(db, chat_membership_core_info)
             else:
                 logger.debug(
-                    f"Chat membership {chat_membership_core_info.user_id} {chat_membership_core_info.chat_id} already exists, skipping"
+                    "Chat membership %s %s already exists, skipping",
+                    chat_membership_core_info.user_id,
+                    chat_membership_core_info.chat_id,
                 )
         else:
             logger.debug("No active uow, skipping")

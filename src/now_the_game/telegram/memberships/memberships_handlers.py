@@ -38,9 +38,9 @@ class ChatMembershipHandlers:
         Process a new chat membership event and add it to the database.
         """
 
-        logger.debug(f"Processing chat membership: {chat_member_updated.chat.id}")
+        logger.debug("Processing chat membership: %s", chat_member_updated.chat.id)
         new_member = True if chat_member_updated.new_chat_member else False
-        logger.debug(f"Member is new: {new_member}")
+        logger.debug("Member is new: %s", new_member)
         if new_member:
             updated_info = chat_member_updated.new_chat_member
         else:

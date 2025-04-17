@@ -57,11 +57,11 @@ class TelegramBot:
 
     def change_status(self, status: TelegramBotStatus):
         self.status = status
-        logger.debug(f"Client status: {self.status.value}")
+        logger.debug("Client status: %s", self.status.value)
 
     async def register_handlers(self, handlers: list[Handler]):
         for handler in handlers:
-            logger.debug(f"Adding handler: {handler}")
+            logger.debug("Adding handler: %s", handler)
             self.client.add_handler(handler)
 
     async def start(

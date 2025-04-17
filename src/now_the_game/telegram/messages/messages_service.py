@@ -16,7 +16,6 @@ from src.shared.events import Event
 from src.shared.observability.traces import async_traced_function
 from src.shared.uow import current_uow
 
-
 logger = logging.getLogger("deus-vult.telegram.messages")
 
 
@@ -33,7 +32,7 @@ class MessagesService(BaseService):
         else:
             payload = event.payload
 
-        logger.debug(f"Processing new message: {payload.message.text}")
+        logger.debug("Processing new message: %s", payload.message.text)
         message_core_info = await MessageTable.from_pyrogram(payload.message)
 
         active_uow = current_uow.get()
@@ -41,7 +40,7 @@ class MessagesService(BaseService):
         if active_uow:
             db = await active_uow.get_session()
             await self.message_model.add(db, message_core_info)
-            logger.debug(f"Message added: {message_core_info}")
+            logger.debug("Message added: %s", message_core_info)
         else:
             logger.debug("No active uow, skipping")
 

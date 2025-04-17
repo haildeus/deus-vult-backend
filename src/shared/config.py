@@ -51,7 +51,7 @@ class BaseAccess:
                 )
             return response
         except Exception as e:
-            logger.error(f"Error getting Google Cloud Project ID: {e}")
+            logger.error("Error getting Google Cloud Project ID: %s", e)
             raise e
 
     def _get_local_secret(self, env_var: str) -> str:
@@ -91,18 +91,21 @@ class BaseAccess:
             response = client.access_secret_version(request={"name": name})  # type: ignore
             payload = response.payload.data.decode("UTF-8")
             logger.info(
-                f"Successfully accessed secret: {secret_id} (version: {version_id})"
+                "Successfully accessed secret: %s (version: %s)",
+                secret_id,
+                version_id,
             )
             return payload
 
         except DefaultCredentialsError as e:
             logger.error(
-                f"Could not find credentials to access secret {secret_id}. "
-                "Check 'Secret Manager Secret Accessor' role."
+                "Could not find credentials to access secret %s. "
+                "Check 'Secret Manager Secret Accessor' role.",
+                secret_id,
             )
             raise e from e
         except Exception as e:
-            logger.error(f"Error accessing secret {secret_id}: {e}", exc_info=True)
+            logger.error("Error accessing secret %s: %s", secret_id, e, exc_info=True)
             raise e
 
 
@@ -150,7 +153,7 @@ def get_secret(
         )
         return None
     except Exception as e:
-        logger.error(f"Error accessing secret {secret_id}: {e}", exc_info=True)
+        logger.error("Error accessing secret %s: %s", secret_id, e, exc_info=True)
         return None
 
 
@@ -249,7 +252,7 @@ class PostgresConfig(BaseConfig):
         else:
             # Local Development or other environments: Connect via TCP/IP
             if not use_placeholder_password:
-                logger.debug(f"Local. Using TCP: {self.host}:{self.port}")
+                logger.debug("Local. Using TCP: %s:%s", self.host, self.port)
 
             sqlalchemy_url = URL.create(
                 drivername="postgresql+asyncpg",

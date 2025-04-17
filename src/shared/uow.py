@@ -38,22 +38,23 @@ class UnitOfWork:
             raise RuntimeError("UnitOfWork session is already active.")
 
         self._context_token = current_uow.set(self)
-        logger.debug(f"UoW context started, token set: {self._context_token}")
+        logger.debug("UoW context started, token set: %s", self._context_token)
 
         async with self._session_factory() as session:
             self._session = session
-            logger.debug(f"UoW acquired session: {session}")
+            logger.debug("UoW acquired session: %s", session)
             try:
                 yield self  # The UoW instance itself
-                logger.debug(f"UoW exiting cleanly, session {session} will commit.")
+                logger.debug("UoW exiting cleanly, session %s will commit.", session)
             except Exception:
                 logger.error(
-                    f"UoW caught exception, session {session} will roll back.",
+                    "UoW caught exception, session %s will roll back.",
+                    session,
                     exc_info=True,
                 )
                 raise
             finally:
-                logger.debug(f"UoW cleaning up (token: {self._context_token})...")
+                logger.debug("UoW cleaning up (token: %s)...", self._context_token)
                 self._session = None
                 if self._context_token:
                     try:
@@ -61,6 +62,7 @@ class UnitOfWork:
                         logger.debug("UoW context variable reset.")
                     except ValueError:
                         logger.warning(
-                            f"Failed to reset UoW (token: {self._context_token})"
+                            "Failed to reset UoW (token: %s)",
+                            self._context_token,
                         )
                     self._context_token = None

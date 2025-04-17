@@ -1,4 +1,5 @@
 import logging
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import or_, select
 
@@ -24,8 +25,10 @@ class ProgressModel(BaseModel[ProgressTable]):
         # All three parameters are provided
         if user_id and chat_instance and element_id:
             logger.debug(
-                f"Fetching progress with all parameters: {user_id}, "
-                + f"{chat_instance}, {element_id}"
+                "Fetching progress with all parameters: %s, %s, %s",
+                user_id,
+                chat_instance,
+                element_id,
             )
             return await self.get_by_other_params(
                 session,
@@ -37,21 +40,27 @@ class ProgressModel(BaseModel[ProgressTable]):
         # Two parameters are provided
         elif user_id and chat_instance:
             logger.debug(
-                f"Fetching progress with two parameters: {user_id}, {chat_instance}"
+                "Fetching progress with two parameters: %s, %s",
+                user_id,
+                chat_instance,
             )
             return await self.get_by_other_params(
                 session, user_id=user_id, chat_instance=chat_instance
             )
         elif user_id and element_id:
             logger.debug(
-                f"Fetching progress with two parameters: {user_id}, {element_id}"
+                "Fetching progress with two parameters: %s, %s",
+                user_id,
+                element_id,
             )
             return await self.get_by_other_params(
                 session, user_id=user_id, element_id=element_id
             )
         elif chat_instance and element_id:
             logger.debug(
-                f"Fetching progress with two parameters: {chat_instance}, {element_id}"
+                "Fetching progress with two parameters: %s, %s",
+                chat_instance,
+                element_id,
             )
             return await self.get_by_other_params(
                 session, chat_instance=chat_instance, element_id=element_id
@@ -59,13 +68,13 @@ class ProgressModel(BaseModel[ProgressTable]):
 
         # One parameter is provided
         elif user_id:
-            logger.debug(f"Fetching progress with one parameter: {user_id}")
+            logger.debug("Fetching progress with one parameter: %s", user_id)
             return await self.get_by_id(session, user_id)
         elif chat_instance:
-            logger.debug(f"Fetching progress with one parameter: {chat_instance}")
+            logger.debug("Fetching progress with one parameter: %s", chat_instance)
             return await self.get_by_other_params(session, chat_instance=chat_instance)
         elif element_id:
-            logger.debug(f"Fetching progress with one parameter: {element_id}")
+            logger.debug("Fetching progress with one parameter: %s", element_id)
             raise ValueError("Element ID is not enough to get a progress")
         else:
             logger.debug("Fetching all progress")
@@ -84,7 +93,7 @@ class ProgressModel(BaseModel[ProgressTable]):
         )
         result = await session.execute(query)
         result = list(result.scalars().all())
-        logger.debug(f"Progress result: {result}")
+        logger.debug("Progress result: %s", result)
         try:
             assert len(result) == 0
         except AssertionError as e:
@@ -92,7 +101,7 @@ class ProgressModel(BaseModel[ProgressTable]):
                 entity=user_id, entity_type=self.model_class.__name__
             ) from e
         except Exception as e:
-            logger.error(f"Error checking if progress exists: {e}")
+            logger.error("Error checking if progress exists: %s", e)
             raise e
 
         return True

@@ -73,7 +73,11 @@ class MessageTable(MessageBase, table=True):
                 content=message.text,
             )
         except Exception as e:
-            logger.error(f"Error creating message from pyrogram message: {e}")
+            logger.error(
+                "Error creating message from pyrogram message: %s",
+                e,
+            )
             raise PyrogramConversionError(
-                f"Error creating message from pyrogram message: {e}"
+                "Error creating message from pyrogram message: %s",
+                e,
             ) from e

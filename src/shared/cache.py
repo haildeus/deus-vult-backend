@@ -31,16 +31,16 @@ def get_disk_cache() -> Cache:
             cache_dir = Path("/tmp") / ".cache"
         else:
             cache_dir = Path(__file__).parent.parent.parent / "tmp" / ".cache"
-        logger.info(f"Using cache directory: {cache_dir}")
+        logger.info("Using cache directory: %s", cache_dir)
 
         # Ensure cache directory exists
         try:
             cache_dir.mkdir(parents=True, exist_ok=True)
-            logger.info(f"Successfully created or found cache directory: {cache_dir}")
+            logger.info("Successfully created or found cache directory: %s", cache_dir)
         except OSError as e:
             # Log a more specific error if even /tmp/.cache fails
             logger.error(
-                f"Failed to create cache directory {cache_dir}: {e}", exc_info=True
+                "Failed to create cache directory %s: %s", cache_dir, e, exc_info=True
             )
             raise  # Re-raise the exception as caching won't work
 
@@ -88,12 +88,14 @@ def serialize_value(value: Any) -> bytes:
 
     except TypeError as e:  # Catch TypeErrors from prep_for_orjson or dumps
         logger.error(
-            f"Cache serialization failed: {e}. Value type: {type(value)}.",  # type: ignore
+            "Cache serialization failed: %s. Value type: %s.",
+            e,
+            type(value),  # type: ignore
             exc_info=True,
         )
         raise  # Re-raise the TypeError to prevent caching bad data
     except Exception as e:
-        logger.error(f"Unexpected cache serialization error: {e}", exc_info=True)
+        logger.error("Unexpected cache serialization error: %s", e, exc_info=True)
         raise
 
 
@@ -167,10 +169,10 @@ def deserialize_value(value: Any) -> Any:  # noqa: C901
             f"Invalid JSON detected. Error: {e}",
             exc_info=True,
         )
-        logger.error(f"Problematic cache bytes (prefix): {value[:100]!r}")
+        logger.error("Problematic cache bytes (prefix): %s", value[:100])
         return None
     except Exception as e:
-        logger.error(f"Unexpected Cache Deserialization Error: {e}", exc_info=True)
+        logger.error("Unexpected Cache Deserialization Error: %s", e, exc_info=True)
         return None
 
 
@@ -263,9 +265,11 @@ def generate_cache_key(  # noqa: C901
                     param_hash = hashlib.md5(orjson.dumps(param_value)).hexdigest()
                 except TypeError:
                     logger.warning(
-                        f"Value for param '{param_name}' (type: {type(param_value)}) "
+                        "Value for param '%s' (type: %s) "
                         + "is not directly ORJSON serializable. "
-                        + "Hashing string representation."
+                        + "Hashing string representation.",
+                        param_name,
+                        type(param_value),  # type: ignore
                     )
                     param_hash = hashlib.md5(str(param_value).encode()).hexdigest()  # type: ignore
 
@@ -293,7 +297,7 @@ def generate_cache_key(  # noqa: C901
 
     # Combine base key and parameter parts
     full_key = ":".join(base_key_parts + param_key_parts)
-    logger.debug(f"Generated cache key for {func.__name__}: {full_key}")
+    logger.debug("Generated cache key for %s: %s", func.__name__, full_key)
     return full_key
 
 
@@ -350,19 +354,21 @@ def disk_cache(  # noqa: C901
                 # --- Cache Read ---
                 cached_data = cache.get(cache_key)  # type: ignore
                 if cached_data is not None:
-                    logger.debug(f"Cache hit for key: {cache_key}")
+                    logger.debug("Cache hit for key: %s", cache_key)
                     try:
                         deserialized_result = deserialize_value(cached_data)
                         return deserialized_result
                     except Exception as deser_err:
                         logger.error(
-                            f"Cache deserialization error for key {cache_key}: "
-                            + f"{deser_err}. Fetching fresh data.",
+                            "Cache deserialization error for key %s: %s. "
+                            "Fetching fresh data.",
+                            cache_key,
+                            deser_err,
                             exc_info=True,
                         )
                         # Proceed to fetch fresh data if deserialization fails
                 else:
-                    logger.debug(f"Cache miss for key: {cache_key}")
+                    logger.debug("Cache miss for key: %s", cache_key)
 
                 # --- Cache Miss: Execute function ---
                 result = await func(*args, **kwargs)
@@ -371,11 +377,12 @@ def disk_cache(  # noqa: C901
                 try:
                     serialized_result = serialize_value(result)
                     if not cache.set(cache_key, serialized_result, expire=ttl):  # type: ignore
-                        logger.warning(f"Failed to set cache for key: {cache_key}")
+                        logger.warning("Failed to set cache for key: %s", cache_key)
                 except Exception as ser_err:
                     logger.error(
-                        f"Cache serialization error for key {cache_key}: "
-                        + f"{ser_err}. Result not cached.",
+                        "Cache serialization error for key %s: %s. Result not cached.",
+                        cache_key,
+                        ser_err,
                         exc_info=True,
                     )
                     # Return the result even if caching fails
@@ -409,7 +416,7 @@ def disk_cache(  # noqa: C901
                 # Cache Read
                 cached_data = cache.get(cache_key)  # type: ignore
                 if cached_data is not None:
-                    logger.debug(f"Cache hit for key: {cache_key}")
+                    logger.debug("Cache hit for key: %s", cache_key)
                     try:
                         return deserialize_value(cached_data)
                     except Exception as deser_err:
@@ -419,7 +426,7 @@ def disk_cache(  # noqa: C901
                             exc_info=True,
                         )
                 else:
-                    logger.debug(f"Cache miss for key: {cache_key}")
+                    logger.debug("Cache miss for key: %s", cache_key)
 
                 # Cache Miss
                 result = func(*args, **kwargs)
@@ -428,11 +435,12 @@ def disk_cache(  # noqa: C901
                 try:
                     serialized_result = serialize_value(result)
                     if not cache.set(cache_key, serialized_result, expire=ttl):  # type: ignore
-                        logger.warning(f"Failed to set cache for key: {cache_key}")
+                        logger.warning("Failed to set cache for key: %s", cache_key)
                 except Exception as ser_err:
                     logger.error(
-                        f"Cache serialization error for key {cache_key}: "
-                        + f"{ser_err}. Result not cached.",
+                        "Cache serialization error for key %s: %s. Result not cached.",
+                        cache_key,
+                        ser_err,
                         exc_info=True,
                     )
 
@@ -440,15 +448,17 @@ def disk_cache(  # noqa: C901
 
             except ValueError as key_err:
                 logger.error(
-                    f"Cache key generation failed for {func.__name__}: {key_err}. "
-                    + "Skipping cache.",
+                    "Cache key generation failed for %s: %s. Skipping cache.",
+                    func.__name__,
+                    key_err,
                     exc_info=True,
                 )
                 return func(*args, **kwargs)
             except Exception as e:
                 logger.error(
-                    f"Unexpected caching error for sync {func.__name__}: {e}. "
-                    + "Falling back.",
+                    "Unexpected caching error for sync %s: %s. Falling back.",
+                    func.__name__,
+                    e,
                     exc_info=True,
                 )
                 return func(*args, **kwargs)
