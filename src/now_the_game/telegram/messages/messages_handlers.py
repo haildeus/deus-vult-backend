@@ -30,19 +30,21 @@ class MessageHandlers:
     Message handlers class
     """
 
-    async def start_message(self, client: Client, message: Message) -> Message:
-        response = await message.reply_text("Hello, world!")  # type: ignore
+    @staticmethod
+    async def start_message(_: Client, message: Message) -> Message:
+        response = await message.reply_text("Hello, world!")
         return response
 
-    async def help_message(self, client: Client, message: Message) -> Message:
-        response = await message.reply_text("Help message")  # type: ignore
+    @staticmethod
+    async def help_message(_: Client, message: Message) -> Message:
+        response = await message.reply_text("Help message")
         return response
 
     @async_traced_function
     @inject
     async def save(
         self,
-        client: Client,
+        _: Client,
         message: Message,
         uow_factory: Callable[[], UnitOfWork] = Provide[Container.uow_factory],
         event_bus: EventBus = Provide[Container.event_bus],

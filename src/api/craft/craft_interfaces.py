@@ -1,4 +1,4 @@
-from ..core.interfaces import ICraftEvent
+from src.api.core.interfaces import ICraftEvent
 
 
 class ICraftRecipeEvent(ICraftEvent):

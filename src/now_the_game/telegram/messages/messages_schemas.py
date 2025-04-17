@@ -53,7 +53,7 @@ class MessageBase(BaseSchema):
 
 
 class MessageTable(MessageBase, table=True):
-    __tablename__ = "messages"  # type: ignore
+    __tablename__ = "messages"
 
     # --- Relationships ---
     user: "UserTable" = Relationship(back_populates="messages")

@@ -1,4 +1,5 @@
 import logging
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -10,7 +11,7 @@ logger = logging.getLogger("deus-vult.api.craft")
 
 
 class ElementModel(BaseModel[ElementTable]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(ElementTable)
 
     @async_traced_function
@@ -39,8 +40,7 @@ class ElementModel(BaseModel[ElementTable]):
     @async_traced_function
     async def remove_secure(self, session: AsyncSession, name: str) -> bool:
         query = select(self.model_class).where(self.model_class.name == name)
-        result = await session.execute(query)
-        result = list(result.scalars().all())
+        result = list((await session.execute(query)).scalars().all())
         try:
             assert len(result) == 1
         except AssertionError as e:
@@ -55,8 +55,7 @@ class ElementModel(BaseModel[ElementTable]):
     @async_traced_function
     async def not_exists(self, session: AsyncSession, name: str) -> bool:
         query = select(self.model_class).where(self.model_class.name == name)
-        result = await session.execute(query)
-        result = list(result.scalars().all())
+        result = list((await session.execute(query)).scalars().all())
         try:
             assert len(result) == 0
         except AssertionError as e:

@@ -247,7 +247,7 @@ async def orchestrate_element_combination(
                         ElementTopics.ELEMENT_CREATE,
                         **new_element_generated.model_dump(),
                     )
-                    result_element_table: ElementTable = add_element_response[0]
+                    result_element_table = add_element_response[0]
 
                 except Exception as e:
                     logger.error(

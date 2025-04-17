@@ -26,7 +26,7 @@ class ChatMembershipHandlers:
     @inject
     async def new_chat_membership(
         self,
-        client: Client,
+        _: Client,
         chat_member_updated: ChatMemberUpdated,
         uow_factory: Callable[[], UnitOfWork] = Provide[Container.uow_factory],
         event_bus: EventBus = Provide[Container.event_bus],

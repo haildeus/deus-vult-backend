@@ -41,12 +41,12 @@ class CharacterBase(BaseSchema):
 
 
 class CharacterTable(CharacterBase, table=True):
-    __tablename__ = "characters"  # type: ignore
+    __tablename__ = "characters"
 
 
 class LoreTable(LoreBase, table=True):
-    __tablename__ = "lore"  # type: ignore
+    __tablename__ = "lore"
 
 
 class PrimaryStatsTable(PrimaryStatsBase, table=True):
-    __tablename__ = "primary_stats"  # type: ignore
+    __tablename__ = "primary_stats"

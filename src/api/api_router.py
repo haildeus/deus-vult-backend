@@ -1,4 +1,5 @@
 import logging
+
 from fastapi import APIRouter
 
 from src.api.craft.craft_router import craft_router
@@ -15,6 +16,6 @@ for router in imported_routers:
 
 
 @api_router.get("/ping", tags=["Health Check"])
-async def ping():
+async def ping() -> dict[str, str]:
     """Health check endpoint for VMs"""
     return {"message": "pong"}

@@ -1,7 +1,6 @@
 import logging
 from typing import cast
 
-from opentelemetry.trace import get_current_span
 from sqlalchemy.exc import SQLAlchemyError
 
 from src.api.craft.elements.elements_constants import STARTING_ELEMENTS
@@ -81,9 +80,6 @@ class ElementsService(BaseService):
         emoji = payload.emoji
         element = ElementTable(name=name, emoji=emoji)
 
-        span = get_current_span()
-        span.set_attribute("name", name)
-        span.set_attribute("emoji", emoji)
         logger.debug("Creating element: %s with emoji: %s", name, emoji)
 
         active_uow = current_uow.get()
@@ -119,9 +115,6 @@ class ElementsService(BaseService):
         element_id = payload.element_id
         name = payload.name
 
-        span = get_current_span()
-        span.set_attribute("element_id", element_id)
-        span.set_attribute("name", name)
         logger.debug("Fetching elements. ID: %s, Name(s): %s", element_id, name)
 
         active_uow = current_uow.get()

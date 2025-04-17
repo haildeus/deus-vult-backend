@@ -10,13 +10,12 @@ logger = logging.getLogger("deus-vult.telegram.callback")
 
 
 class CallbackHandlers:
-    def __init__(self):
+    def __init__(self) -> None:
         pass
 
     async def callback_query(
         self, client: Client, callback_query: CallbackQuery
     ) -> None:
-        logger.info("Callback query: %s", callback_query)
         raise NotImplementedError()
 
     @property

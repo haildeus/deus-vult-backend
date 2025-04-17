@@ -22,7 +22,7 @@ logger = logging.getLogger("deus-vult.telegram.polls")
 
 
 class PollsService(BaseService):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.poll_model = poll_model
         self.poll_option_model = poll_option_model

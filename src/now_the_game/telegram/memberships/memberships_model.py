@@ -15,7 +15,7 @@ logger = logging.getLogger("deus-vult.telegram.memberships")
 
 
 class ChatMembershipModel(BaseModel[ChatMembershipTable]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(ChatMembershipTable)
 
     @async_traced_function
@@ -80,8 +80,7 @@ class ChatMembershipModel(BaseModel[ChatMembershipTable]):
             self.model_class.user_id == user_id,
             self.model_class.chat_id == chat_id,
         )
-        result = await session.execute(query)
-        result = list(result.scalars().all())
+        result = list((await session.execute(query)).scalars().all())
         try:
             assert len(result) == 1
         except AssertionError as e:
@@ -102,8 +101,7 @@ class ChatMembershipModel(BaseModel[ChatMembershipTable]):
             self.model_class.user_id == user_id,
             self.model_class.chat_id == chat_id,
         )
-        result = await session.execute(query)
-        result = list(result.scalars().all())
+        result = list((await session.execute(query)).scalars().all())
         try:
             assert len(result) == 0
         except AssertionError as e:

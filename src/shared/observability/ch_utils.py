@@ -9,7 +9,7 @@ import uuid
 from functools import partial
 
 import clickhouse_connect
-import pytz
+import pytz  # type: ignore
 import urllib3
 from clickhouse_connect.driver import httputil
 from clickhouse_connect.driver.asyncclient import AsyncClient

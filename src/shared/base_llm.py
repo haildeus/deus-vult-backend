@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from enum import Enum
 from typing import Any, Self
 
-import google.generativeai as genai  # type: ignore
+import google.generativeai as genai
 import vertexai  # type: ignore
 import vertexai.generative_models  # type: ignore
 from google.generativeai.embedding import EmbeddingTaskType
@@ -29,7 +29,7 @@ try:
 
     GOOGLE_AUTH_AVAILABLE = True
 except ImportError:
-    GOOGLE_AUTH_AVAILABLE = False  # type: ignore
+    GOOGLE_AUTH_AVAILABLE = False
     logger.warning(
         "`google-auth` library not found. Google Cloud Project ID auto-detection will be disabled."  # noqa: E501
     )
@@ -133,7 +133,7 @@ class VertexConfig(BaseSettings):
                     "Could not auto-detect project ID. Set VERTEX_PROJECT_ID env var."
                 )
 
-        except DefaultCredentialsError as e:  # type: ignore
+        except DefaultCredentialsError as e:
             # Running locally without `gcloud auth application-default login`
             raise ValueError(
                 "VertexConfig requires project_id. "
@@ -146,7 +146,7 @@ class VertexConfig(BaseSettings):
             ) from e
 
         # Final check - If project_id is still None here, something went wrong
-        if not self.project_id:  # type: ignore
+        if not self.project_id:
             raise ValueError("Failed to determine project_id for VertexConfig.")
 
         return self  # Return the validated/modified model instance
@@ -181,9 +181,6 @@ class ProviderBase(ABC):
     def get_model(self) -> Model:
         return self.model
 
-    def __init__(self, config: ProviderConfigBase | BaseSettings):
-        self.config = config
-
     @abstractmethod
     async def embed_content(
         self, content: str | list[str], task_type: Any | None = None
@@ -198,7 +195,6 @@ class VertexLLM(ProviderBase):
     def __init__(self, config: VertexConfig):
         logger.debug("Initializing VertexLLM")
         self.config = config
-        super().__init__(self.config)
 
         self.embedding_model = TextEmbeddingModel.from_pretrained(
             self.config.embedding_model_name
@@ -217,7 +213,7 @@ class VertexLLM(ProviderBase):
     def model(self) -> Model:
         return GeminiModel("gemini-2.0-flash", provider=self.provider)
 
-    async def generate_multimodal(self, prompt: str, image: bytes):
+    async def generate_multimodal(self, prompt: str, image: bytes):  # type: ignore
         client = vertexai.generative_models.GenerativeModel(
             model_name="gemini-2.0-flash",
         )
@@ -292,7 +288,6 @@ class GeminiLLM(ProviderBase):
 
     def __init__(self, config: GeminiConfig):
         self.config = config
-        super().__init__(config)
 
         self.embedding_model = f"models/{config.embedding_model_name}"
         genai.configure(api_key=config.api_key)  # type: ignore

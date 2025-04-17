@@ -19,12 +19,11 @@ from src.shared.events import Event
 from src.shared.observability.traces import async_traced_function
 from src.shared.uow import current_uow
 
-
 logger = logging.getLogger("deus-vult.api.craft")
 
 
 class ProgressService(BaseService):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.model = progress_model
 
@@ -90,7 +89,7 @@ class ProgressService(BaseService):
 
             except EntityAlreadyExistsError:
                 logger.warning(
-                    f"Element %s already exists for user %s, returning progress",
+                    "Element %s already exists for user %s, returning progress",
                     element_id,
                     user_id,
                 )
@@ -179,7 +178,7 @@ class ProgressService(BaseService):
     @EventBus.subscribe(ProgressTopics.PROGRESS_EXISTS)
     @async_traced_function
     async def on_progress_exists(self, event: Event) -> bool:
-        user_id, chat_instance, element_id = await self.__process_fetch_payload(event)  # type: ignore
+        user_id, chat_instance, element_id = await self.__process_fetch_payload(event)
         try:
             assert user_id
             assert chat_instance
@@ -219,8 +218,9 @@ class ProgressService(BaseService):
         else:
             raise RuntimeError("No active UoW found during progress fetching")
 
+    @staticmethod
     async def __process_fetch_payload(
-        self, event: Event
+        event: Event
     ) -> tuple[int | None, int | None, int | None]:
         if not isinstance(event.payload, FetchProgress):
             payload = FetchProgress(**event.payload)  # type: ignore

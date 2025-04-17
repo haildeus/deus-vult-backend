@@ -1,4 +1,5 @@
 import logging
+
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import and_, select
 
@@ -6,12 +7,11 @@ from src.api.craft.recipes.recipes_schemas import RecipeTable
 from src.shared.base import BaseModel, EntityAlreadyExistsError
 from src.shared.observability.traces import async_traced_function
 
-
 logger = logging.getLogger("deus-vult.api.craft")
 
 
 class RecipeModel(BaseModel[RecipeTable]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(RecipeTable)
 
     @async_traced_function
@@ -69,8 +69,7 @@ class RecipeModel(BaseModel[RecipeTable]):
                 element_b_id == RecipeTable.element_b_id,
             )
         )
-        result = await session.execute(query)
-        result = list(result.scalars().all())
+        result = list((await session.execute(query)).scalars().all())
         try:
             assert len(result) == 0
         except AssertionError as e:

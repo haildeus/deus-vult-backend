@@ -8,7 +8,7 @@ from src.shared.base import BaseModel
 
 
 class GameSessionModel(BaseModel[SessionBase]):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(SessionBase)
 
     @overload
@@ -42,15 +42,17 @@ class GameSessionModel(BaseModel[SessionBase]):
         else:
             return await self.get_all(session)
 
+    @staticmethod
     async def get_for_chat_id(
-        self, session: AsyncSession, chat_id: int
+        session: AsyncSession, chat_id: int
     ) -> list[SessionBase]:
         query = select(SessionBase).where(SessionBase.chat_id == chat_id)
         result = await session.execute(query)
         return list(result.scalars().all())
 
+    @staticmethod
     async def get_for_chat_id_and_session_id(
-        self, session: AsyncSession, chat_id: int, session_id: int
+        session: AsyncSession, chat_id: int, session_id: int
     ) -> list[SessionBase]:
         query = select(SessionBase).where(
             SessionBase.chat_id == chat_id, SessionBase.object_id == session_id

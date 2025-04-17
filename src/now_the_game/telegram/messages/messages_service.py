@@ -21,7 +21,7 @@ logger = logging.getLogger("deus-vult.telegram.messages")
 
 
 class MessagesService(BaseService):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.message_model = message_model
 
@@ -81,9 +81,9 @@ class MessagesService(BaseService):
         photo_message = await client.send_photo(
             chat_id=chat_id,
             photo=photo,
-            caption=caption,
-            schedule_date=schedule,
-            ttl_seconds=ttl_seconds,
+            caption=caption or '',
+            schedule_date=schedule,  # type: ignore
+            ttl_seconds=ttl_seconds,  # type: ignore
         )
         return photo_message
 
