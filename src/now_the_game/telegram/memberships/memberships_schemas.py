@@ -46,7 +46,7 @@ class ChatMembershipBase(BaseSchema):
 
 
 class ChatMembershipTable(ChatMembershipBase, table=True):
-    __tablename__ = "chat_members"
+    __tablename__ = "chat_members"  # type: ignore
 
     # --- Relationships ---
     chat: "ChatTable" = Relationship(back_populates="chat_members")

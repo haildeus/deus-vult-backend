@@ -39,7 +39,7 @@ class RecipeBase(BaseSchema):
 
 
 class RecipeTable(RecipeBase, table=True):
-    __tablename__ = "recipes"
+    __tablename__ = "recipes"  # type: ignore
 
     # --- Add Relationship Type Hints ---
     element_a: Optional["ElementTable"] = Relationship(

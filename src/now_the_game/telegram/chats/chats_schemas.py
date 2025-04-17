@@ -64,7 +64,7 @@ class ChatBase(BaseSchema):
 
 
 class ChatTable(ChatBase, table=True):
-    __tablename__ = "chats"
+    __tablename__ = "chats"  # type: ignore
 
     # --- Relationships ---
     chat_members: list["ChatMembershipTable"] = Relationship(

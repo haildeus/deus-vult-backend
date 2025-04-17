@@ -14,4 +14,4 @@ class SessionBase(BaseSchema):
 
 
 class SessionTable(SessionBase, table=True):
-    __tablename__ = "game_sessions"
+    __tablename__ = "game_sessions"  # type: ignore

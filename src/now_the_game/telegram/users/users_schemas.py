@@ -42,7 +42,7 @@ class UserBase(BaseSchema):
 
 
 class UserTable(UserBase, table=True):
-    __tablename__ = "users"
+    __tablename__ = "users"  # type: ignore
 
     # --- Relationships ---
     chat_members: list["ChatMembershipTable"] = Relationship(

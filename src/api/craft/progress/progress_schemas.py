@@ -72,7 +72,7 @@ class ProgressBase(BaseSchema):
 
 
 class ProgressTable(ProgressBase, table=True):
-    __tablename__ = "progress"
+    __tablename__ = "progress"  # type: ignore
 
     # --- Add Relationship Type Hints ---
     element: Optional["ElementTable"] = Relationship(

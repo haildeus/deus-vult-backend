@@ -55,7 +55,7 @@ class PollOptionsBase(BaseSchema):
 
 
 class PollTable(PollBase, table=True):
-    __tablename__ = "polls"
+    __tablename__ = "polls"  # type: ignore
 
     # --- Relationships ---
     options: list["PollOptionTable"] = Relationship(
@@ -84,7 +84,7 @@ class PollTable(PollBase, table=True):
 
 
 class PollOptionTable(PollOptionsBase, table=True):
-    __tablename__ = "poll_options"
+    __tablename__ = "poll_options"  # type: ignore
 
     # --- Relationships ---
     poll: "PollTable" = Relationship(back_populates="options")

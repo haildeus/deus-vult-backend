@@ -28,8 +28,9 @@ class Element(EventPayload):
         str, Field(max_length=10, description="The emoji representing the element")
     ]
 
-    @classmethod
+    # noinspection PyNestedDecorators
     @field_validator("emoji")
+    @classmethod
     def validate_is_proper_emoji(cls, v: str) -> str:
         """Validate that the input string is a single, valid emoji."""
         if not v:
@@ -104,7 +105,7 @@ class ElementBase(BaseSchema):
 
 
 class ElementTable(ElementBase, table=True):
-    __tablename__ = "elements"
+    __tablename__ = "elements"  # type: ignore
 
     # --- Add Back-Populating Relationship Type Hints ---
     recipes_as_a: list["RecipeTable"] = Relationship(
