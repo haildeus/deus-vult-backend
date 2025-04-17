@@ -39,6 +39,7 @@ _STATUS_CODE = {
 }
 
 tracer: Tracer = get_tracer("deus-vult")
+T = tp.TypeVar("T", bound=tp.Callable[..., tp.Any])
 
 
 def _serialize_argument(value: tp.Any) -> AttributeValue:
@@ -55,11 +56,11 @@ def _serialize_argument(value: tp.Any) -> AttributeValue:
     return repr(value)
 
 
-def traced_function(func: tp.Callable[..., tp.Any]) -> tp.Callable[..., tp.Any]:
+def traced_function(func: T) -> T:
     signature = inspect.signature(func)
 
     @functools.wraps(func)
-    def _wrapper(*args: tp.Any, **kwargs: tp.Any) -> tp.Any:
+    def _wrapper(*args, **kwargs):  # type: ignore
         bound = signature.bind(*args, **kwargs)
         bound.apply_defaults()
 
@@ -72,14 +73,14 @@ def traced_function(func: tp.Callable[..., tp.Any]) -> tp.Callable[..., tp.Any]:
         ):
             return func(*args, **kwargs)
 
-    return _wrapper
+    return tp.cast(T, _wrapper)
 
 
-def async_traced_function(func: tp.Callable[..., tp.Any]) -> tp.Callable[..., tp.Any]:
+def async_traced_function(func: T) -> T:
     signature = inspect.signature(func)
 
     @functools.wraps(func)
-    async def _wrapper(*args: tp.Any, **kwargs: tp.Any) -> tp.Any:
+    async def _wrapper(*args, **kwargs):  # type: ignore
         bound = signature.bind(*args, **kwargs)
         bound.apply_defaults()
 
@@ -92,7 +93,7 @@ def async_traced_function(func: tp.Callable[..., tp.Any]) -> tp.Callable[..., tp
         ):
             return await func(*args, **kwargs)
 
-    return _wrapper
+    return tp.cast(T, _wrapper)
 
 
 class ConsoleSpanProcessor(SpanProcessor):
