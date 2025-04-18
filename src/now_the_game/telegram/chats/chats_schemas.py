@@ -55,7 +55,6 @@ class ChatBase(BaseSchema):
     chat_type: ChatType = Field(default=ChatType.USER)
     is_participant: bool = Field(default=False)
 
-    @classmethod
     @model_validator(mode="before")
     def validate_chat_type(cls, values: Any) -> Any:
         if values.is_participant and values.chat_type == ChatType.USER:

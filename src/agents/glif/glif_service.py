@@ -43,7 +43,6 @@ class GlifConfig(BaseSettings):
         extra = "ignore"
         env_file = ".env"
 
-    @classmethod
     @model_validator(mode="before")
     def validate_api_key(cls, values: dict[str, Any]) -> dict[str, Any]:
         if not values.get("api_key"):
@@ -156,7 +155,9 @@ class GlifService(BaseService):
         return await self.glif_request(GlifGeneratorID.MEDIEVAL_IMAGE_GEN, [input_])
 
     async def test_glif_echo(self):
-        response = await self.glif_request(GlifGeneratorID.TEST_ECHO_GEN, ["Hello, world!"])
+        response = await self.glif_request(
+            GlifGeneratorID.TEST_ECHO_GEN, ["Hello, world!"]
+        )
         logger.info("Echo response: %s", response)
 
     async def test_glif_pic(self):

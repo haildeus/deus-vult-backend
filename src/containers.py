@@ -148,7 +148,6 @@ def create_container() -> Container:
         "src.shared",
     ]
     modules_to_wire = find_modules_in_packages(packages_to_wire)  # type: ignore
-    modules_to_wire.append("app")
     container.wire(modules=modules_to_wire)
 
     logger.debug("Container wired")
