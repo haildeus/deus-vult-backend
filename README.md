@@ -84,3 +84,6 @@ dispatch:
 ```
 gcloud app deploy dispatch.yaml
 ```
+
+### 2.4 Environmental variables
+- Do not use `load_dotenv()`, we're using pydantic settings
