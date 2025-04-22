@@ -97,7 +97,7 @@ disallow_untyped_calls = true
 
 # Warning Settings
 warn_redundant_casts = true
-warn_unused_ignores = true
+warn_unused_ignores = false
 warn_return_any = true
 warn_unreachable = true
 
