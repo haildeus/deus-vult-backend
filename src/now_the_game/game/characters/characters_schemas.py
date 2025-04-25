@@ -35,6 +35,13 @@ class PrimaryStatsBase(BaseSchema):
     luck: int = Field(..., description="Luck of the character", ge=0, le=30)
 
 
+class StatusBase(BaseSchema):
+    character_id: int = Field(foreign_key="characters.object_id", index=True)
+
+    health: int = Field(..., description="Health of the character", ge=0, le=100)
+    energy: int = Field(..., description="Energy of the character", ge=0, le=100)
+
+
 class CharacterBase(BaseSchema):
     chat_id: int = Field(foreign_key="chats.object_id", index=True)
     user_id: int = Field(foreign_key="users.object_id", index=True)
