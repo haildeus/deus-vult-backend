@@ -5,6 +5,7 @@ import json
 import socket
 import sys
 import typing as tp
+from collections.abc import Generator
 
 import pydantic
 from opentelemetry.context.context import Context
@@ -39,7 +40,7 @@ _STATUS_CODE = {
 }
 
 tracer: Tracer = get_tracer("deus-vult")
-T = tp.TypeVar("T", bound=tp.Callable[..., tp.Any])
+F = tp.TypeVar("F", bound=tp.Callable[..., tp.Any])
 
 
 def _serialize_argument(value: tp.Any) -> AttributeValue:
@@ -56,44 +57,48 @@ def _serialize_argument(value: tp.Any) -> AttributeValue:
     return repr(value)
 
 
-def traced_function(func: T) -> T:
+@contextlib.contextmanager
+def _trace_function_args(  # type: ignore
+    signature: inspect.Signature, func: F, *args, **kwargs
+) -> Generator[None]:
+    bound = signature.bind(*args, **kwargs)
+    bound.apply_defaults()
+
+    self = bound.arguments.get("self")
+    if self is not None:
+        func_name = f"{self.__class__.__name__}.{func.__name__}"
+    else:
+        func_name = func.__name__
+
+    with tracer.start_as_current_span(
+        func_name,
+        attributes={
+            key: _serialize_argument(value) for key, value in bound.arguments.items()
+        },
+    ):
+        yield
+
+
+def traced_function(func: F) -> F:
     signature = inspect.signature(func)
 
     @functools.wraps(func)
     def _wrapper(*args, **kwargs):  # type: ignore
-        bound = signature.bind(*args, **kwargs)
-        bound.apply_defaults()
-
-        with tracer.start_as_current_span(
-            func.__name__,
-            attributes={
-                key: _serialize_argument(value)
-                for key, value in bound.arguments.items()
-            },
-        ):
+        with _trace_function_args(signature, func, *args, **kwargs):
             return func(*args, **kwargs)
 
-    return tp.cast(T, _wrapper)
+    return tp.cast(F, _wrapper)
 
 
-def async_traced_function(func: T) -> T:
+def async_traced_function(func: F) -> F:
     signature = inspect.signature(func)
 
     @functools.wraps(func)
     async def _wrapper(*args, **kwargs):  # type: ignore
-        bound = signature.bind(*args, **kwargs)
-        bound.apply_defaults()
-
-        with tracer.start_as_current_span(
-            func.__name__,
-            attributes={
-                key: _serialize_argument(value)
-                for key, value in bound.arguments.items()
-            },
-        ):
+        with _trace_function_args(signature, func, *args, **kwargs):
             return await func(*args, **kwargs)
 
-    return tp.cast(T, _wrapper)
+    return tp.cast(F, _wrapper)
 
 
 class ConsoleSpanProcessor(SpanProcessor):

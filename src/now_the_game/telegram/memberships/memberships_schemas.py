@@ -14,8 +14,8 @@ from src.shared.base import BaseSchema
 from src.shared.events import EventPayload
 
 if TYPE_CHECKING:
+    from src.api.users.users_schemas import UserTable
     from src.now_the_game.telegram.chats.chats_schemas import ChatTable
-    from src.now_the_game.telegram.users.users_schemas import UserTable
 
 logger = logging.getLogger("deus-vult.telegram.memberships")
 

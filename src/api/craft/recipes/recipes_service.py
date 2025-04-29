@@ -1,114 +1,72 @@
 import logging
-from typing import cast
 
-from sqlalchemy.exc import SQLAlchemyError
+from sqlmodel import select
 
-from src.api.craft.recipes.recipes_model import recipe_model
-from src.api.craft.recipes.recipes_schemas import CreateRecipe, FetchRecipe, RecipeTable
-from src.shared.base import BaseService, EntityAlreadyExistsError
-from src.shared.event_bus import EventBus
-from src.shared.event_registry import RecipeTopics
-from src.shared.events import Event
+from src.api.craft.elements.elements_constants import VOID
+from src.api.craft.elements.elements_schemas import Element, ElementTable
+from src.api.craft.recipes.recipes_schemas import RecipeTable
+from src.shared.base import BaseService
 from src.shared.observability.traces import async_traced_function
-from src.shared.uow import current_uow
+from src.shared.uow import UnitOfWork, current_uow
 
 logger = logging.getLogger("deus-vult.api.craft")
 
 
 class RecipesService(BaseService):
-    def __init__(self) -> None:
+    def __init__(self, uow: UnitOfWork) -> None:
         super().__init__()
-        self.model = recipe_model
+        self.uow = uow
 
-    @EventBus.subscribe(RecipeTopics.RECIPE_CREATE)
     @async_traced_function
-    async def on_create_recipe(self, event: Event) -> None:
-        payload = cast(CreateRecipe, event.extract_payload(event, CreateRecipe))
-        element_a_id = payload.element_a_id
-        element_b_id = payload.element_b_id
-
-        # To satisfy table constraints
-        smaller_element_id = min(element_a_id, element_b_id)
-        bigger_element_id = max(element_a_id, element_b_id)
-
-        result_id = payload.result_id
-        recipe = RecipeTable(
-            element_a_id=smaller_element_id,
-            element_b_id=bigger_element_id,
-            result_id=result_id,
-        )
-        logger.debug(
-            "Creating recipe: %s + %s = %s",
-            smaller_element_id,
-            bigger_element_id,
-            result_id,
-        )
-
-        active_uow = current_uow.get()
-
-        if active_uow:
-            db = await active_uow.get_session()
-
-            try:
-                if await self.model.not_exists(
-                    db, smaller_element_id, bigger_element_id
-                ):
-                    await self.model.add(db, recipe, pass_checks=False)
-                else:
-                    logger.warning(
-                        "Recipe %s + %s = %s already exists, skipping",
-                        smaller_element_id,
-                        bigger_element_id,
-                        result_id,
-                    )
-                    raise EntityAlreadyExistsError(
-                        entity=smaller_element_id, entity_type=RecipeTable.__name__
-                    )
-            except EntityAlreadyExistsError:
-                logger.warning(
-                    "Recipe %s + %s = %s already exists, skipping",
-                    smaller_element_id,
-                    bigger_element_id,
-                    result_id,
+    async def save_new_recipe(
+        self,
+        element_a: ElementTable,
+        element_b: ElementTable,
+        new_element: Element | None,
+    ) -> RecipeTable:
+        async with self.uow.start() as uow:
+            session = await uow.get_session()
+            if new_element is not None:
+                created_element = ElementTable.model_validate(new_element)
+                session.add(created_element)
+                logger.debug(
+                    "Created new recipe for: %s + %s = %s",
+                    element_a,
+                    element_b,
+                    created_element,
                 )
-            except SQLAlchemyError as e:
-                logger.error(
-                    "SQLAlchemy: %s + %s = %s: %s",
-                    smaller_element_id,
-                    bigger_element_id,
-                    result_id,
-                    e,
+            else:
+                # We use the VOID element as a placeholder for impossible crafts.
+                created_element = ElementTable.model_validate(VOID)
+                logger.debug(
+                    "Failed to create new recipe for %s + %s", element_a, element_b
                 )
-                raise e
-            except Exception as e:
-                logger.error(
-                    "Error: %s + %s = %s: %s",
-                    smaller_element_id,
-                    bigger_element_id,
-                    result_id,
-                    e,
-                )
-                raise e
-        else:
-            raise RuntimeError("No active UoW found during recipe creation")
 
-    @EventBus.subscribe(RecipeTopics.RECIPE_FETCH)
-    @async_traced_function
-    async def on_fetch_recipe(self, event: Event) -> list[RecipeTable]:
-        payload = cast(FetchRecipe, event.extract_payload(event, FetchRecipe))
-
-        active_uow = current_uow.get()
-
-        if active_uow:
-            db = await active_uow.get_session()
-            recipes = await self.model.get(
-                db,
-                element_a_id=payload.element_a_id,
-                element_b_id=payload.element_b_id,
-                result_id=payload.result_id,
+            new_recipe = RecipeTable(
+                element_a_id=element_a.object_id,
+                element_b_id=element_b.object_id,
+                result_id=created_element.object_id,
+                result=created_element,
             )
-            logger.debug("Fetched recipes: %s (length: %s)", recipes, len(recipes))
+            new_recipe.update_resources_cost(element_a, element_b)
+            session.add(new_recipe)
 
-            return recipes
-        else:
-            raise RuntimeError("No active UoW found during recipe fetching")
+        return new_recipe
+
+    @async_traced_function
+    async def fetch_recipe(
+        self,
+        element_a_id: int,
+        element_b_id: int,
+    ) -> RecipeTable | None:
+
+        active_uow = current_uow.get()
+        session = await active_uow.get_session()
+
+        stmt = select(RecipeTable).where(
+            RecipeTable.element_a_id == element_a_id,
+            RecipeTable.element_b_id == element_b_id,
+        )
+        result = (await session.execute(stmt)).scalars().one_or_none()
+
+        return result

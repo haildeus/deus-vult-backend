@@ -167,6 +167,7 @@ class SharedConfig(BaseConfig):
     stage: Literal["dev", "prod"] = "dev"
     event_bus: Literal["local"] = "local"
     debug_mode: bool = True
+    use_disk_cache: bool = True
 
     log_level: int = logging.DEBUG if debug_mode else logging.INFO
 
@@ -223,7 +224,7 @@ class PostgresConfig(BaseConfig):
     class Config(BaseConfig.Config):
         env_prefix = "POSTGRES_"
 
-    @computed_field(return_type=str)
+    @computed_field(return_type=str)  # type: ignore
     @property
     def password(self) -> str:
         """Fetches the password from Secret Manager or local environment."""
@@ -308,7 +309,7 @@ class ClickHouseConfig(BaseConfig):
     class Config(BaseConfig.Config):
         env_prefix = "CLICKHOUSE_"
 
-    @computed_field(return_type=str)
+    @computed_field(return_type=str)  # type: ignore
     @property
     def password(self) -> str:
         """Fetches the password from Secret Manager or local environment."""

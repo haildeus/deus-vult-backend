@@ -342,6 +342,9 @@ def disk_cache(  # noqa: C901
         raise ValueError("Cache TTL must be positive")
 
     def decorator(func: F) -> F:  # noqa: C901
+        if not shared_config.use_disk_cache:
+            return func
+
         @wraps(func)
         async def async_wrapper(*args: Any, **kwargs: Any) -> Any:
             try:

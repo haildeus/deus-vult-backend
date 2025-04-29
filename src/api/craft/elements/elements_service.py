@@ -1,135 +1,146 @@
+import asyncio
 import logging
-from typing import cast
 
-from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.dialects.postgresql import insert
+from sqlmodel import select
 
-from src.api.craft.elements.elements_constants import STARTING_ELEMENTS
-from src.api.craft.elements.elements_model import element_model
-from src.api.craft.elements.elements_schemas import Element, ElementTable, FetchElement
-from src.shared.base import BaseService, EntityAlreadyExistsError
-from src.shared.event_bus import EventBus
-from src.shared.event_registry import ElementTopics
-from src.shared.events import Event
+from src.api.craft.elements.elements_agent import ElementsAgent
+from src.api.craft.elements.elements_constants import INIT_ELEMENTS, VOID
+from src.api.craft.elements.elements_exceptions import NoRecipeExistsException
+from src.api.craft.elements.elements_schemas import (
+    Element,
+    ElementInput,
+    ElementResponse,
+    ElementTable,
+)
+from src.api.craft.progress.progress_service import ProgressService
+from src.api.craft.recipes.recipes_schemas import RecipeBase
+from src.api.craft.recipes.recipes_service import RecipesService
+from src.api.inventory.inventory_schemas import InventoryItemTable
+from src.api.users.users_schemas import UserTable
+from src.shared.base import BaseService
 from src.shared.observability.traces import async_traced_function
-from src.shared.uow import current_uow
+from src.shared.uow import UnitOfWork, current_uow
 
 logger = logging.getLogger("deus-vult.api.craft")
 
 
 class ElementsService(BaseService):
-    def __init__(self):
+    def __init__(
+        self,
+        uow: UnitOfWork,
+        progress_service: ProgressService,
+        recipes_service: RecipesService,
+        elements_agent: ElementsAgent,
+    ):
         super().__init__()
-        self.model = element_model
+        self.uow = uow
+        self.progress_service = progress_service
+        self.recipes_service = recipes_service
+        self.elements_agent = elements_agent
 
-    @EventBus.subscribe(ElementTopics.ELEMENTS_FETCH_INIT)
     @async_traced_function
-    async def on_fetch_init_elements(self, event: Event) -> list[ElementTable]:
-        _ = event
+    async def init_elements(self) -> None:
+        async with self.uow.start() as uow:
+            session = await uow.get_session()
 
-        active_uow = current_uow.get()
-        if active_uow:
-            db = await active_uow.get_session()
-            return await self.model.get_by_param_in_list(
-                db, "name", [element.name for element in STARTING_ELEMENTS]
+            for element in INIT_ELEMENTS:
+                stmt = (
+                    insert(ElementTable)
+                    .values(**element.model_dump())
+                    .on_conflict_do_nothing(index_elements=["object_id"])
+                )
+                await session.execute(stmt)
+
+    @async_traced_function
+    async def combine_elements(
+        self,
+        user: UserTable,
+        element_a_id: int,
+        element_b_id: int,
+    ) -> ElementResponse:
+        assert element_a_id <= element_b_id
+        uow = current_uow.get()
+        session = await uow.get_session()
+
+        await user.inventory.remove_items(
+            InventoryItemTable(
+                type=InventoryItemTable.ItemType.ELEMENT,
+                sub_type_id=element_a_id,
+                amount=1,
+            ),
+            InventoryItemTable(
+                type=InventoryItemTable.ItemType.ELEMENT,
+                sub_type_id=element_b_id,
+                amount=1,
+            ),
+        )
+
+        element_a, element_b = await asyncio.gather(
+            session.get_one(ElementTable, element_a_id),
+            session.get_one(ElementTable, element_b_id),
+        )
+
+        recipe = await self.recipes_service.fetch_recipe(element_a_id, element_b_id)
+
+        if recipe is not None:
+            is_first_discovered = await self.progress_service.discover_recipe(
+                user, recipe
             )
+            is_new = False
         else:
-            raise RuntimeError("No active UoW found during element initialization")
+            is_first_discovered = True
+            is_new = True
 
-    @EventBus.subscribe(ElementTopics.ELEMENTS_INIT)
-    @async_traced_function
-    async def on_init_elements(self, event: Event) -> None:
-        _ = event
+            ai_input = ElementInput(
+                element_a=Element.model_validate(element_a, from_attributes=True),
+                element_b=Element.model_validate(element_b, from_attributes=True),
+            )
 
-        starting_names = [element.name for element in STARTING_ELEMENTS]
-        active_uow = current_uow.get()
+            # We retry 3 times looking for a unique new element.
+            new_element = None
+            retries = 3
+            while retries > 0:
+                potential_element = await self.elements_agent.combine_elements(ai_input)
 
-        if active_uow:
-            db = await active_uow.get_session()
-            existing_elements: list[
-                ElementTable
-            ] = await self.model.get_by_param_in_list(db, "name", starting_names)
-            if len(existing_elements) == len(STARTING_ELEMENTS):
-                logger.debug("Starting elements already exist, skipping")
-                return
-            # Deduct the elements that do not exist
-            missing_elements = [
-                element
-                for element in STARTING_ELEMENTS
-                if element.name not in [e.name for e in existing_elements]
-            ]
-            for element in missing_elements:
-                try:
-                    element_entry = ElementTable(name=element.name, emoji=element.emoji)
-                    await self.model.add(db, element_entry)
-                except EntityAlreadyExistsError as e:
-                    logger.debug("Element %s already exists, skipping", element.name)
-                    raise e
-                except Exception as e:
-                    logger.error("Unexpected error adding %s: %s", element.name, e)
-                    raise e
-        else:
-            raise RuntimeError("No active UoW found during element initialization")
+                stmt = select(
+                    select(ElementTable)
+                    .where(ElementTable.name == potential_element.name)
+                    .exists()
+                )
+                exits = (await session.execute(stmt)).scalar()
 
-    @EventBus.subscribe(ElementTopics.ELEMENT_CREATE)
-    @async_traced_function
-    async def on_create_element(self, event: Event) -> list[ElementTable]:
-        payload = cast(Element, event.extract_payload(event, Element))
-        logger.debug("Creating element: %s", payload)
+                if not exits:
+                    new_element = potential_element
+                    break
 
-        name = payload.name
-        emoji = payload.emoji
-        element = ElementTable(name=name, emoji=emoji)
+                retries -= 1
 
-        logger.debug("Creating element: %s with emoji: %s", name, emoji)
+            # noinspection PyTypeChecker
+            recipe = await self.recipes_service.save_new_recipe(
+                element_a, element_b, new_element
+            )
 
-        active_uow = current_uow.get()
+            if not new_element:
+                raise NoRecipeExistsException("No recipe to combine.")
 
-        if active_uow:
-            db = await active_uow.get_session()
+            await self.progress_service.discover_recipe(user, recipe)
 
-            try:
-                if await self.model.not_exists(db, name):
-                    response = await self.model.add(db, element)
-                    return response
-                else:
-                    logger.warning("Element %s already exists, skipping", name)
-                    raise EntityAlreadyExistsError(
-                        entity=name, entity_type=ElementTable.__name__
-                    )
-            except EntityAlreadyExistsError:
-                logger.warning("Element %s already exists, returning element", name)
-                return [element]
-            except SQLAlchemyError as e:
-                logger.error("SQLAlchemy error adding %s: %s", name, e)
-                raise e
-            except Exception as e:
-                logger.error("Unexpected error adding %s: %s", name, e)
-                raise e
-        else:
-            raise RuntimeError("No active UoW found during element creation")
+        if recipe.result is None or recipe.result.object_id == VOID.object_id:
+            raise NoRecipeExistsException("No recipe to combine.")
 
-    @EventBus.subscribe(ElementTopics.ELEMENT_FETCH)
-    @async_traced_function
-    async def on_fetch_element(self, event: Event) -> list[ElementTable]:
-        payload = cast(FetchElement, event.extract_payload(event, FetchElement))
-        element_id = payload.element_id
-        name = payload.name
+        await user.inventory.add_items(
+            InventoryItemTable(
+                type=InventoryItemTable.ItemType.ELEMENT,
+                sub_type_id=recipe.result.object_id,
+            )
+        )
 
-        logger.debug("Fetching elements. ID: %s, Name(s): %s", element_id, name)
-
-        active_uow = current_uow.get()
-
-        if active_uow:
-            db = await active_uow.get_session()
-            try:
-                result = await self.model.get(db, element_id=element_id, name=name)
-                logger.debug("Fetched elements: %s", result)
-                return result
-            except SQLAlchemyError as e:
-                logger.error("Error fetching %s %s: %s", element_id, name, e)
-                raise e
-            except Exception as e:
-                logger.error("Error fetching %s %s: %s", element_id, name, e)
-                raise e
-        else:
-            raise RuntimeError("No active UoW found during element fetching")
+        return ElementResponse(
+            object_id=recipe.result.object_id,
+            name=recipe.result.name,
+            emoji=recipe.result.emoji,
+            recipe=RecipeBase.model_validate(recipe, from_attributes=True),
+            is_first_discovered=is_first_discovered,
+            is_new=is_new,
+        )

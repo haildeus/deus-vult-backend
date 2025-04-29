@@ -295,6 +295,8 @@ importlib-metadata==8.6.1
     #   opentelemetry-api
 importlib-resources==6.5.2
     # via chromadb
+iniconfig==2.1.0
+    # via pytest
 jinja2==3.1.6
     # via
     #   commitizen
@@ -355,9 +357,12 @@ multidict==6.2.0
     #   yarl
 multiprocess==0.70.16
     # via datasets
+mypy==1.15.0
+    # via deus-vult (pyproject.toml)
 mypy-extensions==1.0.0
     # via
     #   black
+    #   mypy
     #   typing-inspect
 numpy==2.2.4
     # via
@@ -439,6 +444,7 @@ packaging==24.2
     #   onnxruntime
     #   opentelemetry-instrumentation
     #   optuna
+    #   pytest
 pandas==2.2.3
     # via
     #   datasets
@@ -447,6 +453,8 @@ pathspec==0.12.1
     # via black
 platformdirs==4.3.7
     # via black
+pluggy==1.5.0
+    # via pytest
 posthog==3.21.0
     # via chromadb
 prompt-toolkit==3.0.50
@@ -537,6 +545,8 @@ pyproject-hooks==1.2.0
     # via build
 pysocks==1.7.1
     # via kurigram
+pytest==8.3.5
+    # via deus-vult (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via
     #   botocore
@@ -680,6 +690,7 @@ typing-extensions==4.12.2
     #   google-generativeai
     #   groq
     #   huggingface-hub
+    #   mypy
     #   openai
     #   opentelemetry-sdk
     #   pydantic

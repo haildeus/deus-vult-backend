@@ -3,10 +3,11 @@ import logging
 from fastapi import APIRouter
 
 from src.api.craft.craft_router import craft_router
+from src.api.users.users_router import users_router
 
 logger = logging.getLogger("deus-vult.api")
 
-imported_routers = [craft_router]
+imported_routers = [craft_router, users_router]
 
 api_router = APIRouter(prefix="/api")
 

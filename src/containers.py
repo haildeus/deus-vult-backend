@@ -12,6 +12,8 @@ from src.api.craft.elements.elements_agent import ElementsAgent
 from src.api.craft.elements.elements_service import ElementsService
 from src.api.craft.progress.progress_service import ProgressService
 from src.api.craft.recipes.recipes_service import RecipesService
+from src.api.inventory.inventory_service import InventoryService
+from src.api.users.users_service import UsersService
 from src.now_the_game.telegram.chats.chats_service import ChatsService
 from src.now_the_game.telegram.client.client_config import TelegramConfig
 from src.now_the_game.telegram.client.client_object import TelegramBot
@@ -19,7 +21,6 @@ from src.now_the_game.telegram.memberships.memberships_service import Membership
 from src.now_the_game.telegram.messages.messages_service import MessagesService
 from src.now_the_game.telegram.polls.polls_service import PollsService
 from src.now_the_game.telegram.telegram_handlers import TelegramHandlers
-from src.now_the_game.telegram.users.users_service import UsersService
 from src.shared.base import BaseService
 from src.shared.base_llm import VertexConfig, VertexLLM
 from src.shared.cache import get_disk_cache
@@ -60,10 +61,23 @@ class Container(containers.DeclarativeContainer):
     # -- Event Bus --
     event_bus = providers.Singleton(EventBus)
 
+    # -- LLM Provider --
+    model_config = providers.Factory(VertexConfig)
+    model_object = providers.Singleton(VertexLLM, config=model_config)
+    elements_agent = providers.Singleton(ElementsAgent, provider=model_object)
+
     # -- API Services --
-    elements_service = providers.Singleton(ElementsService)
-    recipes_service = providers.Singleton(RecipesService)
-    progress_service = providers.Singleton(ProgressService)
+    recipes_service = providers.Singleton(RecipesService, uow=uow_factory)
+    progress_service = providers.Singleton(ProgressService, uow=uow_factory)
+    inventory_service = providers.Singleton(InventoryService)
+    elements_service = providers.Singleton(
+        ElementsService,
+        uow=uow_factory,
+        recipes_service=recipes_service,
+        progress_service=progress_service,
+        elements_agent=elements_agent,
+    )
+    users_service = providers.Singleton(UsersService, event_bus=event_bus)
 
     # -- Telegram --
     telegram_config = providers.Factory(TelegramConfig)
@@ -78,13 +92,7 @@ class Container(containers.DeclarativeContainer):
     memberships_service = providers.Singleton(MembershipsService)
     messages_service = providers.Singleton(MessagesService)
     polls_service = providers.Singleton(PollsService)
-    users_service = providers.Singleton(UsersService)
     telegram_handlers = providers.Singleton(TelegramHandlers)
-
-    # -- LLM Provider --
-    model_config = providers.Factory(VertexConfig)
-    model_object = providers.Singleton(VertexLLM, config=model_config)
-    elements_agent = providers.Singleton(ElementsAgent, provider=model_object)
 
     # -- Glif --
     glif_config = providers.Factory(GlifConfig)

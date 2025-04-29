@@ -66,6 +66,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
             container.recipes_service,
             container.elements_agent,
             container.progress_service,
+            container.inventory_service,
             # -- Telegram Services --
             container.chats_service,
             container.memberships_service,
@@ -78,12 +79,15 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
             for service in services_to_initialize
         ]
 
+        if shared_config.debug_mode:
+            await db_instance.create_all()
+
         async_service_start_tasks = [
             get_craft_registry(),
             get_telegram_registry(),
             get_game_registry(),
-            # db_instance.create_all(),
             telegram_object.start(),
+            container.elements_service().init_elements(),
         ]
 
         async_tasks = [

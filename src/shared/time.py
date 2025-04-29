@@ -1,20 +1,21 @@
+from datetime import UTC, datetime
 from types import TracebackType
-from datetime import datetime, timezone
 
-ZERO_UTC = datetime(1970, 1, 1, tzinfo=timezone.utc)
-MAX_UTC = datetime.fromtimestamp(4294967295, tz=timezone.utc)
+ZERO_UTC = datetime(1970, 1, 1, tzinfo=UTC)
+MAX_UTC = datetime.fromtimestamp(4294967295, tz=UTC)
 
 
 def now() -> datetime:
-    return datetime.now(tz=timezone.utc)
+    return datetime.now(tz=UTC)
 
 
 def utcnow() -> datetime:
+    # noinspection PyDeprecation
     return datetime.utcnow()
 
 
 def to_utc(d: datetime) -> datetime:
-    return d.astimezone(timezone.utc)
+    return d.astimezone(UTC)
 
 
 class Timer:
