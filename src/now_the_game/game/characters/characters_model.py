@@ -1,181 +1,61 @@
-from typing import overload
+import logging
 
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlmodel import select
 
-from src.now_the_game.game.characters.characters_schemas import (
-    CharacterBase,
-    LoreBase,
-    PrimaryStatsBase,
-)
-from src.shared.base import BaseModel
+from src.now_the_game.game.characters.characters_schemas import CharacterTable
+from src.shared.base import BaseModel, EntityAlreadyExistsError
+
+logger = logging.getLogger("deus-vult.characters_model")
 
 
-class CharacterModel(BaseModel[CharacterBase]):
+class CharacterModel(BaseModel[CharacterTable]):
     def __init__(self) -> None:
-        super().__init__(CharacterBase)
-
-    @overload
-    async def get(self, session: AsyncSession) -> list[CharacterBase]: ...
-
-    @overload
-    async def get(
-        self, session: AsyncSession, *, character_id: int
-    ) -> list[CharacterBase]: ...
-
-    @overload
-    async def get(
-        self, session: AsyncSession, *, chat_id: int
-    ) -> list[CharacterBase]: ...
-
-    @overload
-    async def get(
-        self, session: AsyncSession, *, user_id: int
-    ) -> list[CharacterBase]: ...
-
-    @overload
-    async def get(
-        self, session: AsyncSession, *, chat_id: int, user_id: int
-    ) -> list[CharacterBase]: ...
+        super().__init__(CharacterTable)
 
     async def get(
         self,
         session: AsyncSession,
         *,
-        character_id: int | None = None,
-        chat_id: int | None = None,
         user_id: int | None = None,
-    ) -> list[CharacterBase]:
-        if character_id:
-            return await self.get_by_id(session, character_id)
-
-        elif chat_id and user_id:
-            return await self.get_for_chat_user_id(session, chat_id, user_id)
-        elif chat_id:
-            return await self.get_for_chat_id(session, chat_id)
+        clan_id: int | None = None,
+    ) -> list[CharacterTable]:
+        if user_id and clan_id:
+            logger.debug(
+                "From clan %s fetching character of user %s",
+                clan_id,
+                user_id,
+            )
+            return await self.get_by_other_params(
+                session, user_id=user_id, clan_id=clan_id
+            )
         elif user_id:
-            return await self.get_for_user_id(session, user_id)
+            logger.debug("From user %s fetching all characters", user_id)
+            return await self.get_by_other_params(session, user_id=user_id)
+        elif clan_id:
+            logger.debug("From clan %s fetching all characters", clan_id)
+            return await self.get_by_other_params(session, clan_id=clan_id)
         else:
+            logger.debug("Fetching all characters")
             return await self.get_all(session)
 
-    @staticmethod
-    async def get_for_character_id(
-        session: AsyncSession, character_id: int
-    ) -> list[CharacterBase]:
-        query = select(CharacterBase).where(CharacterBase.object_id == character_id)
-        result = await session.execute(query)
-        return list(result.scalars().all())
-
-    @staticmethod
-    async def get_for_chat_id(
-        session: AsyncSession, chat_id: int
-    ) -> list[CharacterBase]:
-        query = select(CharacterBase).where(CharacterBase.chat_id == chat_id)
-        result = await session.execute(query)
-        return list(result.scalars().all())
-
-    @staticmethod
-    async def get_for_user_id(
-        session: AsyncSession,
-        user_id: int,
-    ) -> list[CharacterBase]:
-        query = select(CharacterBase).where(CharacterBase.user_id == user_id)
-        result = await session.execute(query)
-        return list(result.scalars().all())
-
-    @staticmethod
-    async def get_for_chat_user_id(
-        session: AsyncSession,
-        chat_id: int,
-        user_id: int,
-    ) -> list[CharacterBase]:
-        query = select(CharacterBase).where(
-            CharacterBase.chat_id == chat_id, CharacterBase.user_id == user_id
-        )
-        result = await session.execute(query)
-        return list(result.scalars().all())
-
-
-class LoreModel(BaseModel[LoreBase]):
-    def __init__(self) -> None:
-        super().__init__(LoreBase)
-
-    @overload
-    async def get(self, session: AsyncSession) -> list[LoreBase]: ...
-
-    @overload
-    async def get(self, session: AsyncSession, *, lore_id: int) -> list[LoreBase]: ...
-
-    @overload
-    async def get(
-        self, session: AsyncSession, *, character_id: int
-    ) -> list[LoreBase]: ...
-
-    async def get(
+    async def not_exists(
         self,
         session: AsyncSession,
-        *,
-        character_id: int | None = None,
-        lore_id: int | None = None,
-    ) -> list[LoreBase]:
-        if lore_id:
-            return await self.get_by_id(session, lore_id)
-        elif character_id:
-            return await self.get_for_character_id(session, character_id)
-        else:
-            return await self.get_all(session)
+        user_id: int | None = None,
+        clan_id: int | None = None,
+    ) -> bool:
+        fetched_characters = await self.get(session, user_id=user_id, clan_id=clan_id)
+        try:
+            assert len(fetched_characters) == 0
+        except AssertionError as e:
+            raise EntityAlreadyExistsError(
+                user_id, entity_type=self.model_class.__name__
+            ) from e
+        except Exception as e:
+            logger.error("Error checking if character exists: %s", e)
+            raise e
 
-    @staticmethod
-    async def get_for_character_id(
-        session: AsyncSession, character_id: int
-    ) -> list[LoreBase]:
-        query = select(LoreBase).where(LoreBase.character_id == character_id)
-        result = await session.execute(query)
-        return list(result.scalars().all())
-
-
-class PrimaryStatsModel(BaseModel[PrimaryStatsBase]):
-    def __init__(self) -> None:
-        super().__init__(PrimaryStatsBase)
-
-    @overload
-    async def get(self, session: AsyncSession) -> list[PrimaryStatsBase]: ...
-
-    @overload
-    async def get(
-        self, session: AsyncSession, *, primary_stats_id: int
-    ) -> list[PrimaryStatsBase]: ...
-
-    @overload
-    async def get(
-        self, session: AsyncSession, *, character_id: int
-    ) -> list[PrimaryStatsBase]: ...
-
-    async def get(
-        self,
-        session: AsyncSession,
-        *,
-        character_id: int | None = None,
-        primary_stats_id: int | None = None,
-    ) -> list[PrimaryStatsBase]:
-        if primary_stats_id:
-            return await self.get_by_id(session, primary_stats_id)
-        elif character_id:
-            return await self.get_for_character_id(session, character_id)
-        else:
-            return await self.get_all(session)
-
-    @staticmethod
-    async def get_for_character_id(
-        session: AsyncSession, character_id: int
-    ) -> list[PrimaryStatsBase]:
-        query = select(PrimaryStatsBase).where(
-            PrimaryStatsBase.character_id == character_id
-        )
-        result = await session.execute(query)
-        return list(result.scalars().all())
+        return True
 
 
 character_model = CharacterModel()
-lore_model = LoreModel()
-primary_stats_model = PrimaryStatsModel()

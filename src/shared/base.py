@@ -26,10 +26,17 @@ class EntityAlreadyExistsError(Exception):
 
     DEFAULT_ENTITY_TYPE = "Entity"
 
-    def __init__(self, entity: str | int, entity_type: str | None = None):
+    def __init__(
+        self,
+        entity: str | int | None = None,
+        entity_type: str | None = None,
+    ):
         entity_type = entity_type or self.DEFAULT_ENTITY_TYPE
 
-        if isinstance(entity, int):
+        if not entity:
+            logger.debug("Entity already exists: %s", entity_type)
+            super().__init__(f"{entity_type} already exists")
+        elif isinstance(entity, int):
             logger.debug("%s object (ID: %s) already exists", entity_type, entity)
             super().__init__(f"{entity_type} object (ID: {entity}) already exists")
         else:

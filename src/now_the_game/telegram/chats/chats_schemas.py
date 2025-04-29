@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING, Any
 from pydantic import model_validator
 from pyrogram.enums import ChatType as PyrogramChatType
 from pyrogram.types import ChatMemberUpdated, Message
-from sqlmodel import Field, Relationship
+from sqlmodel import Field, Relationship, UniqueConstraint
 
 from src.now_the_game.telegram.telegram_exceptions import PyrogramConversionError
 from src.shared.base import BaseSchema
@@ -53,7 +53,7 @@ class ChatBase(BaseSchema):
     photo_url: str | None = Field(default=None, min_length=1, max_length=255)
 
     chat_type: ChatType = Field(default=ChatType.USER)
-    is_participant: bool = Field(default=False)
+    chat_instance: int | None = Field(default=None, index=True, nullable=True)
 
     @model_validator(mode="before")
     def validate_chat_type(cls, values: Any) -> Any:
@@ -78,6 +78,11 @@ class ChatTable(ChatBase, table=True):
     users: list["UserTable"] = Relationship(
         back_populates="chats",
         sa_relationship_kwargs={"lazy": "selectin"},
+    )
+
+    __table_args__ = (
+        # Ensure chat_instance is unique
+        UniqueConstraint("chat_instance", name="uq_chats_chat_instance"),
     )
 
     # --- End Relationships ---
