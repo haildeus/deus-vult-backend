@@ -17,12 +17,12 @@ from src.shared.base import BaseSchema
 from src.shared.events import EventPayload
 
 if TYPE_CHECKING:
+    from src.api.users.users_schemas import UserTable
     from src.now_the_game.telegram.memberships.memberships_schemas import (
         ChatMembershipTable,
     )
     from src.now_the_game.telegram.messages.messages_schemas import MessageTable
     from src.now_the_game.telegram.polls.polls_schemas import PollTable
-    from src.now_the_game.telegram.users.users_schemas import UserTable
 
 logger = logging.getLogger("deus-vult.telegram.chats")
 
@@ -74,10 +74,6 @@ class ChatTable(ChatBase, table=True):
     )
     polls: list["PollTable"] = Relationship(
         back_populates="chat", sa_relationship_kwargs={"lazy": "selectin"}
-    )
-    users: list["UserTable"] = Relationship(
-        back_populates="chats",
-        sa_relationship_kwargs={"lazy": "selectin"},
     )
 
     __table_args__ = (

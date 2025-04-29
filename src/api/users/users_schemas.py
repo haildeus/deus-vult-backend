@@ -8,28 +8,23 @@ from typing import TYPE_CHECKING, Any
 from pyrogram.types import Message, User
 from sqlmodel import Field, Relationship
 
+from src.api.inventory.inventory_schemas import InventoryPublic, InventoryTable
 from src.shared.base import BaseSchema
 from src.shared.events import EventPayload
 
 if TYPE_CHECKING:
-    from src.now_the_game.telegram.chats.chats_schemas import ChatTable
     from src.now_the_game.telegram.memberships.memberships_schemas import (
         ChatMembershipTable,
     )
     from src.now_the_game.telegram.messages.messages_schemas import MessageTable
-
-"""
-MODELS
-"""
 
 
 class AddUserPayload(EventPayload):
     user: User
 
 
-"""
-TABLES
-"""
+class NewUserPayload(EventPayload):
+    user: "UserBase"
 
 
 class UserBase(BaseSchema):
@@ -41,21 +36,25 @@ class UserBase(BaseSchema):
     photo_url: str | None = Field(default=None, min_length=1, max_length=255)
 
 
+class UserPublic(UserBase):
+    inventory: InventoryPublic | None = Field(default=None)
+
+
 class UserTable(UserBase, table=True):
     __tablename__ = "users"  # type: ignore
 
-    # --- Relationships ---
-    chat_members: list["ChatMembershipTable"] = Relationship(
+    inventory: InventoryTable = Relationship(
+        back_populates="user", sa_relationship_kwargs={"lazy": "selectin"}
+    )
+
+    chats_member: list["ChatMembershipTable"] = Relationship(
         back_populates="user",
         sa_relationship_kwargs={"lazy": "selectin"},
     )
     messages: list["MessageTable"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"lazy": "selectin"}
     )
-    chats: list["ChatTable"] = Relationship(
-        back_populates="users",
-        sa_relationship_kwargs={"lazy": "selectin"},
-    )
+
     # --- End Relationships ---
 
     @classmethod

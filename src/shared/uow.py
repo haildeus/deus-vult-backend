@@ -7,8 +7,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.shared.types import SessionFactory
 
-current_uow: contextvars.ContextVar["UnitOfWork | None"] = contextvars.ContextVar(
-    "current_uow", default=None
+current_uow: contextvars.ContextVar["UnitOfWork"] = contextvars.ContextVar(
+    "current_uow"
 )
 
 logger = logging.getLogger("deus-vult.uow")
@@ -20,7 +20,7 @@ class UnitOfWork:
     def __init__(self, session_factory: SessionFactory):
         self._session_factory = session_factory
         self._session: AsyncSession | None = None
-        self._context_token: contextvars.Token[UnitOfWork | None] | None = None
+        self._context_token: contextvars.Token[UnitOfWork] | None = None
 
     async def get_session(self) -> AsyncSession:
         """Returns the active session, raising an error if not started."""
@@ -34,8 +34,6 @@ class UnitOfWork:
     @asynccontextmanager
     async def start(self) -> AsyncIterator["UnitOfWork"]:
         """Starts a new transaction context for this Unit of Work."""
-        if self._session is not None:
-            raise RuntimeError("UnitOfWork session is already active.")
 
         self._context_token = current_uow.set(self)
         logger.debug("UoW context started, token set: %s", self._context_token)

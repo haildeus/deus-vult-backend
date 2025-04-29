@@ -66,7 +66,7 @@ class MessageHandlers:
             message_array = [
                 MessageTopics.MESSAGE_CREATE.value,
                 ChatTopics.CHAT_CREATE.value,
-                UserTopics.USER_CREATE.value,
+                UserTopics.USER_CREATE_FROM_TELEGRAM.value,
                 MembershipTopics.MEMBERSHIP_CREATE.value,
             ]
             async_tasks: list[Coroutine[Any, Any, None]] = []

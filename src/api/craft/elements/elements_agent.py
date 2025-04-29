@@ -3,9 +3,7 @@ This module contains the ElementsAgent class which is responsible for LLM-driven
 """
 
 import logging
-from typing import cast
 
-from fastapi import HTTPException
 from pydantic_ai import Agent
 from pydantic_ai.settings import ModelSettings
 
@@ -17,9 +15,6 @@ from src.api.craft.elements.elements_prompts import (
 from src.api.craft.elements.elements_schemas import Element, ElementInput, ElementOutput
 from src.shared.base import BaseService
 from src.shared.base_llm import VertexLLM
-from src.shared.event_bus import EventBus
-from src.shared.event_registry import ElementTopics
-from src.shared.events import Event
 from src.shared.observability.traces import async_traced_function
 
 logger = logging.getLogger("deus-vult.api.craft")
@@ -42,20 +37,6 @@ class ElementsAgent(BaseService):
             ),
             retries=3,
         )
-
-    @EventBus.subscribe(ElementTopics.ELEMENT_COMBINATION)
-    @async_traced_function
-    async def handle_element_combination(self, event: Event) -> Element:
-        payload = cast(ElementInput, event.extract_payload(event, ElementInput))
-
-        try:
-            assert payload.element_a
-            assert payload.element_b
-        except AssertionError as e:
-            raise HTTPException(status_code=400, detail="Invalid elements") from e
-
-        result = await self.combine_elements(payload)
-        return result
 
     @async_traced_function
     async def combine_elements(self, inp: ElementInput) -> Element:

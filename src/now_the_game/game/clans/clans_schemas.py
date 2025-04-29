@@ -26,7 +26,6 @@ class ClanTable(ClanBase, table=True):
 
     # --- Relationships ---
     chat: Optional["ChatTable"] = Relationship(
-        back_populates="clans",
         sa_relationship_kwargs={
             "lazy": "selectin",
             "foreign_keys": "[ClanTable.chat_id]",

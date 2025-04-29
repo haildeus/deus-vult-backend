@@ -68,7 +68,9 @@ class OverloadParametersError(Exception):
 
 class BaseSchema(SQLModel):
     object_id: int = Field(
-        primary_key=True, default_factory=lambda: randint(1, 100000000), index=True
+        primary_key=True,
+        default_factory=lambda: randint(1, 100000000),
+        index=True,
     )
 
     created_at: datetime = Field(default_factory=datetime.now)
@@ -116,6 +118,7 @@ class BaseModel(Generic[T]):
         Args:
             session: The session to add the entity to.
             entity: The entity to add.
+            pass_checks: fixme: add doc
 
         Returns:
             The added entity.

@@ -85,7 +85,8 @@ class PollTopics(Enum):
 
 
 class UserTopics(Enum):
-    USER_CREATE = f"{TELEGRAM_USER_PREFIX}.{CREATE_PREFIX}"
+    USER_CREATE_FROM_TELEGRAM = f"{TELEGRAM_USER_PREFIX}.{CREATE_PREFIX}"
+    USER_INIT = f"{API_PREFIX}.users.{CREATE_PREFIX}"
 
 
 """
