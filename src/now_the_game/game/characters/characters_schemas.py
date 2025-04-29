@@ -17,7 +17,7 @@ class CharacterBase(BaseSchema):
     energy: int = Field(default=100, ge=0, le=100)
 
     # --- Relationships ---
-    selected_clan_id: int = Field(foreign_key="clans.object_id", index=True)
+    clan_id: int = Field(foreign_key="clans.object_id", index=True)
     user_id: int = Field(foreign_key="users.object_id", index=True)
 
 
@@ -25,18 +25,15 @@ class CharacterTable(CharacterBase, table=True):
     __tablename__ = "characters"  # type: ignore
 
     # --- Relationships ---
-    # FIXME: doesn't work
-    # clan: Optional["ClanTable"] = Relationship(
-    #     back_populates="characters",
-    #     sa_relationship_kwargs={
-    #         "lazy": "selectin",
-    #         "foreign_keys": "[CharacterTable.clan_id]",
-    #     },
-    # )
-    # user: Optional["UserTable"] = Relationship(
-    #     back_populates="characters",
-    #     sa_relationship_kwargs={
-    #         "lazy": "selectin",
-    #         "foreign_keys": "[CharacterTable.user_id]",
-    #     },
-    # )
+    clan: Optional["ClanTable"] = Relationship(
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "foreign_keys": "[CharacterTable.clan_id]",
+        },
+    )
+    user: Optional["UserTable"] = Relationship(
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "foreign_keys": "[CharacterTable.user_id]",
+        },
+    )

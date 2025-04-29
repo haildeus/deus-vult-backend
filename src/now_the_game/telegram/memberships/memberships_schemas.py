@@ -50,7 +50,7 @@ class ChatMembershipTable(ChatMembershipBase, table=True):
 
     # --- Relationships ---
     chat: "ChatTable" = Relationship(back_populates="chat_members")
-    user: "UserTable" = Relationship(back_populates="chat_members")
+    user: "UserTable" = Relationship(back_populates="chats_member")
     # --- End Relationships ---
 
     @classmethod

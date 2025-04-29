@@ -54,11 +54,7 @@ class UserTable(UserBase, table=True):
     messages: list["MessageTable"] = Relationship(
         back_populates="user", sa_relationship_kwargs={"lazy": "selectin"}
     )
-    # FIXME: doesn't work
-    # chats: list["ChatTable"] = Relationship(
-    #     back_populates="users",
-    #     sa_relationship_kwargs={"lazy": "selectin"},
-    # )
+
     # --- End Relationships ---
 
     @classmethod

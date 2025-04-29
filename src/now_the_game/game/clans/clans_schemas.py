@@ -25,11 +25,9 @@ class ClanTable(ClanBase, table=True):
     __tablename__ = "clans"  # type: ignore
 
     # --- Relationships ---
-    # FIXME: doesn't work
-    # chat: Optional["ChatTable"] = Relationship(
-    #     back_populates="clans",
-    #     sa_relationship_kwargs={
-    #         "lazy": "selectin",
-    #         "foreign_keys": "[ClanTable.chat_id]",
-    #     },
-    # )
+    chat: Optional["ChatTable"] = Relationship(
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "foreign_keys": "[ClanTable.chat_id]",
+        },
+    )

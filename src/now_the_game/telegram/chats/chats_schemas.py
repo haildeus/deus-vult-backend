@@ -75,10 +75,6 @@ class ChatTable(ChatBase, table=True):
     polls: list["PollTable"] = Relationship(
         back_populates="chat", sa_relationship_kwargs={"lazy": "selectin"}
     )
-    users: list["UserTable"] = Relationship(
-        back_populates="chats",
-        sa_relationship_kwargs={"lazy": "selectin"},
-    )
 
     __table_args__ = (
         # Ensure chat_instance is unique
