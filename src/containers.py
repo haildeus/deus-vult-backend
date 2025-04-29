@@ -18,6 +18,7 @@ from src.now_the_game.telegram.client.client_object import TelegramBot
 from src.now_the_game.telegram.memberships.memberships_service import MembershipsService
 from src.now_the_game.telegram.messages.messages_service import MessagesService
 from src.now_the_game.telegram.polls.polls_service import PollsService
+from src.now_the_game.telegram.telegram_handlers import TelegramHandlers
 from src.now_the_game.telegram.users.users_service import UsersService
 from src.shared.base import BaseService
 from src.shared.base_llm import VertexConfig, VertexLLM
@@ -78,6 +79,7 @@ class Container(containers.DeclarativeContainer):
     messages_service = providers.Singleton(MessagesService)
     polls_service = providers.Singleton(PollsService)
     users_service = providers.Singleton(UsersService)
+    telegram_handlers = providers.Singleton(TelegramHandlers)
 
     # -- LLM Provider --
     model_config = providers.Factory(VertexConfig)

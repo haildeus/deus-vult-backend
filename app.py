@@ -51,6 +51,12 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         _,
     ) = await asyncio.gather(*key_service_init_tasks)
 
+    # --- Telegram Handlers Initialization ---
+    telegram_handlers = container.telegram_handlers()
+    for handler in telegram_handlers.all_handlers:
+        logger.debug("Adding handler: %s", handler)
+        telegram_object.client.add_handler(handler)
+
     # --- Service Initialization ---
     try:
         logger.debug("Initializing services")
