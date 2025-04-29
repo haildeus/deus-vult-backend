@@ -19,7 +19,7 @@ CRUD_OPERATIONS = (
 
 
 """
-API
+1. API
 """
 API_PREFIX = "api"
 CRAFT_PREFIX = f"{API_PREFIX}.craft"
@@ -50,7 +50,7 @@ class ProgressTopics(Enum):
 
 
 """
-TELEGRAM
+2. TELEGRAM
 """
 TELEGRAM_PREFIX = "telegram"
 TELEGRAM_CALLBACK_PREFIX = f"{TELEGRAM_PREFIX}.callback"
@@ -108,25 +108,16 @@ class GlifTopics(Enum):
 
 
 """
-GAME
+3. GAME
 """
 GAME_PREFIX = "game"
-GAME_SESSION_PREFIX = f"{GAME_PREFIX}.sessions"
+GAME_CLAN_PREFIX = f"{GAME_PREFIX}.clans"
 GAME_CHARACTER_PREFIX = f"{GAME_PREFIX}.characters"
-GAME_LORE_PREFIX = f"{GAME_PREFIX}.lore"
-GAME_PRIMARY_STATS_PREFIX = f"{GAME_PREFIX}.primary_stats"
-GAME_EVENT_PREFIX = f"{GAME_PREFIX}.events"
+
+
+class ClanTopics(Enum):
+    CLAN_FETCH = f"{GAME_CLAN_PREFIX}.{FETCH_PREFIX}"
 
 
 class CharacterTopics(Enum):
-    CHARACTER_CREATE = f"{GAME_CHARACTER_PREFIX}.{CREATE_PREFIX}"
     CHARACTER_FETCH = f"{GAME_CHARACTER_PREFIX}.{FETCH_PREFIX}"
-
-
-class SessionTopics(Enum):
-    SESSION_CREATE = f"{GAME_SESSION_PREFIX}.{CREATE_PREFIX}"
-    SESSION_FETCH = f"{GAME_SESSION_PREFIX}.{FETCH_PREFIX}"
-
-
-class EventTopics(Enum):
-    EVENT_AGENT_CREATE = f"{GAME_EVENT_PREFIX}.{CREATE_PREFIX}"

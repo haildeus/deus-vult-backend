@@ -43,7 +43,7 @@ uv lock
 - Use `git push --follow-tags` after to push the flags too.
 - Use `cz bump` for meaningful version update, it will handle the rest.
 
-## 2. Deploying
+# 2. Deploying
 - Initilize gcloud CLI and log into your account
 ```
 gcloud init
@@ -87,3 +87,15 @@ gcloud app deploy dispatch.yaml
 
 ### 2.4 Environmental variables
 - Do not use `load_dotenv()`, we're using pydantic settings
+
+### 2.5 Alembic Migrations
+- Modify models as needed
+- Generate migration script 
+```
+alembic revision --autogenerate -m "Describe your changes here"
+```
+- *Critical*. Review the script. Imay require for you to add sqlmodel as import, refer to `alembic/versions/c8ba7c7e553e_initial_database_schema_setup.py`
+- Apply the migration
+```
+alembic upgrade head
+```

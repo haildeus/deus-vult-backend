@@ -32,12 +32,12 @@ class MessageHandlers:
 
     @staticmethod
     async def start_message(_: Client, message: Message) -> Message:
-        response = await message.reply_text("Hello, world!")
+        response = await message.reply_text("Hello, world!")  # type: ignore
         return response
 
     @staticmethod
     async def help_message(_: Client, message: Message) -> Message:
-        response = await message.reply_text("Help message")
+        response = await message.reply_text("Help message")  # type: ignore
         return response
 
     @async_traced_function

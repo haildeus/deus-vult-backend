@@ -76,7 +76,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
             get_craft_registry(),
             get_telegram_registry(),
             get_game_registry(),
-            db_instance.create_all(),
+            # db_instance.create_all(),
             telegram_object.start(),
         ]
 
