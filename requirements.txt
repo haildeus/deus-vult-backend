@@ -35,6 +35,8 @@ argcomplete==3.5.3
     # via
     #   commitizen
     #   pydantic-ai-slim
+asgi-lifespan==2.1.0
+    # via deus-vult (pyproject.toml)
 asgiref==3.8.1
     # via opentelemetry-instrumentation-asgi
 asyncer==0.0.8
@@ -488,6 +490,8 @@ protobuf==5.29.4
     #   proto-plus
 psutil==7.0.0
     # via deus-vult (pyproject.toml)
+psycopg2-binary==2.9.10
+    # via deus-vult (pyproject.toml)
 pyaes==1.6.1
     # via kurigram
 pyarrow==19.0.1
@@ -546,6 +550,10 @@ pyproject-hooks==1.2.0
 pysocks==1.7.1
     # via kurigram
 pytest==8.3.5
+    # via
+    #   deus-vult (pyproject.toml)
+    #   pytest-asyncio
+pytest-asyncio==0.26.0
     # via deus-vult (pyproject.toml)
 python-dateutil==2.9.0.post0
     # via
@@ -627,6 +635,7 @@ sniffio==1.3.1
     # via
     #   anthropic
     #   anyio
+    #   asgi-lifespan
     #   groq
     #   openai
 sqlalchemy==2.0.39

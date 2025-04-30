@@ -45,7 +45,7 @@ class Database:
             # Consider raising the exception or handling it based on application needs
             raise
 
-    async def create_all(self):
+    async def create_all(self) -> None:
         """
         Initializes the database connection and optionally creates tables.
         """
@@ -59,9 +59,8 @@ class Database:
             await conn.run_sync(SQLModel.metadata.create_all)
 
         logger.debug("Database connection initialized, tables checked/created.")
-        return self
 
-    async def drop_all(self):
+    async def drop_all(self) -> None:
         """
         Drops all tables defined in SQLModel.metadata using CASCADE.
         WARNING: This is destructive and irreversible. Use with extreme caution.

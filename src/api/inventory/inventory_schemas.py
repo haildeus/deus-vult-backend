@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING, Any
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Column, Field, Relationship, SQLModel, select, tuple_
 
+from src.api.craft.elements.elements_schemas import ElementBase, ElementTable
 from src.api.inventory.inventory_exceptions import (
     InventoryNotEnoughItemsException,
 )
@@ -33,6 +34,10 @@ class InventoryItemBase(SQLModel):
     meta: dict[str, Any] = Field(sa_column=Column(JSONB), default_factory=dict)
 
 
+class InventoryItemPublic(InventoryItemBase):
+    element: ElementBase | None = None
+
+
 class InventoryItemTable(InventoryItemBase, table=True):
     __tablename__ = "items"
 
@@ -41,9 +46,16 @@ class InventoryItemTable(InventoryItemBase, table=True):
         sa_relationship_kwargs={"lazy": "selectin"},
     )
 
+    element: ElementTable | None = Relationship(
+        sa_relationship_kwargs={
+            "lazy": "selectin",
+            "primaryjoin": "and_(InventoryItemTable.type == 'ELEMENT', foreign(InventoryItemTable.sub_type_id) == ElementTable.object_id)",  # noqa: E501
+        },
+    )
+
 
 class InventoryPublic(SQLModel):
-    items: list[InventoryItemBase] = []
+    items: list[InventoryItemPublic] = []
 
 
 class InventoryTable(SQLModel, table=True):
