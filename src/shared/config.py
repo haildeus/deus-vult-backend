@@ -163,7 +163,7 @@ SHARED CONFIG
 
 
 class SharedConfig(BaseConfig):
-    app_env: Literal["local", "cloud"] = "local"
+    app_env: Literal["local", "cloud", "test"] = "local"
     stage: Literal["dev", "prod"] = "dev"
     event_bus: Literal["local"] = "local"
     debug_mode: bool = True

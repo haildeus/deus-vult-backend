@@ -80,6 +80,8 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         ]
 
         if shared_config.debug_mode:
+            if shared_config.stage == "test":
+                await db_instance.drop_all()
             await db_instance.create_all()
 
         async_service_start_tasks = [
