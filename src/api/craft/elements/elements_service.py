@@ -14,7 +14,7 @@ from src.api.craft.elements.elements_schemas import (
     ElementTable,
 )
 from src.api.craft.progress.progress_service import ProgressService
-from src.api.craft.recipes.recipes_schemas import RecipeBase
+from src.api.craft.recipes.recipes_schemas import RecipePublic
 from src.api.craft.recipes.recipes_service import RecipesService
 from src.api.inventory.inventory_schemas import InventoryItemTable
 from src.api.users.users_schemas import UserTable
@@ -51,6 +51,46 @@ class ElementsService(BaseService):
                     .on_conflict_do_nothing(index_elements=["object_id"])
                 )
                 await session.execute(stmt)
+
+    @async_traced_function
+    async def craft_from_recipe(
+        self, user: UserTable, recipe_id: int
+    ) -> ElementResponse:
+        recipe = await self.recipes_service.get_recipe(recipe_id)
+        if (
+            recipe is None
+            or recipe.result is None
+            or not await self.progress_service.is_discovered_recipe(user, recipe)
+        ):
+            raise NoRecipeExistsException(f"Recipe with id {recipe_id} is not found")
+
+        base_items = []
+        for base_item_id, amount in recipe.resources_cost.items():
+            base_items.append(
+                InventoryItemTable(
+                    type=InventoryItemTable.ItemType.ELEMENT,
+                    sub_type_id=int(base_item_id),
+                    amount=int(amount),
+                ),
+            )
+
+        await user.inventory.remove_items(*base_items)
+        await user.inventory.add_items(
+            InventoryItemTable(
+                type=InventoryItemTable.ItemType.ELEMENT,
+                sub_type_id=recipe.result.object_id,
+                amount=1,
+            ),
+        )
+
+        return ElementResponse(
+            object_id=recipe.result.object_id,
+            name=recipe.result.name,
+            emoji=recipe.result.emoji,
+            recipe=RecipePublic.model_validate(recipe, from_attributes=True),
+            is_first_discovered=False,
+            is_new=False,
+        )
 
     @async_traced_function
     async def combine_elements(
@@ -140,7 +180,7 @@ class ElementsService(BaseService):
             object_id=recipe.result.object_id,
             name=recipe.result.name,
             emoji=recipe.result.emoji,
-            recipe=RecipeBase.model_validate(recipe, from_attributes=True),
+            recipe=RecipePublic.model_validate(recipe, from_attributes=True),
             is_first_discovered=is_first_discovered,
             is_new=is_new,
         )

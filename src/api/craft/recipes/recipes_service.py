@@ -70,3 +70,14 @@ class RecipesService(BaseService):
         result = (await session.execute(stmt)).scalars().one_or_none()
 
         return result
+
+    @async_traced_function
+    async def get_recipe(
+        self,
+        recipe_id: int,
+    ) -> RecipeTable | None:
+        active_uow = current_uow.get()
+        session = await active_uow.get_session()
+
+        stmt = select(RecipeTable).where(RecipeTable.object_id == recipe_id)
+        return (await session.execute(stmt)).scalars().one_or_none()

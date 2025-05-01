@@ -20,7 +20,7 @@ class ProgressService(BaseService):
         self.uow = uow
 
     @async_traced_function
-    async def discover_recipe(self, user: UserTable, recipe: RecipeTable) -> bool:
+    async def is_discovered_recipe(self, user: UserTable, recipe: RecipeTable) -> bool:
         uow = current_uow.get()
         session = await uow.get_session()
 
@@ -32,7 +32,14 @@ class ProgressService(BaseService):
             )
             .exists()
         )
-        exits = (await session.execute(stmt)).scalar()
+        return bool((await session.execute(stmt)).scalar())
+
+    @async_traced_function
+    async def discover_recipe(self, user: UserTable, recipe: RecipeTable) -> bool:
+        uow = current_uow.get()
+        session = await uow.get_session()
+
+        exits = await self.is_discovered_recipe(user, recipe)
         if exits:
             return False
 
@@ -55,3 +62,14 @@ class ProgressService(BaseService):
             await inner_session.execute(inner_stmt)
 
         return True
+
+    @async_traced_function
+    async def get_open_recipies(self, user: UserTable) -> list[RecipeTable]:
+        uow = current_uow.get()
+        session = await uow.get_session()
+
+        stmt = select(ProgressTable).where(
+            ProgressTable.object_id == user.object_id,
+        )
+        result = (await session.execute(stmt)).scalars().all()
+        return [progress.recipe for progress in result]

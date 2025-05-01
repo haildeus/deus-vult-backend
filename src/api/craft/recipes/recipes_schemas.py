@@ -1,6 +1,7 @@
 from collections import Counter
 from typing import TYPE_CHECKING, Optional
 
+from pydantic import BaseModel
 from sqlalchemy import CheckConstraint, UniqueConstraint
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlmodel import Column, Field, Relationship
@@ -9,7 +10,7 @@ from src.shared.base import BaseSchema
 
 # Forward reference for type hints
 if TYPE_CHECKING:
-    from src.api.craft.elements.elements_schemas import ElementTable
+    from src.api.craft.elements.elements_schemas import Element, ElementTable
 
 
 class RecipeBase(BaseSchema):
@@ -21,6 +22,20 @@ class RecipeBase(BaseSchema):
     resources_cost: dict[str, int] = Field(sa_column=Column(JSONB))
 
     discovered_count: int = Field(default=0)
+
+
+class RecipePublic(RecipeBase):
+    pass
+
+
+class RecipeWithElementsPublic(RecipeBase):
+    element_a: Optional["Element"]
+    element_b: Optional["Element"]
+    result: Optional["Element"]
+
+
+class RecipesListResponse(BaseModel):
+    recipes: list[RecipeWithElementsPublic]
 
 
 class RecipeTable(RecipeBase, table=True):

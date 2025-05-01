@@ -5,7 +5,11 @@ import emoji
 from pydantic import BaseModel, field_validator
 from sqlmodel import Field, Relationship
 
-from src.api.craft.recipes.recipes_schemas import RecipeBase, RecipeTable
+from src.api.craft.recipes.recipes_schemas import (
+    RecipePublic,
+    RecipeTable,
+    RecipeWithElementsPublic,
+)
 from src.shared.base import BaseSchema
 from src.shared.events import EventPayload
 
@@ -50,7 +54,7 @@ class ElementResponse(BaseModel):
     object_id: int = Field(ge=1, description="The unique identifier for the element")
     name: str = Field(max_length=100, description="The name of the element")
     emoji: str = Field(max_length=10, description="The emoji representing the element")
-    recipe: RecipeBase = Field(description="The recipe that this element belongs to")
+    recipe: RecipePublic = Field(description="The recipe that this element belongs to")
 
     is_first_discovered: bool = Field(
         description="Whether the element was discovered by this user before"
@@ -61,6 +65,12 @@ class ElementResponse(BaseModel):
 class CraftRequest(BaseModel):
     object_id_a: int = Field(ge=1, description="The unique identifier for the element")
     object_id_b: int = Field(ge=1, description="The unique identifier for the element")
+
+
+class CraftFromRecipeRequest(BaseModel):
+    recipe_id: int = Field(
+        description="The id of the recipe that should be used for craft"
+    )
 
 
 """
@@ -97,3 +107,6 @@ class ElementInput(EventPayload):
 class ElementOutput(EventPayload):
     reason: str = Field(max_length=150, description="The reason for the combination")
     result: Element = Field(description="The result of the combination")
+
+
+RecipeWithElementsPublic.model_rebuild()
