@@ -2,6 +2,7 @@ import asyncio
 import logging
 
 from sqlalchemy.dialects.postgresql import insert
+from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from src.api.craft.elements.elements_agent import ElementsAgent
@@ -138,23 +139,9 @@ class ElementsService(BaseService):
             )
 
             # We retry 3 times looking for a unique new element.
-            new_element = None
-            retries = 3
-            while retries > 0:
-                potential_element = await self.elements_agent.combine_elements(ai_input)
-
-                stmt = select(
-                    select(ElementTable)
-                    .where(ElementTable.name == potential_element.name)
-                    .exists()
-                )
-                exits = (await session.execute(stmt)).scalar()
-
-                if not exits:
-                    new_element = potential_element
-                    break
-
-                retries -= 1
+            new_element = await self._generate_new_element_with_retries(
+                session, ai_input
+            )
 
             # noinspection PyTypeChecker
             recipe = await self.recipes_service.save_new_recipe(
@@ -184,3 +171,27 @@ class ElementsService(BaseService):
             is_first_discovered=is_first_discovered,
             is_new=is_new,
         )
+
+    @async_traced_function
+    async def _generate_new_element_with_retries(
+        self, session: AsyncSession, ai_input: ElementInput
+    ) -> Element | None:
+        new_element = None
+        retries = 3
+        while retries > 0:
+            potential_element = await self.elements_agent.combine_elements(ai_input)
+
+            stmt = select(
+                select(ElementTable)
+                .where(ElementTable.name == potential_element.name)
+                .exists()
+            )
+            exits = (await session.execute(stmt)).scalar()
+
+            if not exits:
+                new_element = potential_element
+                break
+
+            retries -= 1
+
+        return new_element
