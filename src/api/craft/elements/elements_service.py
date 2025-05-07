@@ -166,7 +166,7 @@ class ElementsService(BaseService):
 
             await self.progress_service.discover_recipe(user, recipe)
 
-        if recipe.result is None or recipe.result.object_id == VOID.object_id:
+        if recipe.result_id == VOID.object_id:
             raise NoRecipeExistsException("No recipe to combine.")
 
         await user.inventory.add_items(

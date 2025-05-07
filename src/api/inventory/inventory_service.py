@@ -40,3 +40,5 @@ class InventoryService(BaseService):
         )
 
         session.add(new_inventory)
+        await session.flush()
+        await session.refresh(new_inventory)

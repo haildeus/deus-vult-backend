@@ -54,7 +54,7 @@ class RecipeTable(RecipeBase, table=True):
             "foreign_keys": "[RecipeTable.element_b_id]",
         },
     )
-    result: Optional["ElementTable"] = Relationship(
+    result: "ElementTable" = Relationship(
         back_populates="recipe",
         sa_relationship_kwargs={
             "lazy": "selectin",

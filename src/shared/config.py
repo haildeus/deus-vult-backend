@@ -209,7 +209,7 @@ class PostgresConfig(BaseConfig):
     # --- Access ---
 
     # For local dev
-    password_local: str = Field(..., validation_alias="POSTGRES_PASSWORD_LOCAL")
+    password_local: str = Field("", validation_alias="POSTGRES_PASSWORD_LOCAL")
     # For Google App Engine
     password_secret_id: str | None = Field(
         None, validation_alias="DB_PASSWORD_SECRET_ID"
@@ -300,7 +300,7 @@ class ClickHouseConfig(BaseConfig):
     # --- Access ---
 
     # For local dev
-    password_local: str = Field(None, validation_alias="CLICKHOUSE_PASSWORD_LOCAL")
+    password_local: str = Field("", validation_alias="CLICKHOUSE_PASSWORD_LOCAL")
     # For Google App Engine
     password_secret_id: str | None = Field(
         None, validation_alias="CLICKHOUSE_PASS_SECRET_ID"

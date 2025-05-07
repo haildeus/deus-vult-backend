@@ -46,10 +46,11 @@ class RecipesService(BaseService):
                 element_a_id=element_a.object_id,
                 element_b_id=element_b.object_id,
                 result_id=created_element.object_id,
-                result=created_element,
             )
             new_recipe.update_resources_cost(element_a, element_b)
             session.add(new_recipe)
+            await session.commit()
+            await session.refresh(new_recipe)
 
         return new_recipe
 
