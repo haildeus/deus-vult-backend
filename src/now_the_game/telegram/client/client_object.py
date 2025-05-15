@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from pyrogram.client import Client
@@ -30,7 +31,7 @@ class TelegramBot:
         in_memory = shared_config.app_env == "cloud" and shared_config.stage == "dev"
 
         self.client = Client(
-            name=config.bot_session_name,
+            name="deus-vult-bot",
             api_id=config.api_id,
             api_hash=config.api_hash,
             bot_token=config.bot_token,

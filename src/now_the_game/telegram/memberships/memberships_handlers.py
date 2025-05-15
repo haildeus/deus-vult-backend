@@ -6,6 +6,9 @@ from pyrogram.handlers.chat_member_updated_handler import ChatMemberUpdatedHandl
 from pyrogram.handlers.handler import Handler
 from pyrogram.types import ChatMemberUpdated, InlineKeyboardButton, InlineKeyboardMarkup
 
+from src.now_the_game.telegram.text.art import JOIN_THE_CRUSADE_MESSAGE
+from src.now_the_game.telegram.text.buttons import LAUNCH_GAME_BUTTON
+
 logger = logging.getLogger("deus-vult.telegram.memberships")
 
 
@@ -44,14 +47,15 @@ class ChatMembershipHandlers:
         """
         Process a new chat membership event and add it to the database.
         """
+
         await client.send_message(
             chat_member_updated.chat.id,
-            "Are you ready?",
+            JOIN_THE_CRUSADE_MESSAGE,
             reply_markup=InlineKeyboardMarkup(
                 [
                     [
                         InlineKeyboardButton(
-                            "Launch Game", callback_data="launch_game"
+                            LAUNCH_GAME_BUTTON, callback_data="launch_game"
                         ),
                     ]
                 ]
@@ -63,7 +67,8 @@ class ChatMembershipHandlers:
         bot_membership_filter = filters.create(self.is_bot_membership_update)  # type: ignore
         new_chat_member_filter = filters.create(self.is_new_chat_member)  # type: ignore
         return [
-            # Handle bot joining a new chat
+            # We do it to catch the case when the bot joins the chat
+            # (avoid updates on block notifications)
             ChatMemberUpdatedHandler(
                 ChatMembershipHandlers.bot_join_new_chat,
                 bot_membership_filter & new_chat_member_filter,
